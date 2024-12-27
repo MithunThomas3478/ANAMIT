@@ -1,0 +1,348 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    text-decoration: none;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.5;
+    color: #333333;
+}
+
+.container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Header styles */
+.header {
+    position: sticky;
+    top: 0;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.header-container {
+    display: flex;
+    align-items: center;
+    height: 4rem;
+    gap: 2rem;
+}
+
+.logo h1 {
+    color: #ff9000;
+}
+
+.main-nav {
+    display: none;
+}
+
+.search-container {
+    flex: 1;
+    max-width: 28rem;
+    margin: 0 2rem;
+}
+
+.search-box {
+    position: relative;
+}
+
+.search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 0.5rem 1rem 0.5rem 2.5rem;
+    border: 1px solid #ddd;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+}
+.header {
+    display: flex; /* Enable flexbox */
+    justify-content: flex-end; /* Move the child to the right side */
+    width: 100%; /* Ensure the container spans the full width */
+    padding: 10px; /* Optional: Add some padding */
+    background-color: #fff; /* Optional: Set background for better visibility */
+}
+
+.header-actions {
+    display: flex; /* Flexbox for alignment of buttons */
+    gap: 15px; /* Space between icons */
+    align-items: center; /* Center vertically */
+}
+
+.header-actions button {
+    background: none; /* Remove button background */
+    border: none; /* Remove button border */
+    cursor: pointer; /* Make it look interactive */
+}
+
+
+/* .header-actions {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.header-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+} */
+
+/* Hero section */
+.hero {
+    background-color: #f3f4f6;
+    padding: 3rem 0;
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+}
+
+.hero-content {
+    max-width: 600px;
+}
+
+.hero h1 {
+    font-size: 4rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 1rem;
+}
+
+.collection {
+    font-size: 2rem;
+    font-weight: 300;
+    margin-bottom: 2rem;
+}
+
+.offer {
+    margin-top: 1.5rem;
+}
+
+.discount {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.extra-offer {
+    font-size: 1.25rem;
+}
+
+.code {
+    background: #333;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
+}
+
+/* Products section */
+.products {
+    padding: 4rem 0;
+}
+
+.bg-gray {
+    background-color: #f9fafb;
+}
+
+.section-title {
+    text-align: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 3rem;
+}
+
+.highlight {
+    color: #f97316;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.product-card {
+    text-decoration: none;
+    color: inherit;
+}
+
+.product-image {
+    aspect-ratio: 3/4;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image img {
+    transform: scale(1.05);
+}
+
+.product-card h3 {
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Looks section */
+.looks {
+    padding: 4rem 0;
+}
+
+.looks-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+.look-card {
+    text-decoration: none;
+    color: white;
+}
+
+.look-image {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.look-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.look-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.look-overlay h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.shop-now {
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.5rem 1.5rem;
+    border: 2px solid white;
+    border-radius: 9999px;
+}
+
+.look-card:hover .look-image img {
+    transform: scale(1.05);
+}
+
+/* Footer */
+.footer {
+    background-color: #f3f4f6;
+    padding: 4rem 0;
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+}
+
+.footer-column h3 {
+    font-size: 0.875rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.footer-column ul {
+    list-style: none;
+}
+
+.footer-column a {
+    color: #666;
+    text-decoration: none;
+    font-size: 0.875rem;
+    display: block;
+    padding: 0.25rem 0;
+}
+
+.footer-column a:hover {
+    color: #333;
+}
+
+.social-links {
+    display: flex;
+    gap: 1rem;
+}
+
+.social-links a {
+    color: #666;
+}
+
+.social-links a:hover {
+    color: #333;
+}
+
+.footer-bottom {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #ddd;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #666;
+}
+
+/* Media Queries */
+@media (min-width: 768px) {
+    .main-nav {
+        display: flex;
+        gap: 2rem;
+    }
+
+    .main-nav a {
+        color: #666;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .main-nav a:hover {
+        color: #333;
+    }
+
+    .product-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    .looks-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .footer-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
