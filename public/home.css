@@ -1,75 +1,62 @@
-/* header */
 body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f8f9fa;
-    font-family: Arial, sans-serif;
-}
-.top-bar {
-    background-color: #000;
-    color: #fff;
-    text-align: center;
-    padding: 10px 0;
-    font-size: 14px;
 }
 .navbar {
-    background-color: #fff;
-    border-bottom: 2px solid #ddd;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    padding: 10px 20px; /* Added padding */
+    background-color: #868686;
+    padding: 10px 20px;
 }
 .navbar-brand {
+    color: #fdfdfd !important;
     font-weight: bold;
-    font-size: 24px;
-    color: #000;
+    font-size: 28px;
+    text-align: left;
 }
-.navbar-nav {
-    margin: 0 auto;
-}
-.navbar-nav .nav-link {
-    color: #000;
-    margin: 0 20px;
+.nav-link {
+    color: #fff !important;
+    margin-right: 20px;
     font-size: 16px;
-    font-weight: 600;
-    text-transform: uppercase;
-    padding: 10px 15px; /* Added padding */
 }
-.navbar-nav .nav-link:hover {
-    color: #ff007f;
+.nav-link:hover {
+    color: #ff5100 !important;
 }
-.icons .icon {
-    color: #000;
-    font-size: 20px;
-    margin-left: 15px;
-    position: relative;
-}
-.icons .icon:hover {
-    color: #ff007f;
-}
-.icon-badge {
-    position: absolute;
-    top: -5px;
-    right: -10px;
-    background-color: yellow;
-    color: #000;
-    font-size: 12px;
-    font-weight: bold;
-    padding: 2px 6px;
-    border-radius: 50%;
-}
+
 .search-bar {
-    max-width: 300px; /* Limit the width */
-    flex-grow: 1;
+    width: 250px;
     margin-right: 20px;
 }
+.icon {
+    color: #fff;
+    margin-left: 15px;
+    font-size: 22px;
+    cursor: pointer;
+}
+.icon:hover {
+    color:#ff9000;
+}
+.auth-links {
+    color: #fff;
+    font-size: 16px;
+    margin-left: 15px;
+    text-decoration: none;
+}
+.auth-links:hover {
+    color: #ff9000;
+}
 @media (max-width: 768px) {
-    .navbar-nav {
-        flex-direction: column;
-        align-items: center;
+    .navbar-brand {
+        font-size: 24px;
+    }
+    .nav-link {
+        margin-right: 10px;
+        font-size: 14px;
     }
     .search-bar {
-        width: 100%;
-        margin: 10px 0;
+        width: 180px;
+    }
+    .icon {
+        font-size: 18px;
     }
 }
 /* main */

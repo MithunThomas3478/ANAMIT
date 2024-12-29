@@ -1,0 +1,172 @@
+
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>OTP Verification</title> 
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"> 
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>  
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+ 
+    <style> 
+        html, body { 
+            height: 100%; 
+        } 
+        body { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background-color: #f0f2f5; 
+            font-family: Arial, sans-serif; 
+        } 
+        .container { 
+            width: 100%; 
+            padding-right: 15px; 
+            padding-left: 15px; 
+            margin-right: auto; 
+            margin-left: auto; 
+        } 
+        .otp-card { 
+            max-width: 400px; 
+            width: 100%; 
+            padding: 2rem; 
+            border-radius: 1rem; 
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); 
+            background-color: #ffffff; 
+            margin: 0 auto; 
+        } 
+        .otp-input-group { 
+            display: flex; 
+            justify-content: space-between; 
+            gap: 0.5rem; 
+        } 
+        .otp-input { 
+            width: 3rem; 
+            height: 3rem; 
+            text-align: center; 
+            font-size: 1.5rem; 
+            border: 2px solid #ced4da; 
+            border-radius: 0.5rem; 
+        } 
+        .otp-input:focus { 
+            border-color: #0d6efd; 
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); 
+        } 
+        .btn-verify { 
+            background-color: #0d6efd; 
+            border-color: #0d6efd; 
+            padding: 0.75rem 0; 
+            font-size: 1.1rem; 
+        } 
+        .btn-verify:hover { 
+            background-color: #0b5ed7; 
+            border-color: #0a58ca; 
+        } 
+        .resend-link { 
+            color: #0d6efd; 
+            text-decoration: none; 
+        } 
+        .resend-link:hover { 
+            text-decoration: underline; 
+        } 
+        .timer { 
+            font-size: 1.2rem; 
+            font-weight: bold; 
+            color: #dc3545; 
+            margin-top: 1rem; 
+        } 
+        @media (max-width: 575.98px) { 
+            .otp-card { 
+                padding: 1.5rem; 
+            } 
+            .otp-input { 
+                width: 2.5rem; 
+                height: 2.5rem; 
+                font-size: 1.25rem; 
+            } 
+        } 
+        @media (max-width: 320px) { 
+            .otp-input { 
+                width: 2rem; 
+                height: 2rem; 
+                font-size: 1rem; 
+            } 
+            .timer { 
+                font-size: 1rem; 
+            } 
+        } 
+    </style> 
+</head> 
+<body> 
+    <div class="container"> 
+        <div class="row justify-content-center"> 
+            <div class="col-12 col-sm-10 col-md-8 col-lg-6"> 
+                <div class="otp-card"> 
+                    <h2 class="text-center mb-4">OTP Verification</h2> 
+                    <p class="text-center mb-4">Enter the 6-digit code sent to your phone</p> 
+                    <form id="otp-form"> 
+                        <div class="otp-input-group mb-4"> 
+                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,1)" name="otp-text-1"> 
+                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,2)" name="otp-text-2"> 
+                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,3)" name="otp-text-3"> 
+                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,4)" name="otp-text-4"> 
+                            <input type="text" class="form-control otp-input" maxlength="1"oninput="moveToNext(this,5)" name="otp-text-5"> 
+                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,6)"name="otp-text-6"> 
+                        </div> 
+                        <div class="d-grid"> 
+                            <button type="submit" class="btn btn-primary btn-verify"  id="verifyBtn">Verify OTP</button> 
+                        </div> 
+                    </form> 
+                    <div class="text-center mt-3"> 
+                        <p class="mb-2"> 
+                            Didn't receive the code?  
+                            <a href="#" class="resend-link" id="resent-otp">Resend OTP</a> 
+                        </p> 
+                        <p class="timer" id="timer"> OTP Expires in 00:30</p>    
+                    </div> 
+                </div> 
+            </div> 
+        </div> 
+    </div> 
+</body> 
+</html> 
+ 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> 
+ 
+ 
+<script> 
+ 
+    // for moving to next box when entering 
+    function moveToNext(current,index){ 
+        const inputs = document.querySelectorAll('.otp-input'); 
+ 
+        const nextInputs = inputs[index]; 
+ 
+        if(current.value && nextInputs){ 
+            nextInputs.focus(); 
+             
+        } 
+    } 
+ 
+    // setting the timer 
+    let time=30; 
+    const timeElement = document.getElementById('timer'); 
+ 
+    let interval = setInterval(()=>{ 
+        if(time>0){ 
+            time--; 
+            timeElement.textContent = time; 
+            
+        }else { 
+             timeElement.textContent = "OTP Expired" 
+             clearInterval(interval) 
+        } 
+    },1000);
+    startTimer();
+
+</script>
+
+</body>
+</html>

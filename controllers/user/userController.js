@@ -74,14 +74,10 @@ async function sendVerificationEmail(email, otp) {
             return res.render('signUp',{message : 'Password does not match'});
         }
 
-
-
         const findUser = await user.findOne({email})
         if(findUser){
             return res.render('signUp',{message : 'User email already existed'});
         }
-
-
 
         const otp = generateOtp();
         const emailSend = await sendVerificationEmail(email,otp);
@@ -91,16 +87,13 @@ async function sendVerificationEmail(email, otp) {
         }
 
         req.session.userOtp = otp;
-        req.session.userData = {email,password,name,phone}
+        req.session.userData = {name,phone,email,password,name,phone}
 
-        res.render('otp');
-
-        console.log('OTP Sent',otp)
-
-
+        res.render('verify-otp');
+        console.log('OTP Sent',otp);
     } catch (error) {
         console.error('signup error',error);
-        res.redirect('/pageNotFound')
+        res.redirect('/pageNotFound');
     }
 }
 

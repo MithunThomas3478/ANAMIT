@@ -3,57 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANAMIT  -  men's fashion store</title>
+    <title>ANAMIT  -  Men's Fashion Store</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="home.css">
     
 </head>
 <body>
-<!-- Top Notice Bar -->
-<div class="top-bar">
-    Free Shipping Sitewide On Every Order, Don't Miss Out!!
-</div>
-
-<!-- Navbar -->    
-<nav class="navbar navbar-expand-lg">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="#">ANAMIT</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="topwearDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        TOPWEAR
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="topwearDropdown">
-                        <li><a class="dropdown-item" href="#">T-Shirts</a></li>
-                        <li><a class="dropdown-item" href="#">Shirts</a></li>
-                    </ul>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="bottomwearDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        BOTTOMWEAR
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="bottomwearDropdown">
-                        <li><a class="dropdown-item" href="#">Jeans</a></li>
-                        <li><a class="dropdown-item" href="#">Trousers</a></li>
-                    </ul>
-                </li>
-            </ul>
-            <form class="d-flex search-bar" role="search">
-                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-dark" type="submit">Search</button>
-            </form>
-            <div class="icons d-flex align-items-center">
-                <i class="bi bi-person icon" title="Profile"></i>
-                <i class="bi bi-heart icon" title="Wishlist"></i>
-                <i class="bi bi-cart icon" title="Cart">
-                    <span class="icon-badge">1</span>
-                </i>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <!-- Brand Name on Left -->
+            <a class="navbar-brand" href="#">ANAMIT</a>
+    
+            <!-- Links at Center -->
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">TOPWEAR</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">BOTTOMWEAR</a>
+                    </li>
+                </ul>
             </div>
+    
+            <!-- Search and Icons on Right -->
+            <div class="d-flex align-items-center">
+                <input type="text" class="form-control search-bar" placeholder="Search">
+                <span class="icon bi bi-person-circle" title="Profile"></span>
+                <span class="icon bi bi-heart" title="Wishlist"></span>
+                <span class="icon bi bi-cart-fill" title="Cart"><sup></sup></span>
+            </div>
+    
+            <!-- Login/Signup on Far Right -->
+            <a href="/login" class="auth-links">LOG IN</a>
+            <a href="signup" class="auth-links">SIGN UP</a>
         </div>
-    </div>
-</nav>
+    </nav>
+    
