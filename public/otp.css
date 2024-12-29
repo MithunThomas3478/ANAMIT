@@ -1,0 +1,34 @@
+/* General Styles */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Arial', sans-serif;
+  }
+  
+  .card {
+    max-width: 400px;
+    width: 100%;
+    background: #ffffff;
+  }
+  
+  .otp-input {
+    font-size: 1.5rem;
+    text-align: center;
+    border: 2px solid #ced4da;
+    border-radius: 5px;
+  }
+  
+  .otp-input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+  }
+  
+  /* Center content */
+  .container {
+    height: 100vh;
+  }
+  
+  /* Add spacing to input fields */
+  .row.g-3 .col {
+    flex-grow: 0;
+  }
+  
