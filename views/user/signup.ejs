@@ -5,72 +5,151 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ANAMIT - Create Your Account</title>
     <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-    rel="stylesheet"/>
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet" />
     <link rel="stylesheet" href="signup.css">
-    
 </head>
 <body>
-  <div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5">
-            <div class="card shadow-lg">
-                <div class="card-body p-4">
-                    <h2 class="text-center mb-4">Sign Up</h2>
-                    <form id="signupForm" action="/signup" method="POST">
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Full Name</label>
-                            <input type="text" id="name" name="name" class="form-control"  />
-                            <div id="error1" class="error-message"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" id="email" name="email" class="form-control"  />
-                            <div id="error2" class="error-message"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="phone" class="form-label">Phone Number</label>
-                            <input
-                                type="tel"
-                                id="phone"
-                                name="phone"
-                                class="form-control"
-                                pattern="[0-9]{10}"  
-                            />
-                            <div id="error3" class="error-message"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input
-                                type="password"
-                                id="password"
-                                name="password"
-                                class="form-control"   
-                            />
-                            <div id="error4" class="error-message"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="confirmPassword" class="form-label">Confirm Password</label>
-                            <input
-                                type="password"
-                                id="confirmPassword"
-                                name="confirmPassword"
-                                class="form-control" 
-                            />
-                            <div id="error5" class="error-message"></div>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Sign Up</button>
-                        </div>
-                    </form>                   
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card shadow-lg">
+                    <div class="card-body p-4">
+                        <h2 class="text-center mb-4">Sign Up</h2>
+                        <form id="signupForm" action="/signup" method="POST" novalidate>
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Full Name</label>
+                                <input type="text" id="name" name="name" class="form-control" />
+                                <div id="error1" class="error-message text-danger"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="text" id="email" name="email" class="form-control" />
+                                <div id="error2" class="error-message text-danger"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input
+                                    type="text"
+                                    id="phone"
+                                    name="phone"
+                                    class="form-control"
+                                    maxlength="10" />
+                                <div id="error3" class="error-message text-danger"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" id="password" name="password" class="form-control" />
+                                <div id="error4" class="error-message text-danger"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="confirmPassword" class="form-label">Confirm Password</label>
+                                <input
+                                    type="password"
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    class="form-control" />
+                                <div id="error5" class="error-message text-danger"></div>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Sign Up</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+    <script>
+        const nameId = document.getElementById('name');
+        const emailId = document.getElementById('email');
+        const phoneId = document.getElementById('phone');
+        const passwordId = document.getElementById('password');
+        const confirmPasswordId = document.getElementById('confirmPassword');
+        const error1 = document.getElementById('error1');
+        const error2 = document.getElementById('error2');
+        const error3 = document.getElementById('error3');
+        const error4 = document.getElementById('error4');
+        const error5 = document.getElementById('error5');
+        const signupForm = document.getElementById('signupForm');
 
+        function nameValidateChecking() {
+            const nameVal = nameId.value.trim();
+            const namePattern = /^[A-Za-z\s]+$/;
+            if (nameVal === '') {
+                error1.style.display = 'block';
+                error1.innerHTML = 'Please enter a valid name';
+            } else if (!namePattern.test(nameVal)) {
+                error1.style.display = 'block';
+                error1.innerHTML = 'Name can only contain alphabets and spaces';
+            } else {
+                error1.style.display = 'none';
+            }
+        }
+
+        function emailValidateChecking() {
+            const emailVal = emailId.value.trim();
+            const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailPattern.test(emailVal)) {
+                error2.style.display = 'block';
+                error2.innerHTML = 'Invalid email format';
+            } else {
+                error2.style.display = 'none';
+            }
+        }
+
+        function phoneValidateChecking() {
+            const phoneVal = phoneId.value.trim();
+            if (phoneVal === '') {
+                error3.style.display = 'block';
+                error3.innerHTML = 'Please enter a valid phone number';
+            } else if (phoneVal.length !== 10 || !/^\d+$/.test(phoneVal)) {
+                error3.style.display = 'block';
+                error3.innerHTML = 'Phone number must be 10 digits';
+            } else {
+                error3.style.display = 'none';
+            }
+        }
+
+        function passwordValidateChecking() {
+            const passwordVal = passwordId.value;
+            const confirmPasswordVal = confirmPasswordId.value;
+            const passwordPattern = /^[A-Za-z\d]+$/;
+
+            if (passwordVal.length < 8) {
+                error4.style.display = 'block';
+                error4.innerHTML = 'Password must be at least 8 characters long';
+            } else if (!passwordPattern.test(passwordVal)) {
+                error4.style.display = 'block';
+                error4.innerHTML = 'Password must contain only alphabets and numbers';
+            } else {
+                error4.style.display = 'none';
+            }
+
+            if (passwordVal !== confirmPasswordVal) {
+                error5.style.display = 'block';
+                error5.innerHTML = 'Passwords do not match';
+            } else {
+                error5.style.display = 'none';
+            }
+        }
+
+        signupForm.addEventListener('submit', function (e) {
+            nameValidateChecking();
+            emailValidateChecking();
+            phoneValidateChecking();
+            passwordValidateChecking();
+
+            if (
+                error1.innerHTML ||
+                error2.innerHTML ||
+                error3.innerHTML ||
+                error4.innerHTML ||
+                error5.innerHTML
+            ) {
+                e.preventDefault();
+            }
+        });
+    </script>
 </body>
-<script>
-
-</script>
 </html>
