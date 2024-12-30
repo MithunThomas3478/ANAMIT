@@ -144,13 +144,42 @@ const loadVerifyOtp = (req,res)=>{
     res.render('verify-otp')
 }
 
+const resendOtp = async (req, res) => {
+    console.log("Resend OTP called");
+
+    try {
+        if (!req.session.userData) {
+            console.log("Session expired");
+            return res.status(400).json({ success: false, message: "Session expired. Please sign up again." });
+        }
+
+        const newOtp = generateOtp();
+        const emailSend = await sendVerificationEmail(req.session.userData.email, newOtp);
+
+        if (!emailSend) {
+            console.log("Failed to send email");
+            return res.status(500).json({ success: false, message: "Failed to resend OTP." });
+        }
+
+        req.session.userOtp = newOtp;
+        console.log("New OTP sent:", newOtp);
+        res.status(200).json({ success: true, message: "OTP has been resent successfully." });
+    } catch (error) {
+        console.error("Resend OTP Error:", error);
+        res.status(500).json({ success: false, message: "Something went wrong." });
+    }
+};
+
+
+
 module.exports = {
     loadHomepage,
     pageNotFound,
     loadSignUp,
     signUp,
     verifyOtp,
-    loadVerifyOtp
+    loadVerifyOtp,
+    resendOtp
   
 
 }

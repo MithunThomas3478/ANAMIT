@@ -100,7 +100,7 @@
     </style> 
 </head> 
 <body> 
-    <div class="container"> 
+    <!-- <div class="container"> 
         <div class="row justify-content-center"> 
             <div class="col-12 col-sm-10 col-md-8 col-lg-6"> 
                 <div class="otp-card"> 
@@ -119,17 +119,78 @@
                             <button type="submit" class="btn btn-primary btn-verify"  id="verifyBtn">Verify OTP</button> 
                         </div> 
                     </form> 
-                    <div class="text-center mt-3"> 
+                   
+                        <div class="text-center mt-3"> 
+                            <p class="mb-2"> 
+                                Didn't receive the code?  
+                                <a href="#" class="resend-link" id="resent-otp" onclick="resetTimer(60)">Resend OTP</a> 
+                            </p> 
+                            <p class="timer" id="timer"> OTP Expires in 00:30</p>    
+                        </div> 
+                  
+                    
+                </div> 
+            </div> 
+        </div> 
+    </div>  -->
+    <!-- <div class="container"> 
+        <div class="row justify-content-center"> 
+            <div class="col-12 col-sm-10 col-md-8 col-lg-6"> 
+                <div class="otp-card"> 
+                    <h2 class="text-center mb-4">OTP Verification</h2> 
+                    <p class="text-center mb-4">Enter the 6-digit code sent to your phone</p> 
+                    <form id="otp-form"> 
+                       
+                        <div class="d-grid"> 
+                            <button type="submit" class="btn btn-primary btn-verify" id="verifyBtn">Verify OTP</button> 
+                        </div> 
+                    </form> 
+                    <div class="text-center mt-3">  
                         <p class="mb-2"> 
                             Didn't receive the code?  
-                            <a href="#" class="resend-link" id="resent-otp">Resend OTP</a> 
+                            <a href="#" class="resend-link" id="resend-otp" >Resend OTP</a> 
                         </p> 
-                        <p class="timer" id="timer"> OTP Expires in 00:30</p>    
+                        <p class="timer" id="timer">OTP Expires in 00:60</p>
                     </div> 
                 </div> 
             </div> 
         </div> 
-    </div> 
+    </div>
+     -->
+
+     <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+                <div class="otp-card">
+                    <h2 class="text-center mb-4">OTP Verification</h2>
+                    <p class="text-center mb-4">Enter the 6-digit code sent to your phone</p>
+    
+                    <form id="otp-form">
+                        <div class="otp-input-group mb-4 d-flex justify-content-between"> 
+                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,1)" name="otp-text-1" autofocus aria-label="OTP digit 1"> 
+                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,2)" name="otp-text-2" aria-label="OTP digit 2"> 
+                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,3)" name="otp-text-3" aria-label="OTP digit 3"> 
+                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,4)" name="otp-text-4" aria-label="OTP digit 4"> 
+                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,5)" name="otp-text-5" aria-label="OTP digit 5"> 
+                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,6)" name="otp-text-6" aria-label="OTP digit 6"> 
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-verify" id="verifyBtn">Verify OTP</button>
+                        </div>
+                    </form>
+    
+                    <div class="text-center mt-3">
+                        <p class="mb-2">
+                            Didn't receive the code?
+                            <a href="#" id="resend-otp" class="resend-link">Resend OTP</a>
+                        </p>
+                        <p id="timer">OTP Expires in 00:60</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
 </body> 
 </html> 
  
@@ -150,75 +211,276 @@
         } 
     } 
 
-    // otp concat/
+
+    let interval; // Declare interval globally to manage it across events
+const timeElement = document.getElementById('timer'); // Timer display element
+
+function startTimer() {
+    let time = 60; // Timer starts at 60 seconds
+
+    // Clear any existing timer
+    if (interval) {
+        clearInterval(interval);
+    }
+
+    // Start a new timer
+    interval = setInterval(() => {
+        if (time > 0) {
+            time--;
+            timeElement.textContent = `OTP Expires in 00:${time.toString().padStart(2, '0')}`;
+        } else {
+            timeElement.textContent = "OTP Expired"; // Show expiration message
+            clearInterval(interval); // Stop the timer
+        }
+    }, 1000);
+}
+
+function stopTimer() {
+    // Clear the interval and reset the timer display
+    if (interval) {
+        clearInterval(interval);
+        timeElement.textContent = "";
+    }
+}
+
+// Call `startTimer()` when the OTP screen loads for the first time
+startTimer();
 
 
-
-    document.getElementById('otp-form').addEventListener('submit', async (e) => {
+document.getElementById("resend-otp").addEventListener("click", (e) => {
     e.preventDefault();
 
-    let otp = '';
-    const output = document.querySelectorAll('.otp-input');
+    // Send a request to resend the OTP
+    fetch("/resend-otp", { method: "POST" })
+        .then((response) => response.json())
+        .then((result) => {
+            if (result.success) {
+                Swal.fire({
+                    icon: "success",
+                    title: "OTP Resent",
+                    text: "A new OTP has been sent to your phone.",
+                });
 
-    // Combine all OTP input values
-    output.forEach((input) => {
-        otp += input.value;
+                // Clear all OTP input fields
+                document.querySelectorAll(".otp-input").forEach((input) => {
+                    input.value = "";
+                });
+
+                // Restart the timer
+                startTimer();
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Failed to resend OTP. Please try again.",
+                });
+            }
+        })
+        .catch(() => {
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Something went wrong. Please try again later.",
+            });
+        });
+});
+
+
+document.getElementById("otp-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    let otp = "";
+    document.querySelectorAll(".otp-input").forEach((input) => {
+        otp += input.value; // Combine all OTP inputs into one string
     });
 
     try {
-        const response = await fetch('/verify-otp', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ otp: otp }),
+        const response = await fetch("/verify-otp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ otp }),
         });
 
         const result = await response.json();
-        console.log("result is",result);
 
-        if(result.success){
+        if (response.ok) {
             Swal.fire({
-                icon:"success",
-                title:"otp verified successfully",
-                text:"redirecting to login page",
-                timer:1000
+                icon: "success",
+                title: "OTP Verified",
+                text: "Your OTP has been successfully verified.",
             }).then(()=>{
-                window.location.href= result.redirectUrl;
-            })
-        }else{
+              window.location.href= result.redirectUrl;
+          })
+
+            stopTimer(); // Stop the timer on success
+        } else {
             Swal.fire({
-                icon:"error",
-                title:"invalid otp",
-                text:"try again"
+                icon: "error",
+                title: "Invalid OTP",
+                text: result.message || "Please try again.",
             });
         }
     } catch (error) {
         Swal.fire({
-            icon: 'error',
-            title: 'Error!',
-            text: 'Something went wrong. Please try again later.',
+            icon: "error",
+            title: "Error",
+            text: "Something went wrong. Please try again later.",
         });
     }
 });
 
 
+//     let interval; // Declare interval globally to manage it
+// const timeElement = document.getElementById('timer');
+
+// let interval; // Declare interval globally to manage it
+// const timeElement = document.getElementById('timer');
+
+// // Function to start or reset the timer
+// function startTimer() {
+//     let time = 60; // Reset time to 60 seconds
+
+//     // Clear any existing interval
+//     if (interval) {
+//         clearInterval(interval);
+//     }
+
+//     // Start a new timer
+//     interval = setInterval(() => {
+//         if (time > 0) {
+//             time--;
+//             timeElement.textContent = `OTP Expires in 00:${time.toString().padStart(2, '0')}`;
+//         } else {
+//             timeElement.textContent = "OTP Expired";
+//             clearInterval(interval);
+//         }
+//     }, 1000);
+// }
+
+// // Stop the timer when OTP is verified
+// function stopTimer() {
+//     if (interval) {
+//         clearInterval(interval);
+//         timeElement.textContent = ""; // Clear the timer display
+//     }
+// }
+
+// // Start the timer when the page loads
+// startTimer();
+
+//     // otp concat/
+//     document.getElementById('otp-form').addEventListener('submit', async (e) => {
+//     e.preventDefault();
+
+//     let otp = '';
+//     const output = document.querySelectorAll('.otp-input');
+
+//     // Combine all OTP input values
+//     output.forEach((input) => {
+//         otp += input.value;
+//     });
+
+//     try {
+//         const response = await fetch('/verify-otp', {
+//             method: 'POST',
+//             headers: {
+//                 'Content-Type': 'application/json',
+//             },
+//             body: JSON.stringify({ otp: otp }),
+//         });
+
+//         const result = await response.json();
+//         console.log("result is",result);
+
+//         if(result.success){
+//             Swal.fire({
+//                 icon:"success",
+//                 title:"otp verified successfully",
+//                 text:"redirecting to login page",
+//                 timer:1000
+//             }).then(()=>{
+//                 window.location.href= result.redirectUrl;
+//             })
+//         }else{
+//             Swal.fire({
+//                 icon:"error",
+//                 title:"invalid otp",
+//                 text:"try again"
+//             });
+//         }
+//     } catch (error) {
+//         Swal.fire({
+//             icon: 'error',
+//             title: 'Error!',
+//             text: 'Something went wrong. Please try again later.',
+//         });
+//     }
+// });
+
+// // Function to reset the timer
+// function resetTimer() {
+//     const timerElement = document.getElementById("timer");
+//     let timerValue = 60;
+
+//     // Clear any existing timer interval
+//     if (window.timerInterval) {
+//         clearInterval(window.timerInterval);
+//     }
+
+//     // Start a new timer interval
+//     window.timerInterval = setInterval(() => {
+//         if (timerValue > 0) {
+//             timerValue--;
+//             timerElement.textContent = `OTP Expires in 00:${timerValue.toString().padStart(2, '0')}`;
+//         } else {
+//             clearInterval(window.timerInterval);
+//             timerElement.textContent = "OTP has expired.";
+//         }
+//     }, 1000);
+// }
+
+// // Event listener for the Resend OTP button
+// document.getElementById("resend-otp").addEventListener("click", async (e) => {
+//     e.preventDefault();
+
+//     try {
+//         const response = await fetch("/resend-otp", { method: "POST" });
+//         const result = await response.json();
+
+//         if (response.ok) {
+//             Swal.fire({
+//                 icon: "success",
+//                 title: "OTP Resent",
+//                 text: "A new OTP has been sent to your email.",
+//             });
+
+//             // Clear all OTP input fields
+//             document.querySelectorAll(".otp-input").forEach((input) => {
+//                 input.value = "";
+//             });
+
+//             // Reset the timer
+//             resetTimer();
+//         } else {
+//             Swal.fire({
+//                 icon: "error",
+//                 title: "Error",
+//                 text: result.message || "Failed to resend OTP. Please try again.",
+//             });
+//         }
+//     } catch (error) {
+//         Swal.fire({
+//             icon: "error",
+//             title: "Error",
+//             text: "Something went wrong. Please try again later.",
+//         });
+//     }
+// });
+
+
        
-    // setting the timer 
-    let time=30; 
-    const timeElement = document.getElementById('timer'); 
-    
-    let interval = setInterval(()=>{ 
-         if(time>0){ 
-                time--; 
-                timeElement.textContent = time; 
-                
-            }else { 
-                timeElement.textContent = "OTP Expired" 
-                clearInterval(interval) 
-            } 
-    },1000);
-startTimer();
+  
+  
 
 </script>
 

@@ -8,6 +8,7 @@ router.get('/signup',userController.loadSignUp)
 router.post('/signup',userController.signUp)
 router.post('/verify-otp',userController.verifyOtp)
 router.get('/verify-otp',userController.loadVerifyOtp)
+router.post('/resend-otp',userController.resendOtp)
 
   
   module.exports = router; 
