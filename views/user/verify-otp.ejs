@@ -106,7 +106,7 @@
                 <div class="otp-card"> 
                     <h2 class="text-center mb-4">OTP Verification</h2> 
                     <p class="text-center mb-4">Enter the 6-digit code sent to your phone</p> 
-                    <form id="otp-form"> 
+                    <form id="otp-form" > 
                         <div class="otp-input-group mb-4"> 
                             <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,1)" name="otp-text-1"> 
                             <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,2)" name="otp-text-2"> 
@@ -149,22 +149,76 @@
              
         } 
     } 
- 
+
+    // otp concat/
+
+
+
+    document.getElementById('otp-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    let otp = '';
+    const output = document.querySelectorAll('.otp-input');
+
+    // Combine all OTP input values
+    output.forEach((input) => {
+        otp += input.value;
+    });
+
+    try {
+        const response = await fetch('/verify-otp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ otp: otp }),
+        });
+
+        const result = await response.json();
+        console.log("result is",result);
+
+        if(result.success){
+            Swal.fire({
+                icon:"success",
+                title:"otp verified successfully",
+                text:"redirecting to login page",
+                timer:1000
+            }).then(()=>{
+                window.location.href= result.redirectUrl;
+            })
+        }else{
+            Swal.fire({
+                icon:"error",
+                title:"invalid otp",
+                text:"try again"
+            });
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: 'Something went wrong. Please try again later.',
+        });
+    }
+});
+
+
+       
     // setting the timer 
     let time=30; 
     const timeElement = document.getElementById('timer'); 
- 
+    
     let interval = setInterval(()=>{ 
-        if(time>0){ 
-            time--; 
-            timeElement.textContent = time; 
-            
-        }else { 
-             timeElement.textContent = "OTP Expired" 
-             clearInterval(interval) 
-        } 
+         if(time>0){ 
+                time--; 
+                timeElement.textContent = time; 
+                
+            }else { 
+                timeElement.textContent = "OTP Expired" 
+                clearInterval(interval) 
+            } 
     },1000);
-    startTimer();
+startTimer();
 
 </script>
 

@@ -1,6 +1,9 @@
+const { MongoError } = require('mongodb');
 const user = require('../../models/userSchema')
 const nodemailer = require('nodemailer')
 const env = require("dotenv").config()
+const bcrypt = require('bcrypt');
+
 
 const pageNotFound = async (req,res) => {
     try {
@@ -87,9 +90,9 @@ async function sendVerificationEmail(email, otp) {
         }
 
         req.session.userOtp = otp;
-        req.session.userData = {name,phone,email,password,name,phone}
+        req.session.userData = {name,phone,email,password,}
 
-        res.render('verify-otp');
+        res.redirect('/verify-otp');
         console.log('OTP Sent',otp);
     } catch (error) {
         console.error('signup error',error);
@@ -97,10 +100,57 @@ async function sendVerificationEmail(email, otp) {
     }
 }
 
+const verifyOtp = async (req,res) => {
+   try {
+    
+    const {otp} = req.body;
+    console.log('sfkadyu',otp)
+    const sessionOtp = req.session.userOtp;
+    const userData = req.session.userData;
+    console.log('dsvd',sessionOtp)
+    console.log('123456',userData)
+    
+    if(!otp || !sessionOtp || !userData){
+        return res.render('verify-otp',{message: 'Session expired or invalid request. Please try again.'});
+    }
+    
+    if(otp == sessionOtp){
+        const hashedPassword = await bcrypt.hash(userData.password,10);
+
+        const newUser = new user({
+            name : userData.name,
+            phone : userData.phone,
+            email : userData.email,
+            password : hashedPassword,
+        });
+
+        await newUser.save();
+
+        req.session.userOtp = null;
+        req.session.userData = null;
+
+        res.status(200).send({success:true,message:"redirecting to login page",redirectUrl:"/login"})
+    }else{
+      res.status(400).send({success:false,message:"invalid otp"});
+    }
+
+   } catch (error) {
+    console.error('OTP verfication error:',error);
+    res.redirect('/pageNotFound');
+   }
+}
+
+const loadVerifyOtp = (req,res)=>{
+    res.render('verify-otp')
+}
 
 module.exports = {
     loadHomepage,
     pageNotFound,
     loadSignUp,
-    signUp
+    signUp,
+    verifyOtp,
+    loadVerifyOtp
+  
+
 }
