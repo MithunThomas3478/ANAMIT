@@ -30,14 +30,24 @@
             <!-- Search and Icons on Right -->
             <div class="d-flex align-items-center">
                 <input type="text" class="form-control search-bar" placeholder="Search">
-                <span class="icon bi bi-person-circle" title="Profile"></span>
-                <span class="icon bi bi-heart" title="Wishlist"></span>
-                <span class="icon bi bi-cart-fill" title="Cart"><sup></sup></span>
-            </div>
-    
-            <!-- Login/Signup on Far Right -->
-            <a href="/login" class="auth-links">LOG IN</a>
-            <a href="signup" class="auth-links">SIGN UP</a>
+                <% if (locals.user) { %>
+                    <div class="profile-menu">
+                        <span class="icon bi bi-person-circle" title="Profile" onclick="toggleDropdown()" style="font-size: 30px; cursor: pointer;">
+                        </span>
+                        <div class="dropdown-menu" id="dropdown">
+                            <a href="#" class="username"><%= user.name %></a>
+                            <a href="/profile">Profile</a>
+                            <a href="/logout">Logout</a>
+                        </div>
+                    </div><span class="icon bi bi-heart" title="Wishlist"></span>
+                    <span class="icon bi bi-cart-fill" title="Cart"><sup></sup></span>
+                </div>
+                <% } else { %>
+                    <!-- Login/Signup -->
+                    <a href="/login" class="auth-links">LOG IN</a>
+                    <a href="signup" class="auth-links">SIGN UP</a>
+                   
+                <% } %>
         </div>
     </nav>
     

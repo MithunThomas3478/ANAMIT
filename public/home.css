@@ -3,6 +3,8 @@ body {
     margin: 0;
     padding: 0;
 }
+
+  
 .navbar {
     background-color: #868686;
     padding: 10px 20px;
@@ -59,6 +61,50 @@ body {
         font-size: 18px;
     }
 }
+/* Prevent blinking cursor for profile, cart, and wishlist icons */
+.profile-menu .icon, .bi-heart, .bi-cart-fill {
+    outline: none; /* Remove the focus outline */
+    user-select: none; /* Prevent text selection */
+    cursor: pointer; /* Make sure it's clickable */
+  }
+  
+  .profile-menu .icon:focus, .bi-heart:focus, .bi-cart-fill:focus {
+    caret-color: transparent; /* Hide the blinking cursor */
+    outline: none; /* Ensure no outline appears when focused */
+  }
+.profile-menu {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: #fff;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    z-index: 1;
+    min-width: 150px;
+    overflow: hidden;
+  }
+  
+  .dropdown-menu a {
+    display: block;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: #000000;
+  }
+  
+  .dropdown-menu a:hover {
+    background-color: #f0f0f0;
+  }
+  .username {
+    display: block;   /* Make sure the username is displayed */
+    color: #000;      /* Set a color to ensure it's visible */
+}
+
+
 /* main */
 
 .header {

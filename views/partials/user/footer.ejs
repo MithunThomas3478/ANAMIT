@@ -50,4 +50,28 @@
 <!-- Bootstrap Icons -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 </body>
+
+<script>
+function toggleDropdown() {
+  const dropdown = document.getElementById("dropdown");
+  dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+}
+
+// Close dropdown when clicking outside
+document.addEventListener("click", (event) => {
+  const dropdown = document.getElementById("dropdown");
+  if (!event.target.closest(".profile-menu")) {
+    dropdown.style.display = "none";
+  }
+});
+
+document.querySelectorAll('.profile-menu .icon, .bi-heart, .bi-cart-fill').forEach(icon => {
+  icon.addEventListener('focus', (event) => {
+    event.target.blur(); // Removes focus from the icon and stops the cursor from blinking
+  });
+});
+
+
+</script>
+
 </html>
