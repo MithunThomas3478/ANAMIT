@@ -170,6 +170,9 @@ const resendOtp = async (req, res) => {
     }
 };
 
+const loadLoginPage = (req,res)=>{
+    res.render('login')
+}
 
 
 module.exports = {
@@ -179,7 +182,8 @@ module.exports = {
     signUp,
     verifyOtp,
     loadVerifyOtp,
-    resendOtp
+    resendOtp,
+    loadLoginPage
   
 
 }

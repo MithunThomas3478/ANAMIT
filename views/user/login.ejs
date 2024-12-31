@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Luxe Tickers</title>
+  <title>ANAMIT - Login</title>
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <style>
@@ -12,6 +12,7 @@
       padding: 0;
       font-family: Arial, sans-serif;
       height: 100%;
+      text-decoration: none;
     }
     .container {
       display: flex;
@@ -78,6 +79,7 @@
       border-radius: 4px;
       cursor: pointer;
       font-size: 1rem;
+      
     }
     .btn:hover {
       background-color: #357ABD;
@@ -90,6 +92,9 @@
     }
     .btn-outline:hover {
       background-color: #f5f5f5;
+    }
+    .btn a{
+      text-decoration: none;
     }
     .links {
       display: flex;
@@ -142,7 +147,7 @@
           </form>
           <button class="btn btn-outline">
             <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" width="20" height="20" style="vertical-align: middle; margin-right: 8px;">
-            <a href="{% url 'social:begin' 'google-oauth2' %}">Sign up with Google</a>
+            <a href="/auth/google">Sign up with Google</a>
           </button>
         </div>
         <div class="links">

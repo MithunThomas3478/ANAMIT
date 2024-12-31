@@ -9,9 +9,19 @@ const UserSchema = new Schema({
   },
   phone: {
     type: String,
-    required: true,
+    required: false,
     unique: true,
-    trim: true
+    trim: true,
+    sparse: true,
+    default: null
+  },
+  googleId: {
+    type:String,
+    unique: true
+  },
+  password: {
+     type: String,
+     required : false
   },
   email: {
     type: String,
@@ -19,12 +29,8 @@ const UserSchema = new Schema({
     unique: true,
     trim: true,
     lowercase: true
-  },
-  password: {
-    type: String,
-    required: true,
-    minlength: 8
   }
+ 
 });
 
 
