@@ -33,6 +33,10 @@ const UserSchema = new Schema({
   isAdmin :{
     type :Boolean,
     default : false
+  },
+  isBlock : {
+    type : Boolean,
+    default : false
   }
  
 });
