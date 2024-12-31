@@ -29,6 +29,10 @@ const UserSchema = new Schema({
     unique: true,
     trim: true,
     lowercase: true
+  },
+  isAdmin :{
+    type :Boolean,
+    default : false
   }
  
 });

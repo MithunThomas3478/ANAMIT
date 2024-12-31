@@ -1,4 +1,4 @@
-const { MongoError } = require('mongodb');
+
 const user = require('../../models/userSchema')
 const nodemailer = require('nodemailer')
 const env = require("dotenv").config()
@@ -170,10 +170,88 @@ const resendOtp = async (req, res) => {
     }
 };
 
-const loadLoginPage = (req,res)=>{
-    res.render('login')
+const loadLoginPage = async (req,res)=>{
+    try {
+        if(!req.session.user){
+            return res.render('login');
+        }else{
+            res.redirect('/');
+        }
+       
+    } catch (error) {
+        res.redirect('/pageNotFound')
+    }
 }
 
+const login = async (req, res) => {
+    try {
+        
+        
+        const { email, password } = req.body;
+        console.log(email,password);
+        const findUser = await user.findOne({isAdmin:false,email:email});
+
+        console.log("hey ",findUser);
+        
+        if (!findUser) {
+            return res.render('login', { message: 'User not found' });
+        }
+
+        if (findUser.isBlocked) {
+            return res.render('login', { message: 'User is blocked by admin' });
+        }
+
+        const passwordMatch =  await bcrypt.compare(password, findUser.password);
+        
+        console.log("pass",passwordMatch);
+        
+
+        if (!passwordMatch) {
+            return res.render('login', { message: 'Incorrect password' });
+        }
+
+        // Save user data in session
+        req.session.user = findUser._id
+        console.log(req.session.user)
+
+        // Redirect to home page
+        return res.redirect('/');
+    } catch (error) {
+        console.error('Login error:', error);
+        return res.render('login', { message: 'Please try again' });
+    }
+};
+
+
+// const login = async (req,res) => {
+    
+//     try {
+//         const {email,password} = req.body;
+//         const findUser = await user.findOne({isAdmin : 0,email:email});
+
+//         if(!findUser){
+//             return res.render('login',{message : 'User not found'});
+//         }
+
+//         if(findUser.isBlocked){
+//             return res.render('login',{message: 'User is blocked by admin'});
+//         }
+
+//         const passwordMatch = await bcrypt.compare(password, findUser.password);
+
+//         if(!passwordMatch){
+//             return res.render('login',{message: 'Incorrect password'});
+//         }
+
+//         req.session.user
+//         res.redirect('/');
+
+//     } catch (error) {
+//         console.error('login error');
+//         res.render('login',{message : "Please try again"})
+        
+//     }
+// }
 
 module.exports = {
     loadHomepage,
@@ -183,7 +261,8 @@ module.exports = {
     verifyOtp,
     loadVerifyOtp,
     resendOtp,
-    loadLoginPage
+    loadLoginPage,
+    login
   
 
 }
