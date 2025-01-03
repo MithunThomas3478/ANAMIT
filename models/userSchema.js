@@ -1,47 +1,40 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
-const UserSchema = new Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  phone: {
-    type: String,
-    required: false,
-    unique: true,
-    trim: true,
-    sparse: true,
-    default: null
-  },
-  googleId: {
-    type:String,
-    unique: true
-  },
-  password: {
-     type: String,
-     required : false
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    lowercase: true
-  },
-  isAdmin :{
-    type :Boolean,
-    default : false
-  },
-  isBlock : {
-    type : Boolean,
-    default : false
-  }
- 
+
+const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema({
+    name: {
+      type: String,
+      required: true
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true
+    },
+    phone: {
+      type: String
+    },
+    password: {
+      type: String
+    },
+    authProvider: {
+      type: String,
+      enum: ['local', 'google'],
+      required: true,
+      default: 'local'
+    },
+    isBlocked: {
+      type: Boolean,
+      required: true,
+      default: false
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    },
 });
 
+module.exports = mongoose.model('User', userSchema);
 
-const user =  mongoose.model('User', UserSchema);
 
-module.exports = user

@@ -1,63 +1,84 @@
-const Admin = require('../../models/userSchema');
+const User = require('../../models/userSchema');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
 
-const loadLogin = async (req,res) => {
-    if(req.session.admin){
-        return res.redirect('dashboard')
-    }
-    res.render('adminlogin',{message : null})
+const pageerror = async (req,res) => {
+
+    res.render('page_404')
+    
 }
 
-
+const loadLogin = async (req, res) => {
+    console.log('Admin login page loaded');
+    if (req.session.admin) {
+        console.log('Admin already logged in. Redirecting to dashboard...');
+        return res.redirect('/admin/dashboard');
+    }
+    res.render('logins', { message: null });
+};
 
 const adminLogin = async (req, res) => {
-    const { email, password } = req.body;
-    console.log('email: ', email);
-    console.log('pass',password)
-
-    // Basic email format validation
-    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-    if (!emailRegex.test(email)) {
-        return res.render('adminlogin', { message: 'Invalid email format' });
-    }
-
     try {
-        // Find admin by email
-        const findAdmin = await Admin.findOne({ email });
+        console.log('Received POST request:', req.body); // Log form data
+        const { email, password } = req.body;
 
-        if (!findAdmin) {
-            return res.render('adminlogin', { message: 'Invalid email or password' });
+        const admin = await User.findOne({ email, isAdmin: true });
+        if (admin) {
+            const passwordMatch = await bcrypt.compare(password, admin.password); // Use await!
+            if (passwordMatch) {
+                req.session.admin = true;
+                return res.redirect('/admin/dashboard');
+            } else {
+                return res.redirect('/admin/login?error=Invalid Password');
+            }
+        } else {
+            return res.redirect('/admin/login?error=Admin Not Found');
         }
-
-        // Check if the account is blocked
-        if (findAdmin.isBlock) {
-            return res.render('adminlogin', { message: 'This account is blocked. Please contact support' });
-        }
-
-        // Use bcrypt to compare the entered password with the stored hashed password
-        const isMatch = await bcrypt.compare(password, findAdmin.password);
-        if (!isMatch) {
-            return res.render('adminlogin', { message: 'Invalid email or password' });
-        }
-
-        // Redirect to the dashboard (make sure session is handled)
-        res.redirect('/dashboard');
     } catch (error) {
         console.error('Admin login error:', error.message);
-        res.status(500).render('adminlogin', { message: 'Internal server error. Please try again later.' });
+        return res.redirect('/admin/page_404');
     }
 };
 
+
+
 const loadDashboard = async (req, res) => {
-    // Render the dashboard view (ensure proper authorization for the user)
-    res.render('dashboard');
+    if (req.session.admin) {
+        try {
+            console.log('Rendering dashboard...');
+            res.render('dashboard');
+        } catch (error) {
+            console.error('Error rendering dashboard:', error.message);
+            res.redirect('/admin/page_404');
+        }
+    } else {
+        console.log('Admin not logged in. Redirecting to login...');
+        res.redirect('/admin/login');
+    }
 };
+
+const logout = async (req,res) => {
+    try {
+        req.session.destroy(err=>{
+           if(err){
+            console.log('Error destroy session',err);
+            return res.render('pageerror');
+           } 
+           res.redirect('/admin/login');
+        })
+    } catch (error) {
+        console.log('unexpected error');
+        return res.redirect('/admin/login');
+    }
+}
 
 
 module.exports = {
     loadLogin,
     adminLogin,
-    loadDashboard
+    loadDashboard,
+    pageerror,
+    logout
 }
+

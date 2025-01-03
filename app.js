@@ -16,15 +16,26 @@ db();
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 
+// app.use(session({
+//   secret : process.env.SESSION_SECRET,
+//   resave : false,
+//   saveUninitialized : true,
+//   cookie : {
+//     secure : false,
+//     httpOnly : true,
+//     maxAge : 72*60*60*1000  }
+//   }));
+
 app.use(session({
-  secret : process.env.SESSION_SECRET,
-  resave : false,
-  saveUninitialized : true,
-  cookie : {
-    secure : false,
-    httpOnly : true,
-    maxAge : 72*60*60*1000  }
-  }));
+  secret: 'yourSecretKey',
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+      secure: false, // Set to true if you're using https
+      httpOnly: true,
+      maxAge: 60 * 60 * 1000 // 1 hour in milliseconds
+    }
+}));
 
 
   // Initialize Passport
@@ -34,6 +45,10 @@ app.use(passport.session());
 
 app.use((req,res,next)=>{
   res.set('cache-control','no-store')
+  next();
+});
+app.use((req, res, next) => {
+  res.locals.user = req.session.user || null;
   next();
 });
 

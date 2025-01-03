@@ -1,5 +1,5 @@
 
-const user = require('../../models/userSchema')
+const User = require('../../models/userSchema')
 const nodemailer = require('nodemailer')
 const env = require("dotenv").config()
 const bcrypt = require('bcrypt');
@@ -22,8 +22,11 @@ const loadHomepage = async (req, res) => {
         // If you need to fetch user data from the database, you can use the ID
         const user = req.session.user;
         console.log(req.session.user)
-        const userData = user._id ? await user.findOne({ _id: user._id }) : user;
-        res.render('home', { user: userData ,user}); // Render home page with user data
+        // const userData = user._id ? await user.findOne({ _id: user._id }) : user;
+        const userData = await User.findOne({ _id: user }) ;
+        
+        // res.render('home', { user: userData ,user}); // Render home page with user data
+        res.render('home', { user: userData }); // Render home page with user data
       } else {
         // If user is not logged in (session user does not exist)
         res.render('home'); // Render home page without user data
@@ -81,6 +84,7 @@ async function sendVerificationEmail(email, otp) {
       return false; // Return false if email sending fails
     }
   }
+  
   const signUp = async (req,res) => {
     
     try {
@@ -90,7 +94,7 @@ async function sendVerificationEmail(email, otp) {
             return res.render('signUp',{message : 'Password does not match'});
         }
 
-        const findUser = await user.findOne({email})
+        const findUser = await User.findOne({email})
         if(findUser){
             return res.render('signUp',{message : 'User email already existed'});
         }
@@ -130,11 +134,12 @@ const verifyOtp = async (req,res) => {
     if(otp == sessionOtp){
         const hashedPassword = await bcrypt.hash(userData.password,10);
 
-        const newUser = new user({
+        const newUser = new User({
             name : userData.name,
             phone : userData.phone,
             email : userData.email,
             password : hashedPassword,
+            createdAt : Date.now()
         });
 
         await newUser.save();
@@ -196,16 +201,16 @@ const loadLoginPage = async (req,res)=>{
     }
 }
 
+
+
 const login = async (req, res) => {
     try {
-        
-        
         const { email, password } = req.body;
-        console.log(email,password);
-        const findUser = await user.findOne({isAdmin:false,email:email});
-
-        console.log("hey ",findUser);
+        console.log(email, password);
         
+        // Find the user by email, whether Google or local login
+        const findUser = await User.findOne({ email });
+
         if (!findUser) {
             return res.render('login', { message: 'User not found' });
         }
@@ -214,18 +219,18 @@ const login = async (req, res) => {
             return res.render('login', { message: 'User is blocked by admin' });
         }
 
-        const passwordMatch =  await bcrypt.compare(password, findUser.password);
-        
-        console.log("pass",passwordMatch);
-        
+        // If authProvider is local, verify password
+        if (findUser.authProvider === 'local') {
+            const passwordMatch = await bcrypt.compare(password, findUser.password);
 
-        if (!passwordMatch) {
-            return res.render('login', { message: 'Incorrect password' });
+            if (!passwordMatch) {
+                return res.render('login', { message: 'Incorrect password' });
+            }
         }
 
-        // Save user data in session
-        req.session.user = findUser._id
-        console.log(req.session.user)
+        // Save user data in session for both Google and local users
+        req.session.user = findUser._id;
+        console.log(req.session.user);
 
         // Redirect to home page
         return res.redirect('/');

@@ -1,162 +1,250 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ANAMIT - Login</title>
-  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-  <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      height: 100%;
-      text-decoration: none;
-    }
-    .container {
-      display: flex;
-      height: 100%;
-    }
-    .left {
-      flex: 1;
-      background-color: #f0f0f0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .left img {
-      width: 100%;
-      height: auto;
-      object-fit: cover;
-      max-width: 600px;
-      max-height: 600px;
-    }
-    .right {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: #ffffff;
-    }
-    .card {
-      width: 100%;
-      max-width: 400px;
-      padding: 2rem;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      border-radius: 8px;
-    }
-    .card-header {
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
-    .card-header h1 {
-      color: #333;
-      font-size: 1.5rem;
-      margin: 0;
-    }
-    .form-group {
-      margin-bottom: 1rem;
-    }
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      color: #666;
-    }
-    input[type="email"], input[type="password"] {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 1rem;
-    }
-    .btn {
-      width: 100%;
-      padding: 0.75rem;
-      background-color: #4A90E2;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 1rem;
-      
-    }
-    .btn:hover {
-      background-color: #357ABD;
-    }
-    .btn-outline {
-      margin-top: 1rem;
-      background-color: #fff;
-      color: #757575;
-      border: 1px solid #ddd;
-    }
-    .btn-outline:hover {
-      background-color: #f5f5f5;
-    }
-    .btn a{
-      text-decoration: none;
-    }
-    .links {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 1rem;
-    }
-    .links a {
-      color: #4A90E2;
-      text-decoration: none;
-    }
-    .links a:hover {
-      text-decoration: underline;
-    }
-    @media (max-width: 768px) {
-      .container {
-        flex-direction: column;
-      }
-      .left {
-        display: none;
-      }
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ANAMIT - Login</title>
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+    
+    <!-- Internal CSS -->
+    <style>
+        /* Base Styles */
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            height: 100%;
+            text-decoration: none;
+            overflow-x: hidden;
+        }
+
+        /* Layout Styles */
+        .container {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+            padding: 0;
+            margin: 0;
+            max-width: none;
+        }
+
+        /* Image Section Styles */
+        .left {
+            width: 50%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .left::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/images/istockphoto-1132649230-612x612.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* Form Section Styles */
+        .right {
+            width: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #ffffff;
+            padding: 2rem;
+        }
+
+        /* Card Styles */
+        .card {
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin: auto;
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header h1 {
+            color: #333;
+            font-size: 1.5rem;
+            margin: 0;
+        }
+
+        /* Form Element Styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #666;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        /* Button Styles */
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #ff9000;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #fe5000;
+        }
+
+        .btn-outline {
+            margin-top: 1rem;
+            background-color: #fff;
+            color: #ff9000;
+            border: 1px solid #ddd;
+        }
+
+        .btn-outline:hover {
+            background-color: #f5f5f5;
+        }
+
+        .btn a {
+            text-decoration: none;
+        }
+
+        /* Link Styles */
+        .links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+
+        .links a {
+            color: #0059fe;
+            text-decoration: none;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+
+        /* Alert Styles */
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .left {
+                display: none;
+            }
+            .right {
+                width: 100%;
+                padding: 1rem;
+            }
+            .card {
+                margin: 0 auto;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Left Section -->
-    <div class="left">
-      <img src="https://idestiny.in/wp-content/uploads/2024/10/Apple_Watch_Ultra_2_49mm_Black_Titanium_Milanese_Loop_Black_PDP_Image_Position_8__en-IN-600x600.jpg" alt="Luxury Watch">
+    <div class="container">
+        <!-- Image Section -->
+        <div class="left"></div>
+
+        <!-- Form Section -->
+        <div class="right">
+            <div class="card">
+                <div class="card-header">
+                    <h1>ANAMIT - Login your Account</h1>
+                </div>
+                
+                <div class="card-content">
+                    <!-- Error Message Section -->
+                    <% if (locals.message) { %>
+                    <div id="errorMessage" class="alert alert-danger" role="alert">
+                        <%= locals.message %>
+                    </div>
+                    <% } %>
+
+                    <!-- Login Form -->
+                    <form id="loginform" method="POST" action="/login">
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" 
+                                   placeholder="Enter your email" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" 
+                                   placeholder="Enter your password" required />
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn">Log In</button>
+                        </div>
+                    </form>
+
+                    <!-- Google Sign-up Button -->
+                    <button class="btn btn-outline">
+                        <img src="https://developers.google.com/identity/images/g-logo.png"
+                             alt="Google logo" width="20" height="20"
+                             style="vertical-align: middle; margin-right: 8px" />
+                        <a href="/auth/google">Sign up with Google</a>
+                    </button>
+                </div>
+
+                <!-- Additional Links -->
+                <div class="links">
+                    <a href="/forgot-password">Forgot password?</a>
+                    <a href="/signup">Sign up</a>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Right Section -->
-    <div class="right">
-      <div class="card">
-        <div class="card-header">
-          <h1>ANAMIT - Login your Account</h1>
-        </div>
-        <div class="card-content">
-          <form id="loginform" method="POST" action="/login">
-           
-            <div class="form-group">
-              <label for="email">Email</label>
-              <input type="email" id="email" name="email" placeholder="Enter your email" required>
-            </div>
-            <div class="form-group">
-              <label for="password">Password</label>
-              <input type="password" id="password" name="password" placeholder="Enter your password" required>
-            </div>
-       
-            <button type="submit" class="btn">Log In</button>
-          </form>
-          <button class="btn btn-outline">
-            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" width="20" height="20" style="vertical-align: middle; margin-right: 8px;">
-            <a href="/auth/google">Sign up with Google</a>
-          </button>
-        </div>
-        <div class="links">
-          <a href="/forgot-password">Forgot password?</a>
-          <a href="/signup">Sign up</a>
-        </div>
-      </div>
-    </div>
-  </div>
-   
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script>
+        window.onload = function() {
+            const errorMessage = document.getElementById("errorMessage");
+            if (errorMessage) {
+                setTimeout(function() {
+                    errorMessage.style.display = "none";
+                }, 3000);
+            }
+        };
+    </script>
 </body>
 </html>

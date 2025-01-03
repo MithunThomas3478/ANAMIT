@@ -1,21 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
-</head>
-<body>
-    <h1>Welcome to the Admin Dashboard</h1>
-    <p>Total Users: <%= totalUsers %></p>
+<%-include("../../views/partials/admin/header")%>
 
-    <h2>Recent Admins</h2>
-    <ul>
-        <% recentAdmins.forEach(admin => { %>
-            <li><%= admin.email %> - <%= admin.createdAt.toLocaleString() %></li>
-        <% }) %>
-    </ul>
+<section class="content-main">
+    <div class="content-header">
+        <div>
+            <h2 class="content-title card-title">Dashboard </h2>
+        </div>
+       
+    </div>
+</section>
+<%- include("../../views/partials/admin/footer") %>
 
-    <a href="/logout">Logout</a>
-</body>
-</html>
+

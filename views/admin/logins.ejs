@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/style.css" />
+    <style>
+        /* Base Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            height: 100%;
+            font-family: 'Nunito Sans', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Layout Styles */
+        .main-container {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Image Section */
+        .image-section {
+            width: 50%;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1d3557, #457b9d);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-section::after {
+            content: 'Admin Portal';
+            position: absolute;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        /* Form Section */
+        .form-section {
+            width: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            padding: 2rem;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-container h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #343a40;
+            font-weight: 700;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .form-control {
+            padding: 0.8rem;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 0.8rem;
+            font-size: 1rem;
+            background-color: #FE5000;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-primary:hover {
+            background-color: #FF9000;
+        }
+
+        .alert {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        .error-message {
+            color: #e63946;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .image-section {
+                display: none;
+            }
+            
+            .form-section {
+                width: 100%;
+                padding: 1rem;
+                min-height: 100vh;
+            }
+            
+            .login-container {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+         <!-- Image Section -->
+        <div class="image-section"></div>
+
+        <!-- Form Section -->
+         <div class="form-section">
+            <div class="login-container">
+                <h2>Admin Login</h2>
+                
+                <% if (message) { %>
+                <div class="alert alert-danger"><%= message %></div>
+                <% } %>
+                
+                <form id="adminLoginForm" method="POST" action="/admin/login">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="text" id="email" name="email" 
+                               class="form-control" placeholder="Enter your email" required />
+                        <div id="emailError" class="error-message"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="text" id="password" name="password" 
+                               class="form-control" placeholder="Enter your password" required />
+                        <div id="passwordError" class="error-message"></div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Log In</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    Scripts
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const adminLoginForm = document.getElementById("adminLoginForm");
+            const emailField = document.getElementById("email");
+            const passwordField = document.getElementById("password");
+            const emailError = document.getElementById("emailError");
+            const passwordError = document.getElementById("passwordError");
+
+            adminLoginForm.addEventListener("submit", function (event) {
+                let isValid = true;
+
+                const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+                if (!emailPattern.test(emailField.value)) {
+                    emailError.textContent = "Invalid email format";
+                    isValid = false;
+                } else {
+                    emailError.textContent = "";
+                }
+
+                if (passwordField.value.length < 8) {
+                    passwordError.textContent = "Password must be at least 8 characters";
+                    isValid = false;
+                } else {
+                    passwordError.textContent = "";
+                }
+
+                if (!isValid) {
+                    event.preventDefault();
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

@@ -1,7 +1,8 @@
 const express = require('express')
 const router = express.Router();
 const userController = require('../controllers/user/userController');
-const passport = require('passport');
+const {userAuth} = require('../middlewares/auth');
+const passport = require('passport')
 
 router.get('/pageNotFound',userController.pageNotFound);
 router.get('/', userController.loadHomepage); 
@@ -14,9 +15,14 @@ router.get('/login',userController.loadLoginPage);
 router.post('/login',userController.login)
 router.get('/logout',userController.logout)
 
-router.get('/auth/google',passport.authenticate('google',{scope:['profile','email']}));
-router.get('/auth/google/callback',passport.authenticate('google',{failureRedirect:'/login'}),(req,res)=>{
-  res.redirect('/')
-}); 
+// Google login
+router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/auth/google/callback', passport.authenticate('google', {
+  failureRedirect: '/login',
+}), (req, res) => {
+  req.session.user = req.user; // Store the authenticated user in session
+  res.redirect('/'); // Redirect to the homepage or desired route
+});
+
   
   module.exports = router; 

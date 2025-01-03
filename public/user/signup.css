@@ -1,6 +1,10 @@
 body {
     background-color: #f8f9fa;
     font-family: 'Roboto', sans-serif;
+    display: flex;
+    align-items: center;
+    height: 100vh;
+
 }
 
 .card {
@@ -20,8 +24,8 @@ h2 {
 }
 
 .form-control:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    border-color: #FE5000;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
 .btn-primary {
@@ -45,3 +49,16 @@ hr {
     font-size: 0.75rem;
     display: none;
 }
+.btn-signup {
+    background-color: #ff9000;
+    color: white; /* Adjust this to your preferred text color */
+    border: none; /* Remove border if desired */
+    padding: 10px 20px; /* Adjust padding as needed */
+    font-size: 16px; /* Adjust font size as needed */
+    cursor: pointer; /* Change cursor to pointer on hover */
+  }
+  
+  .btn-signup:hover {
+    background-color: #e07e00; /* Slightly darker shade for hover effect */
+  }
+  
