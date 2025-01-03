@@ -57,7 +57,18 @@ const adminAuth = (req,res,next)=>{
     })
 }
 
+const adminAuthMiddleware = (req, res, next) => {
+  if (!req.session.admin) {
+    
+    return res.redirect('/admin/login?error=Please log in to access the admin panel');
+  }
+  console.log("admin session exists");
+  next();   
+};
+
+
 module.exports = {
     userAuth,
-    adminAuth
+    adminAuth,
+    adminAuthMiddleware
 }

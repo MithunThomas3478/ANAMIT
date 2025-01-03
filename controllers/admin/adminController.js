@@ -27,7 +27,7 @@ const adminLogin = async (req, res) => {
         if (admin) {
             const passwordMatch = await bcrypt.compare(password, admin.password); // Use await!
             if (passwordMatch) {
-                req.session.admin = true;
+                req.session.admin = admin._id;
                 return res.redirect('/admin/dashboard');
             } else {
                 return res.redirect('/admin/login?error=Invalid Password');
@@ -40,6 +40,7 @@ const adminLogin = async (req, res) => {
         return res.redirect('/admin/page_404');
     }
 };
+
 
 
 
@@ -59,6 +60,8 @@ const loadDashboard = async (req, res) => {
 };
 
 const logout = async (req,res) => {
+    console.log('Logging out admin...')
+  
     try {
         req.session.destroy(err=>{
            if(err){
