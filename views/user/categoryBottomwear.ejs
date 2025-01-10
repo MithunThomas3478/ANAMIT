@@ -5,32 +5,248 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ANAMIT - Bottomwear</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/user/categoryWear.css">
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2874f0;
+            --secondary-color: #ff9f00;
+            --text-color: #212121;
+            --light-gray: #f1f3f6;
+        }
 
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--light-gray);
+        }
+
+        .height-75vh {
+            min-height: 75vh;
+        }
+
+        .custom-breadcrumb {
+            padding: 15px 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .custom-breadcrumb a {
+            color: var(--text-color);
+            text-decoration: none;
+        }
+
+        .custom-breadcrumb a:hover {
+            color: var(--primary-color);
+        }
+
+        .filters-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 100px;
+            margin-left: 0;
+            width: 100%;
+            max-width: 280px;
+        }
+
+        .col-12.col-lg-3.p-0 {
+            padding-left: 0 !important;
+            margin-left: 0;
+        }
+
+        .filters-header {
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .filter-section {
+            margin-bottom: 25px;
+        }
+
+        .filter-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .filter-option {
+            margin-bottom: 12px;
+        }
+
+        .price-inputs {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .price-input {
+            width: 45%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .price-slider {
+            width: 100%;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .product-image-container {
+            position: relative;
+            padding-top: 133%;
+            overflow: hidden;
+        }
+
+        .product-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-image {
+            transform: scale(1.05);
+        }
+
+        .wishlist-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .wishlist-button:hover {
+            transform: scale(1.1);
+        }
+
+        .product-details {
+            padding: 15px;
+        }
+
+        .product-brand {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 5px;
+        }
+
+        .product-name {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            height: 40px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .price-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .current-price {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--text-color);
+        }
+
+        .original-price {
+            text-decoration: line-through;
+            color: #888;
+            font-size: 14px;
+        }
+
+        .discount {
+            color: #388e3c;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .out-of-stock {
+            color: #ff6b6b;
+            font-weight: 500;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 991px) {
+            .filters-container {
+                position: relative;
+                top: 0;
+                max-width: 100%;
+                margin-bottom: 20px;
+            }
+
+            .product-container {
+                margin-top: 20px;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .col-6 {
+                padding: 5px;
+            }
+
+            .product-details {
+                padding: 10px;
+            }
+
+            .product-name {
+                font-size: 13px;
+                height: 36px;
+            }
+        }
+    </style>
 </head>
 <body>
-    
-
     <%- include('../partials/user/header') %>
-    <main class="height-75vh"> 
-
+    
+    <main class="height-75vh">
         <div class="container" style="padding-top: 100px;">
             <div class="custom-breadcrumb">
                 <a href="/">Home</a> > <a href="/clothing">Clothing</a> > Men's Bottomwear
             </div>
-    
+
             <div class="row">
                 <!-- Filters Column -->
                 <div class="col-12 col-lg-3">
-                    <div class="filters-container" style="position: absolute; left: 0; top: 50;">
+                    <div class="filters-container">
                         <div class="filters-header d-flex justify-content-between align-items-center">
                             <span>Filters</span>
-                            <a href="/category/mens-bottomwear" class="clear-all">CLEAR ALL</a>
+                            <a href="/category/mens-botttomwear" class="clear-all">CLEAR ALL</a>
                         </div>
-    
-                        
-    
+
+                        <form id="filterForm" action="/category/mens-botttomwear" method="GET">
                             <!-- Brand Filter -->
                             <div class="filter-section">
                                 <div class="filter-title">BRAND</div>
@@ -50,14 +266,15 @@
                                     </div>
                                 <% }); %>
                             </div>
-    
+
                             <!-- Price Filter -->
                             <div class="filter-section">
                                 <div class="filter-title">PRICE</div>
                                 <input type="range" class="price-slider" 
                                        min="<%= filters.priceRange.min %>" 
                                        max="<%= filters.priceRange.max %>" 
-                                       step="100">
+                                       step="100"
+                                       value="<%= filters.priceRange.selected.max %>">
                                 <div class="price-inputs">
                                     <input type="number" class="price-input" name="minPrice" 
                                            placeholder="Min" value="<%= filters.priceRange.selected.min %>">
@@ -68,6 +285,8 @@
                         </form>
                     </div>
                 </div>
+
+                <!-- Products Grid -->
                 <div class="col-12 col-lg-9">
                     <div class="product-container">
                         <div class="row">
@@ -79,11 +298,8 @@
                                                 <img src="<%= product.image %>" 
                                                      class="product-image" 
                                                      alt="<%= product.name %>">
-                                                <button class="wishlist-button" onclick="event.preventDefault();">
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" 
-                                                         stroke="currentColor" stroke-width="2">
-                                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                                                    </svg>
+                                                <button class="wishlist-button" onclick="toggleWishlist(event, '<%= product.id %>')">
+                                                    <i class="far fa-heart"></i>
                                                 </button>
                                             </div>
                                             <div class="product-details">
@@ -109,9 +325,12 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
     </main>
-   
+
     <%- include('../partials/user/footer') %>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Handle filter form submission
@@ -129,8 +348,52 @@
         priceSlider.addEventListener('input', (e) => {
             const value = e.target.value;
             maxPriceInput.value = value;
+            document.getElementById('filterForm').submit();
+        });
+
+        // Wishlist functionality
+        function toggleWishlist(event, productId) {
+            event.preventDefault();
+            const button = event.currentTarget;
+            const icon = button.querySelector('i');
+            
+            // Toggle heart icon
+            if (icon.classList.contains('far')) {
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+                icon.style.color = '#ff4d4d';
+            } else {
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+                icon.style.color = 'inherit';
+            }
+
+            // Here you can add AJAX call to update wishlist in backend
+            // fetch('/api/wishlist/toggle', {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //     },
+            //     body: JSON.stringify({ productId })
+            // });
+        }
+
+        // Add smooth scroll behavior
+        document.addEventListener('DOMContentLoaded', () => {
+            const links = document.querySelectorAll('a[href^="#"]');
+            links.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
         });
     </script>
-     
 </body>
 </html>

@@ -8,7 +8,7 @@ const upload = multer();
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const router = express.Router();
-const { userAuh, adminAuth, adminAuthMiddleware } = require("../middlewares/auth");
+const { adminAuthMiddleware } = require("../middlewares/auth");
 
 
 
@@ -60,7 +60,7 @@ router.put('/category/update/:id',categoryController.updateCategory);
 router.patch('/category/:id/toggle-status', categoryController.toggleStatus);
 router.delete('/category/:id/delete',categoryController.deleteCategory);
 
-
+router.delete('/product/delete/:id', productController.deleteProduct);
 router.get('/addProduct',productController.loadAddCategory);
 router.post('/addProduct',newUploads,productController.addProducts);
 router.get('/product',productController.loadProductPage);

@@ -139,6 +139,47 @@ const addProducts = async (req, res) => {
   }
 };
 
+const deleteProduct = async (req, res) => {
+  try {
+      const productId = req.params.id;
+
+      // Find the product to get image paths
+      const product = await Product.findById(productId);
+      if (!product) {
+          return res.status(404).json({
+              success: false,
+              message: "Product not found"
+          });
+      }
+
+      // Delete images from storage
+      const uploadDirectory = path.join("public");
+      product.variants.forEach(variant => {
+          variant.productImage.forEach(imagePath => {
+              const fullPath = path.join(uploadDirectory, imagePath);
+              if (fs.existsSync(fullPath)) {
+                  fs.unlinkSync(fullPath);
+              }
+          });
+      });
+
+      // Delete the product from database
+      await Product.findByIdAndDelete(productId);
+
+      return res.status(200).json({
+          success: true,
+          message: "Product deleted successfully"
+      });
+
+  } catch (error) {
+      console.error("Error deleting product:", error);
+      return res.status(500).json({
+          success: false,
+          message: "Error deleting product"
+      });
+  }
+};
+
 const loadProductPage = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -355,4 +396,5 @@ module.exports = {
   toggleProductStatus,
   loadEditProduct,
   editProduct,
+  deleteProduct
 };

@@ -60,8 +60,8 @@ app.set('views', [
 
 app.use(express.static(path.join(__dirname,'public')));  
 
-app.use('/',userRouter);
 app.use('/admin',adminRouter);
+app.use('/',userRouter);
 
 const PORT = 3478 || process.env.PORT
 app.listen(process.env.PORT,()=>{

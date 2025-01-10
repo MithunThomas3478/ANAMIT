@@ -21,13 +21,15 @@ const loadHomepage = async (req, res) => {
     const products = await Product.find({ isBlocked: false })
       .populate("category")
       .lean(); // Using lean() for better performance
+      console.log(products);
+      
 
     // Group products by category type (TOPWEAR, BOTTOMWEAR)
     const topwear = products.filter((product) =>
-      product.category.name.toUpperCase().includes("TOPWEAR")
+      product.category?.name.toUpperCase().includes("TOPWEAR")
     );
     const bottomwear = products.filter((product) =>
-      product.category.name.toUpperCase().includes("BOTTOMWEAR")
+      product.category?.name.toUpperCase().includes("BOTTOMWEAR")
     );
 
     let userData = null;
@@ -294,7 +296,7 @@ const logout = async (req, res) => {
 const getMensTopwear = async (req, res) => {
   try {
     // Get category ID for Men's Topwear
-    const topwearCategory = await Category.findOne({ name: "Topwear" });
+    const topwearCategory = await Category.findOne({ name: "TOPWEAR" });
     if (!topwearCategory) {
       return res.status(404).render("error", { message: "Category not found" });
     }
@@ -430,7 +432,7 @@ const getMensTopwear = async (req, res) => {
 const getMensBottomwear = async (req, res) => {
   try {
     // Get category ID for Men's Topwear
-    const topwearCategory = await Category.findOne({ name: "Bottomwear" });
+    const topwearCategory = await Category.findOne({ name: "BOTTOMWEAR" });
     if (!topwearCategory) {
       return res.status(404).render("error", { message: "Category not found" });
     }

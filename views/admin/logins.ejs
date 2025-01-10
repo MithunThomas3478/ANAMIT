@@ -6,7 +6,7 @@
     <title>Admin Login</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="/css/style.css" />
+    
     <style>
         /* Base Styles */
         * {
@@ -19,6 +19,7 @@
             height: 100%;
             font-family: 'Nunito Sans', sans-serif;
             overflow-x: hidden;
+            background-color: #f8f9fa;
         }
 
         /* Layout Styles */
@@ -47,6 +48,7 @@
             color: rgba(255, 255, 255, 0.8);
             font-size: 2.5rem;
             font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         /* Form Section */
@@ -55,29 +57,30 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #f8f9fa;
             padding: 2rem;
         }
 
         .login-container {
             width: 100%;
             max-width: 400px;
-            padding: 2rem;
+            padding: 2.5rem;
             background: white;
-            border-radius: 10px;
+            border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
 
         .login-container h2 {
             text-align: center;
             margin-bottom: 1.5rem;
-            color: #343a40;
+            color: #1d3557;
             font-weight: 700;
+            font-size: 1.75rem;
         }
 
         /* Form Elements */
         .form-group {
             margin-bottom: 1.5rem;
+            position: relative;
         }
 
         label {
@@ -85,44 +88,100 @@
             color: #495057;
             margin-bottom: 0.5rem;
             display: block;
+            font-size: 0.95rem;
         }
 
         .form-control {
             padding: 0.8rem;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
             font-size: 1rem;
             width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #457b9d;
+            box-shadow: 0 0 0 3px rgba(69, 123, 157, 0.1);
+            outline: none;
+        }
+
+        .form-control.is-invalid {
+            border-color: #e63946;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23dc3545' viewBox='0 0 12 12'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
         }
 
         .btn-primary {
             width: 100%;
             padding: 0.8rem;
             font-size: 1rem;
-            background-color: #FE5000;
+            background-color: #1d3557;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             color: #fff;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            position: relative;
         }
 
         .btn-primary:hover {
-            background-color: #FF9000;
+            background-color: #457b9d;
+            transform: translateY(-1px);
         }
 
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-loading {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .btn-loading::after {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin: -8px 0 0 -8px;
+            border: 2px solid transparent;
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Alert Styles */
         .alert {
-            margin-bottom: 1rem;
-            padding: 0.75rem;
-            font-size: 0.9rem;
-            text-align: center;
-            border-radius: 5px;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .alert-danger {
+            background-color: #fde8e8;
+            color: #e63946;
+            border: 1px solid #fbd5d5;
         }
 
         .error-message {
             color: #e63946;
             font-size: 0.85rem;
             margin-top: 0.25rem;
+            display: none;
         }
 
         /* Responsive Design */
@@ -137,7 +196,7 @@
             
             .form-section {
                 width: 100%;
-                padding: 1rem;
+                padding: 1.5rem;
                 min-height: 100vh;
             }
             
@@ -149,73 +208,141 @@
 </head>
 <body>
     <div class="main-container">
-         <!-- Image Section -->
+        <!-- Image Section -->
         <div class="image-section"></div>
 
         <!-- Form Section -->
-         <div class="form-section">
+        <div class="form-section">
             <div class="login-container">
                 <h2>Admin Login</h2>
                 
-                <% if (message) { %>
-                <div class="alert alert-danger"><%= message %></div>
+                <% if (locals.message) { %>
+                <div id="alertMessage" class="alert alert-danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <%= message %>
+                </div>
                 <% } %>
                 
-                <form id="adminLoginForm" method="POST" action="/admin/login">
+                <form id="adminLoginForm" method="POST" action="/admin/login" novalidate>
                     <div class="form-group">
                         <label for="email">Email Address</label>
-                        <input type="text" id="email" name="email" 
-                               class="form-control" placeholder="Enter your email" required />
+                        <input type="email" id="email" name="email" 
+                               class="form-control" placeholder="Enter your email"
+                               required autocomplete="email" />
                         <div id="emailError" class="error-message"></div>
                     </div>
                     
                     <div class="form-group">
                         <label for="password">Password</label>
-                        <input type="text" id="password" name="password" 
-                               class="form-control" placeholder="Enter your password" required />
+                        <input type="password" id="password" name="password" 
+                               class="form-control" placeholder="Enter your password"
+                               required autocomplete="current-password" />
                         <div id="passwordError" class="error-message"></div>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary">Log In</button>
+                    <button type="submit" id="submitButton" class="btn btn-primary">
+                        Log In
+                    </button>
                 </form>
             </div>
         </div>
     </div>
 
-    Scripts
-    <script src="/js/jquery.min.js"></script>
-    <script src="/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            const adminLoginForm = document.getElementById("adminLoginForm");
-            const emailField = document.getElementById("email");
-            const passwordField = document.getElementById("password");
+            const form = document.getElementById("adminLoginForm");
+            const emailInput = document.getElementById("email");
+            const passwordInput = document.getElementById("password");
             const emailError = document.getElementById("emailError");
             const passwordError = document.getElementById("passwordError");
+            const submitButton = document.getElementById("submitButton");
+            const alertMessage = document.getElementById("alertMessage");
 
-            adminLoginForm.addEventListener("submit", function (event) {
-                let isValid = true;
-
+            // Validation functions
+            function isValidEmail(email) {
                 const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-                if (!emailPattern.test(emailField.value)) {
-                    emailError.textContent = "Invalid email format";
-                    isValid = false;
-                } else {
-                    emailError.textContent = "";
-                }
+                return emailPattern.test(email);
+            }
 
-                if (passwordField.value.length < 8) {
-                    passwordError.textContent = "Password must be at least 8 characters";
-                    isValid = false;
-                } else {
-                    passwordError.textContent = "";
-                }
+            function showError(input, errorElement, message) {
+                input.classList.add("is-invalid");
+                errorElement.textContent = message;
+                errorElement.style.display = "block";
+            }
 
-                if (!isValid) {
-                    event.preventDefault();
+            function hideError(input, errorElement) {
+                input.classList.remove("is-invalid");
+                errorElement.textContent = "";
+                errorElement.style.display = "none";
+            }
+
+            // Real-time validation
+            emailInput.addEventListener("input", function() {
+                if (this.value.trim() === "") {
+                    showError(this, emailError, "Email is required");
+                } else if (!isValidEmail(this.value)) {
+                    showError(this, emailError, "Please enter a valid email address");
+                } else {
+                    hideError(this, emailError);
                 }
             });
+
+            passwordInput.addEventListener("input", function() {
+                if (this.value.trim() === "") {
+                    showError(this, passwordError, "Password is required");
+                } else if (this.value.length < 8) {
+                    showError(this, passwordError, "Password must be at least 8 characters");
+                } else {
+                    hideError(this, passwordError);
+                }
+            });
+
+            // Form submission
+            form.addEventListener("submit", function(event) {
+                event.preventDefault();
+                let isValid = true;
+
+                // Validate email
+                if (emailInput.value.trim() === "") {
+                    showError(emailInput, emailError, "Email is required");
+                    isValid = false;
+                } else if (!isValidEmail(emailInput.value)) {
+                    showError(emailInput, emailError, "Please enter a valid email address");
+                    isValid = false;
+                }
+
+                // Validate password
+                if (passwordInput.value.trim() === "") {
+                    showError(passwordInput, passwordError, "Password is required");
+                    isValid = false;
+                } else if (passwordInput.value.length < 8) {
+                    showError(passwordInput, passwordError, "Password must be at least 8 characters");
+                    isValid = false;
+                }
+
+                if (isValid) {
+                    // Show loading state
+                    submitButton.classList.add("btn-loading");
+                    submitButton.textContent = "";
+                    
+                    // Submit the form
+                    this.submit();
+                }
+            });
+
+            // Auto-hide alert message
+            if (alertMessage) {
+                setTimeout(function() {
+                    alertMessage.style.opacity = "0";
+                    alertMessage.style.transition = "opacity 0.5s ease";
+                    setTimeout(() => alertMessage.remove(), 500);
+                }, 5000);
+            }
         });
     </script>
 </body>
-</html> 
+</html>
