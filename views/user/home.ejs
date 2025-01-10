@@ -1,76 +1,165 @@
-<%-include("../../views/partials/user/header")%>
-<!-- main -->
-
-<div class="header">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANAMIT - Fashion Store</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/user/home.css">
     
-</div>
-<div class="container">
-    <div class="category">
-        <h1>TOPWEAR</h1>
-        <div class="row">
-            <div class="col-md-2 col-sm-4">
-                <img src="/images/polotshit.webp" alt="Polo T-Shirts">
-                <p>Polo T-Shirts</p>
-            </div>
-            <div class="col-md-2 col-sm-4">
-                <img src="/images/plain tshirt.webp" alt="Plain T-Shirts">
-                <p>Plain T-Shirts</p>
-            </div>
-            <div class="col-md-2 col-sm-4">
-                <img src="/images/formal.webp" alt="Formal Shirts">
-                <p>Formal Shirts</p>
-            </div>
-            <div class="col-md-2 col-sm-4">
-                <img src="/images/full sleve.webp" alt="Full Sleeve T-Shirts">
-                <p>Full Sleeve T-Shirts</p>
-            </div>
-            <div class="col-md-2 col-sm-4">
-                <img src="/images/casual.webp" alt="Casual Shirts">
-                <p>Casual Shirts</p>
-            </div>
+</head>
+<%- include('../partials/user/header')%>
+<body>
+    
+    <div id="heroCarousel" class="carousel slide hero-carousel" data-bs-ride="carousel" style="padding-top: 100px;">
+        <div class="carousel-indicators">
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
         </div>
-    </div>
-    <div class="category">
-        <h1>BOTTOMWEAR</h1>
-        <div class="row">
-            <div class="col-md-2 col-sm-4">
-                <img src="/images/Cargo Joggers.webp" alt="Cargo Joggers">
-                <p>Cargo Joggers</p>
+        <div class="carousel-inner">
+            <div class="carousel-item active h-100">
+                <div class="carousel-overlay"></div>
+                <img src="/images/1.jpg" class="d-block w-100 h-100" alt="Winter Collection">
+               
             </div>
-            <div class="col-md-2 col-sm-4">
-                <img src="/images/Cargo Pants.webp" alt="Cargo Pants">
-                <p>Cargo Pants</p>
+            <div class="carousel-item h-100">
+                <div class="carousel-overlay"></div>
+                <img src="/images/2.jpg" class="d-block w-100 h-100" alt="New Arrivals">
             </div>
-            <div class="col-md-2 col-sm-4">
-                <img src="/images/Jeans.webp" alt="Jeans">
-                <p>Jeans</p>
-            </div>
-            <div class="col-md-2 col-sm-4">
-                <img src="/images/Chino Pants.webp" alt="Chino Pants">
-                <p>Chino Pants</p>
-            </div>
-            <div class="col-md-2 col-sm-4">
-                <img src="/images/Boxers.webp" alt="Boxers">
-                <p>Boxers</p>
-            </div>
+           
         </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+        </button>
     </div>
-    <div class="shop-looks">
-        <h1>SHOP EVERY DAY LOOKS</h1>
-        <div class="row">
-            <div class="col-md-4 col-sm-6">
-                <img src="casual-look.jpg" alt="Casual Look">
-                <p>Casual</p>
+
+    <div class="container-fluid py-5">
+        <!-- Top Wear Section -->
+        <section class="mb-5">
+            <h1 class="section-title"><span class="orange-text">TOP</span>WEAR</h1>
+            <div class="category-container">
+                <div class="category-item">
+                    <div class="category-card">
+                <a href="/topwear"><img src="/images/polo.webp" alt="Polo T-Shirts" class="rounded"></a>        
+                        <p class="mt-2">POLO T-SHIRTS</p>
+                    </div>
+                </div>
+                <div class="category-item">
+                    <div class="category-card">
+                        <a href="/topwear"><img src="/images/PLAIN T-SHIRTS.webp" alt="Plain T-Shirts" class="rounded"></a>      
+                        <p class="mt-2">PLAIN T-SHIRTS</p>
+                    </div>
+                </div>
+                <div class="category-item">
+                    <div class="category-card">
+                        <a href="/topwear"><img src="/images/FORMAL SHIRTS.webp" alt="Formal Shirts" class="rounded"></a>      
+                        <p class="mt-2">FORMAL SHIRTS</p>
+                    </div>
+                </div>
+                <div class="category-item">
+                    <div class="category-card">
+                        <a href="/topwear"><img src="/images/FULL SLEEVE T-SHIRTS.webp" alt="Full Sleeve T-Shirts" class="rounded"></a>     
+                        <p class="mt-2">FULL SLEEVE T-SHIRTS</p>
+                    </div>
+                </div>
+                <div class="category-item">
+                    <div class="category-card">
+                        <a href="/topwear"> <img src="/images/CASUAL SHIRTS.webp" alt="Casual Shirts" class="rounded"></a>     
+                        <p class="mt-2">CASUAL SHIRTS</p>
+                    </div>
+                </div>
             </div>
-            <div class="col-md-4 col-sm-6">
-                <img src="party-look.jpg" alt="Party Look">
-                <p>Party</p>
+        </section>
+
+        <!-- Bottom Wear Section -->
+        <section class="mb-5">
+            <h1 class="section-title"><span class="orange-text">BOTTOM</span>WEAR</h1>
+            <div class="category-container">
+                <div class="category-item">
+                    <div class="category-card">
+                       <a href="/bottomwear"><img src="/images/CARGO JOGGERS.webp" alt="Cargo Joggers" class="rounded"></a> 
+                        <p class="mt-2">CARGO JOGGERS</p>
+                    </div>
+                </div>
+                <div class="category-item">
+                    <div class="category-card">
+                     <a href="/bottomwear"><img src="/images/CARGO PANTS.webp" alt="Cargo Pants" class="rounded"></a>   
+                        <p class="mt-2">CARGO PANTS</p>
+                    </div>
+                </div>
+                <div class="category-item">
+                    <div class="category-card">
+                        <a href="/bottomwear">  <img src="/images/JEANS.webp" alt="Jeans" class="rounded"></a>      
+                        <p class="mt-2">JEANS</p>
+                    </div>
+                </div>
+                <div class="category-item">
+                    <div class="category-card">
+                        <a href="/bottomwear"> <img src="/images/CHINO PANTS.webp" alt="Chino Pants" class="rounded"></a>      
+                        <p class="mt-2">CHINO PANTS</p>
+                    </div>
+                </div>
+                <div class="category-item">
+                    <div class="category-card">
+                        <a href="/bottomwear"> <img src="/images/BOXERS.webp" alt="Boxers" class="rounded"></a>         
+                        <p class="mt-2">BOXERS</p>
+                    </div>
+                </div>
             </div>
-            <div class="col-md-4 col-sm-6">
-                <img src="office-look.jpg" alt="Office Look">
-                <p>Office</p>
+        </section>
+
+        <!-- Shop Every Day Looks -->
+        <section>
+            <h1 class="section-title">SHOP EVERY DAY <span class="orange-text">LOOKS</span></h1>
+            <div class="looks-container">
+                <div class="looks-item">
+                    <div class="look-card rounded">
+                        <img src="/images/CASUAL.jpg" alt="Casual">
+                        <div class="look-overlay">
+                            <h3 class="mb-3 fs-2">CASUAL</h3>
+                            <a href="#" class="shop-now-btn">SHOP NOW</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="looks-item">
+                    <div class="look-card rounded">
+                        <img src="/images/PARTY.jpg" alt="Party">
+                        <div class="look-overlay">
+                            <h3 class="mb-3 fs-2">PARTY</h3>
+                            <a href="#" class="shop-now-btn">SHOP NOW</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="looks-item">
+                    <div class="look-card rounded">
+                        <img src="/images/OFFICE.jpg" alt="Office">
+                        <div class="look-overlay">
+                            <h3 class="mb-3 fs-2">OFFICE</h3>
+                            <a href="#" class="shop-now-btn">SHOP NOW</a>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </section>
     </div>
-</div>
-<%-include("../../views/partials/user/footer")%>
+    <%- include('../partials/user/footer')%>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Add animation to carousel items when they become active
+        document.getElementById('heroCarousel').addEventListener('slide.bs.carousel', function (e) {
+            const caption = e.relatedTarget.querySelector('.carousel-caption');
+            const title = caption.querySelector('.hero-title');
+            const subtitle = caption.querySelector('.hero-subtitle');
+            const code = caption.querySelector('.hero-code');
+
+            title.classList.add('animate__animated', 'animate__fadeInDown');
+            subtitle.classList.add('animate__animated', 'animate__fadeInUp');
+            code.classList.add('animate__animated', 'animate__fadeIn');
+        });
+    </script>
+</body>
+</html>

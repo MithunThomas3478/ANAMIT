@@ -1,0 +1,33 @@
+<%- include('../partials/admin/adminHeader')%>
+<main class="main-content">
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">Dashboard Overview</h1>
+        <div class="user-info">
+            <span>Welcome, Admin</span>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <i class="fas fa-shopping-cart stat-icon" style="color: var(--primary-color);"></i>
+            <div class="stat-value">1,234</div>
+            <div class="stat-label">Total Orders</div>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-users stat-icon" style="color: var(--secondary-color);"></i>
+            <div class="stat-value">5,678</div>
+            <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-box stat-icon" style="color: var(--accent-color);"></i>
+            <div class="stat-value">890</div>
+            <div class="stat-label">Total Products</div>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-dollar-sign stat-icon" style="color: var(--success-color);"></i>
+            <div class="stat-value">$12,345</div>
+            <div class="stat-label">Total Revenue</div>
+        </div>
+    </div>
+</main>
+<%- include('../partials/admin/adminFooter')%>

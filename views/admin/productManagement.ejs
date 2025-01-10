@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/admin/productManagement.css">
+ 
+</head>
+<body>
+    <%- include('../partials/admin/adminHeader')%>
+    <main class="main-content"  > 
+        <h1>Product Management</h1>
+            <div class="container mt-4">
+                <div class="d-flex justify-content-end mb-4 w-100">
+                    <a href="/admin/addproduct" class="add-product-btn" style="background-color: #6d28d9; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; text-decoration: none; font-weight: 500; transition: background-color 0.3s ease;">
+                        ➕ ADD NEW PRODUCT
+                    </a>
+                </div>
+        
+                <div class="table-responsive bg-white rounded w-100" style="box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    <table class="table mb-0">
+                        <thead style="background-color: #4f46e5; color: white;">
+                            <tr>
+                                <th style="padding: 1rem;">Image</th>
+                                <th style="padding: 1rem;">Product Name</th>
+                                <th style="padding: 1rem;">Category</th>
+                                <th style="padding: 1rem;">Price</th>
+                                <th style="padding: 1rem;">Quantity</th>
+                                <th style="padding: 1rem;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% products.slice(startIndex, endIndex).forEach(product => { %>
+                                <tr style="transition: background-color 0.3s ease;">
+                                    <td style="padding: 1rem;">
+                                        <% if (product.variants && product.variants.length > 0 && product.variants[0].productImage.length > 0) { %>
+                                            <img src="<%= product.variants[0].productImage[0] %>" alt="<%= product.productName %>" class="product-img" style="width: 50px; height: 50px; object-fit: cover; border-radius: 0.25rem;">
+                                        <% } else { %>
+                                            <p>No image available</p>
+                                        <% } %>
+                                    </td>
+                                    <td style="padding: 1rem;"><%= product.productName %></td>
+                                    <td style="padding: 1rem;"><%= product.category ? product.category.name : 'No Category' %></td>
+                                    <td style="padding: 1rem;">
+                                        ₹<%= (product.variants && product.variants[0] && product.variants[0].price) ? product.variants[0].price.toFixed(2) : '0.00' %>
+                                    </td>
+                                    <td style="padding: 1rem;"><%= product.variants ? product.variants.reduce((sum, variant) => sum + variant.stock, 0) : 0 %></td>
+                                    <td style="padding: 1rem;">
+                                        <div class="d-flex gap-2">
+                                            <a href="/admin/editProduct?id=<%= product._id %>">
+                                                <button class="edit-btn" data-id="<%= product._id %>" style="background-color: #8b5cf6; color: white; border: none; padding: 0.5rem; border-radius: 0.25rem; cursor: pointer; transition: background-color 0.3s ease;">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                                                    </svg>
+                                                </button>
+                                            </a>
+                                            
+                                            <button class="<%= product.isBlocked ? 'unlist-btn' : 'list-btn' %>" data-id="<%= product._id %>" style="background-color: <%= product.isBlocked ? '#f59e0b' : '#10b981' %>; color: white; border: none; padding: 0.5rem; border-radius: 0.25rem; cursor: pointer; transition: background-color 0.3s ease;">
+                                                <%= product.isBlocked ? 'Unlist' : 'List' %>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+        
+                    <!-- Pagination Controls -->
+                    <div class="d-flex justify-content-between align-items-center p-3 border-top" style="background-color: #f9fafb;">
+                        <div class="text-muted">
+                            Showing <%= startIndex + 1 %> to <%= Math.min(endIndex, products.length) %> of <%= products.length %> products
+                        </div>
+                        <nav aria-label="Product navigation">
+                            <ul class="pagination mb-0">
+                                <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                                    <a class="page-link" href="?page=<%= currentPage - 1 %>" <%= currentPage === 1 ? 'tabindex="-1" aria-disabled="true"' : '' %> style="color: #6d28d9; border-color: #6d28d9;">Previous</a>
+                                </li>
+                                
+                                <% for(let i = 1; i <= totalPages; i++) { %>
+                                    <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                        <a class="page-link" href="?page=<%= i %>" style="color: #6d28d9; border-color: #6d28d9; <%= currentPage === i ? 'background-color: #6d28d9; color: white;' : '' %>"><%= i %></a>
+                                    </li>
+                                <% } %>
+                                
+                                <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                                    <a class="page-link" href="?page=<%= currentPage + 1 %>" <%= currentPage === totalPages ? 'tabindex="-1" aria-disabled="true"' : '' %> style="color: #6d28d9; border-color: #6d28d9;">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+     
+    </main>
+    
+    <%- include('../partials/admin/adminFooter')%>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/admin/products.js"></script>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle edit button clicks
+    document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.dataset.id;
+            window.location.href =`/admin/editProduct?id=${productId}`;
+        });
+    });
+
+    // Handle list/unlist toggle
+    document.querySelectorAll('.list-btn, .unlist-btn').forEach(button => {
+        button.addEventListener('click', async function() {
+            const productId = this.dataset.id;
+            try {
+                const response = await fetch(`/admin/product/toggle/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Failed to update product status');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to update product status');
+            }
+        });
+    });
+});
+
+
+
+    </script>
+</body>
+</html>

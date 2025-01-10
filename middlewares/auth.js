@@ -1,24 +1,6 @@
 const  User = require('../models/userSchema');
 
-// const userAuth = (req,res,next)=>{
-//     if(req.session.user){
-//         User.findById(req.session.user,req.session.passport.user)
-//         .then(data=>{
-//             if(data && !data.isBlocked){
-//                 next();
-//             }else{
-//                 res.redirect('/login')
-//             }
-//         })
-//         .catch(error=>{
-//             console.log('Error in your auth middlerware');
-//             res.status(500).send('Internal Serve error')
-//         })
-        
-//     }else{
-//         res.redirect('/login')
-//     }
-// }
+
 const userAuth = (req, res, next) => {
     if (req.session.user) {
       User.findById(req.session.user)

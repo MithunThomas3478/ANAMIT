@@ -48,7 +48,7 @@ const loadDashboard = async (req, res) => {
     if (req.session.admin) {
         try {
             console.log('Rendering dashboard...');
-            res.render('dashboard');
+            res.render('adminDashboard');
         } catch (error) {
             console.error('Error rendering dashboard:', error.message);
             res.redirect('/admin/page_404');

@@ -65,7 +65,7 @@ app.use('/admin',adminRouter);
 
 const PORT = 3478 || process.env.PORT
 app.listen(process.env.PORT,()=>{
-    console.log(`ANAMIT Server is Running ${new Date()} `)
+    console.log(`ANAMIT Server is Running on ${PORT} `)
 });
 
 module.exports = app;

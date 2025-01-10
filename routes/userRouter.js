@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router();
 const userController = require('../controllers/user/userController');
+const productController = require('../controllers/user/productController');
 const {userAuth} = require('../middlewares/auth');
 const passport = require('passport')
 
@@ -12,8 +13,14 @@ router.post('/verify-otp',userController.verifyOtp);
 router.get('/verify-otp',userController.loadVerifyOtp);
 router.post('/resend-otp',userController.resendOtp);
 router.get('/login',userController.loadLoginPage);
-router.post('/login',userController.login)
-router.get('/logout',userController.logout)
+router.post('/login',userController.login);
+router.get('/logout',userController.logout);
+
+
+router.get('/topwear',userController.getMensTopwear);
+router.get('/bottomwear',userController.getMensBottomwear);
+
+router.get('/product/:id', productController.getProductDetails);
 
 // Google login
 router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));

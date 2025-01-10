@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANAMIT - <%= product.productName %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+   <style>
+
+   /* Base Variables */
+:root {
+    --primary-color: #FF8C00;
+    --text-color: #212529;
+    --border-color: #dee2e6;
+    --hover-color: #e67e00;
+    --light-bg: #f8f9fa;
+    --gray-text: #6c757d;
+}
+
+/* Layout */
+.height-75vh {
+    min-height: 75vh;
+}
+
+.product-section {
+    padding-top: 100px;
+}
+
+/* Image Gallery */
+.thumbnail-container {
+    height: 500px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) var(--light-bg);
+}
+
+.thumbnail-container::-webkit-scrollbar {
+    width: 6px;
+    background: var(--light-bg);
+}
+
+.thumbnail-container::-webkit-scrollbar-thumb {
+    background-color: var(--primary-color);
+    border-radius: 3px;
+}
+
+.thumbnail {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    margin-bottom: 10px;
+    transition: border-color 0.3s ease;
+}
+
+.thumbnail:hover {
+    border-color: var(--primary-color);
+}
+
+.main-image {
+    width: 100%;
+    max-height: 600px;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.main-image:hover {
+    transform: scale(1.02);
+}
+
+/* Product Information */
+.product-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.product-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+
+.product-description {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--gray-text);
+    margin-bottom: 1.5rem;
+}
+
+/* Color Selection */
+.color-swatch {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    position: relative;
+}
+
+.color-swatch:hover {
+    transform: scale(1.1);
+}
+
+.color-swatch.active {
+    border-color: var(--primary-color);
+}
+
+.color-swatch.active::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border: 1px solid var(--primary-color);
+    border-radius: 50%;
+}
+
+/* Size Selection */
+.size-btn {
+    min-width: 50px;
+    border: 1px solid var(--border-color);
+    background: white;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.size-btn:hover:not(.out-of-stock) {
+    background-color: var(--light-bg);
+    border-color: var(--text-color);
+}
+
+.size-btn.active {
+    background-color: var(--text-color);
+    color: white;
+    border-color: var(--text-color);
+}
+
+.size-btn.out-of-stock {
+    color: var(--gray-text);
+    cursor: not-allowed;
+    background-color: var(--light-bg);
+    text-decoration: line-through;
+}
+
+/* Action Buttons */
+.buy-now-btn {
+    background-color: var(--primary-color);
+    border: none;
+    transition: background-color 0.3s ease;
+    padding: 12px 24px;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Product Cards */
+.product-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.product-card img {
+    border-radius: 4px;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    aspect-ratio: 1/1;
+}
+
+/* Trust Badges */
+.trust-badge {
+    text-align: center;
+    padding: 20px;
+    transition: transform 0.3s ease;
+}
+
+.trust-badge:hover {
+    transform: translateY(-3px);
+}
+
+.trust-badge img {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 10px;
+    transition: transform 0.3s ease;
+}
+
+.trust-badge:hover img {
+    transform: scale(1.1);
+}
+#productContainer {
+    display: flex;
+    gap: 20px;
+    position: relative;
+}
+
+.main-image-container {
+    position: relative;
+    width: 100%;
+}
+
+.main-image {
+    width: 100%;
+    height: auto;
+    cursor: crosshair;
+    border: 1px solid #ddd;
+}
+
+.zoom-container {
+    width: 400px;
+    height: 400px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+    position: absolute;
+    top: 0;
+    right: 670px;
+    display: none;
+    background: #fff;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.zoomed-image {
+    width: 800px;
+    height: auto;
+    position: absolute;
+    transform-origin: top left;
+    pointer-events: none;
+}
+
+.thumbnail-wrapper {
+    margin-bottom: 10px;
+    border: 2px solid transparent;
+    cursor: pointer;
+}
+
+.thumbnail-wrapper.active {
+    border-color: #FF8C00;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .thumbnail-container {
+        height: auto;
+        display: flex;
+        overflow-x: auto;
+        overflow-y: hidden;
+        margin-bottom: 1rem;
+        padding-bottom: 10px;
+    }
+
+    .thumbnail {
+        margin-right: 10px;
+        margin-bottom: 0;
+        flex-shrink: 0;
+    }
+
+    .main-image {
+        max-height: 400px;
+    }
+
+    .product-title {
+        font-size: 1.25rem;
+    }
+
+    .product-price {
+        font-size: 1.25rem;
+    }
+
+    .size-btn {
+        padding: 6px 12px;
+    }
+}
+
+@media (max-width: 576px) {
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .action-buttons .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .trust-badge {
+        padding: 10px;
+    }
+
+    .trust-badge img {
+        width: 40px;
+        height: 40px;
+    }
+
+}
+
+   </style>
+</head>
+<body>
+    <%- include('../partials/user/header') %>
+    <!-- Keep original header -->
+    <!-- Keep original breadcrumb -->
+    <main class="height-75vh"> 
+
+ <!-- Product Section -->
+ <section class="container py-4" >
+    <div class="row" style="padding-top: 100px;">
+        <!-- Thumbnails -->
+        <div class="col-md-1">
+            <div class="thumbnail-container">
+                <% product.variants[0].productImage.forEach((image, index) => { %>
+                    <div class="thumbnail-wrapper <%= index === 0 ? 'active' : '' %>">
+                        <img src="<%= image %>" 
+                             alt="<%= product.productName %> thumbnail" 
+                             class="thumbnail" 
+                             onclick="updateMainImage(this.src, this)">
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+    
+        <!-- Main Image -->
+        <div class="col-md-5 position-relative">
+            <div class="main-image-container">
+                <img src="<%= product.variants[0].productImage[0] %>" 
+                     alt="<%= product.productName %>" 
+                     class="main-image" 
+                     id="mainImage">
+                <div class="zoom-container" id="zoomContainer">
+                    <img src="<%= product.variants[0].productImage[0] %>" 
+                         alt="<%= product.productName %> Zoomed" 
+                         class="zoomed-image" 
+                         id="zoomedImage">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <h1 class="h4 mb-3"><%= product.productName %></h1>
+            <h2 class="h3 mb-4">₹ <%= product.variants[0].price %></h2>
+
+            <!-- Color Selection -->
+            <div class="mb-4">
+                <h3 class="h6 mb-3">Color: <span class="text-muted" id="selectedColorName">
+                    <%= product.variants[0].colorName %>
+                </span></h3>
+                <div class="d-flex gap-2">
+                    <% product.variants.forEach((variant, index) => { %>
+                        <div class="color-swatch <%= index === 0 ? 'active' : '' %>" 
+                             style="background-color: <%= variant.color %>"
+                             onclick="updateVariant('<%= index %>')"></div>
+                    <% }); %>
+                </div>
+            </div>
+
+            <!-- Size Selection -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="h6 mb-0">Size:</h3>
+                    <a href="#" class="text-decoration-none">Size Guide</a>
+                </div>
+                <div class="d-flex gap-2 flex-wrap" id="sizeButtons">
+                    <% product.variants[0].size.split(',').forEach(size => { %>
+                        <button class="size-btn <%= product.variants[0].stock > 0 ? '' : 'out-of-stock' %>">
+                            <%= size %>
+                        </button>
+                    <% }); %>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-grid gap-2 d-md-flex mb-4">
+                <button class="btn btn-dark flex-grow-1 py-2" 
+                        onclick="addToCart('<%= product._id %>')"
+                        <%= product.variants[0].stock === 0 ? 'disabled' : '' %>>
+                    Add to Cart
+                </button>
+                <button class="btn buy-now-btn text-white flex-grow-1 py-2 bg-warning"
+                        onclick="buyNow('<%= product._id %>')"
+                        <%= product.variants[0].stock === 0 ? 'disabled' : '' %>>
+                    Buy Now
+                </button>
+            </div>
+
+            <!-- Product Description -->
+            <div class="mb-4">
+                <p><%= product.description %></p>
+            </div>
+        </div>
+    </div>
+        
+    </div>
+</section>
+
+<!-- Keep original trust badges section -->
+
+<!-- Similar Products -->
+
+
+
+
+<section class="container py-5">
+    <h2 class="h4 mb-4">Similar Products</h2>
+    <div class="row g-4">
+        <% similarProducts.forEach(similarProduct => { %>
+            <div class="col-6 col-md-3">
+                <div class="product-card">
+                    <a href="/product/<%= similarProduct._id %>" class="text-decoration-none text-dark">
+                        <img src="<%= similarProduct.variants[0].productImage[0] %>" 
+                             alt="<%= similarProduct.productName %>" 
+                             class="img-fluid mb-3">
+                        <h3 class="h6"><%= similarProduct.productName %></h3>
+                        <p class="mb-0">₹<%= similarProduct.variants[0].price %></p>
+                    </a>
+                </div>
+            </div>
+        <% }); %>
+    </div>
+</section>
+
+
+    </main>
+   
+    <%- include('../partials/user/footer') %>
+    <!-- Keep original footer -->
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+
+
+
+        
+        let currentVariantIndex = 0;
+        const product = <%- JSON.stringify(product) %>;
+
+        function updateMainImage(src) {
+            document.getElementById('mainImage').src = src;
+        }
+
+        function updateVariant(index) {
+            currentVariantIndex = parseInt(index);
+            const variant = product.variants[currentVariantIndex];
+
+            // Update color selection
+            document.querySelectorAll('.color-swatch').forEach((swatch, i) => {
+                swatch.classList.toggle('active', i === currentVariantIndex);
+            });
+
+            // Update color name
+            document.getElementById('selectedColorName').textContent = variant.colorName;
+
+            // Update main image and thumbnails
+            const thumbnailContainer = document.querySelector('.thumbnail-container');
+            thumbnailContainer.innerHTML = variant.productImage.map(image => `
+                <img src="${image}" 
+                     alt="${product.productName} thumbnail" 
+                     class="thumbnail" 
+                     onclick="updateMainImage('${image}')">
+            `).join('');
+
+            // Update main image to first image of new variant
+            updateMainImage(variant.productImage[0]);
+
+            // Update price
+            document.querySelector('.h3.mb-4').textContent = `₹ ${variant.price}`;
+
+            // Update size buttons
+            const sizeButtons = document.getElementById('sizeButtons');
+            sizeButtons.innerHTML = variant.size.split(',').map(size => `
+                <button class="size-btn ${variant.stock > 0 ? '' : 'out-of-stock'}">
+                    ${size}
+                </button>
+            `).join('');
+
+            // Update button states
+            const addToCartBtn = document.querySelector('.btn-dark');
+            const buyNowBtn = document.querySelector('.buy-now-btn');
+            const isOutOfStock = variant.stock === 0;
+            
+            addToCartBtn.disabled = isOutOfStock;
+            buyNowBtn.disabled = isOutOfStock;
+        }
+
+        async function addToCart(productId) {
+            try {
+                const response = await fetch('/api/cart/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        productId,
+                        variantIndex: currentVariantIndex
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Product added to cart successfully!');
+                } else {
+                    throw new Error('Failed to add to cart');
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                alert('Failed to add product to cart');
+            }
+        }
+
+        function buyNow(productId) {
+            window.location.href = `/checkout?productId=${productId}&variantIndex=${currentVariantIndex}`;
+        }
+        
+        document.addEventListener("DOMContentLoaded", function() {
+    const mainImage = document.getElementById("mainImage");
+    const zoomContainer = document.getElementById("zoomContainer");
+    const zoomedImage = document.getElementById("zoomedImage");
+
+    // Function to initialize zoom functionality
+    function initZoom() {
+        mainImage.addEventListener("mousemove", (e) => {
+            const rect = mainImage.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Calculate percentages
+            const xPercent = (x / rect.width) * 100;
+            const yPercent = (y / rect.height) * 100;
+
+            // Calculate the maximum translation values
+            const maxTranslateX = zoomedImage.offsetWidth - zoomContainer.offsetWidth;
+            const maxTranslateY = zoomedImage.offsetHeight - zoomContainer.offsetHeight;
+
+            // Calculate translations based on percentages
+            const translateX = (maxTranslateX * xPercent) / 100;
+            const translateY = (maxTranslateY * yPercent) / 100;
+
+            // Apply the transform
+            zoomedImage.style.transform = `translate(-${translateX}px, -${translateY}px)`;
+            zoomContainer.style.display = "block";
+        });
+
+        mainImage.addEventListener("mouseleave", () => {
+            zoomContainer.style.display = "none";
+        });
+    }
+
+    // Initialize zoom on page load
+    initZoom();
+});
+
+// Update the updateMainImage function
+function updateMainImage(src, thumbnailElement) {
+    // Update main image
+    const mainImage = document.getElementById('mainImage');
+    mainImage.src = src;
+
+    // Update zoomed image
+    const zoomedImage = document.getElementById('zoomedImage');
+    zoomedImage.src = src;
+
+    // Update active state of thumbnails
+    const thumbnails = document.querySelectorAll('.thumbnail-wrapper');
+    thumbnails.forEach(thumb => thumb.classList.remove('active'));
+    thumbnailElement.parentElement.classList.add('active');
+
+    // Reset zoom container display
+    const zoomContainer = document.getElementById('zoomContainer');
+    zoomContainer.style.display = 'none';
+}
+
+    </script>
+</body>
+</html>

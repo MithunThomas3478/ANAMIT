@@ -1,0 +1,15 @@
+
+<script>
+    const sidebar = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
+    const toggleBtn = document.querySelector('.toggle-btn');
+
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+        toggleBtn.querySelector('i').classList.toggle('fa-chevron-right');
+        toggleBtn.querySelector('i').classList.toggle('fa-chevron-left');
+    });
+</script>
+</body>
+</html>

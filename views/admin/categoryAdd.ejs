@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANAMIT - Add Category</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 2rem;
+            transition: margin-left 0.3s ease, width 0.3s ease;
+            background-color: #f3f4f6;
+            width: calc(100% - var(--sidebar-width));
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .dashboard-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #6d28d9;
+            margin-bottom: 1.5rem;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 0.5rem;
+        }
+        .form-label {
+            font-weight: 500;
+            color: #374151;
+        }
+        .invalid-feedback {
+            display: block;
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .btn-primary {
+            background-color: #6d28d9;
+            border-color: #6d28d9;
+            padding: 0.5rem 1.5rem;
+        }
+        .btn-primary:hover {
+            background-color: #5b21b6;
+            border-color: #5b21b6;
+        }
+        .btn-secondary {
+            background-color: #9ca3af;
+            border-color: #9ca3af;
+        }
+        .btn-secondary:hover {
+            background-color: #6b7280;
+            border-color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/admin/adminHeader') %>
+
+    <main class="main-content">
+        <h1 class="dashboard-title">Add New Category</h1>
+        <div class="d-flex justify-content-end align-items-center mb-4">
+            <a href="/admin/category" class="btn btn-secondary">Back to Categories</a>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <form id="addCategoryForm" novalidate>
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">Category Name</label>
+                        <input 
+                            type="text" 
+                            id="categoryName" 
+                            name="name" 
+                            class="form-control" 
+                            placeholder="Enter category name" 
+                            required 
+                            minlength="2"
+                            maxlength="50"
+                        />
+                        <div class="invalid-feedback" id="nameError"></div>
+                    </div>
+                  
+                    <div class="mb-3">
+                        <label for="categoryDescription" class="form-label">Description</label>
+                        <textarea 
+                            id="categoryDescription" 
+                            name="description" 
+                            class="form-control" 
+                            rows="3" 
+                            placeholder="Enter category description" 
+                            required
+                            minlength="10"
+                            maxlength="500"
+                        ></textarea>
+                        <div class="invalid-feedback" id="descriptionError"></div>
+                    </div>
+                  
+                    <div class="form-check mb-3">
+                        <input 
+                            type="checkbox" 
+                            id="isListed" 
+                            name="isListed" 
+                            class="form-check-input" 
+                            checked
+                        />
+                        <label for="isListed" class="form-check-label">List this category</label> 
+                    </div>
+                  
+                    <button type="submit" class="btn btn-primary" id="submitButton">Add Category</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <%- include('../partials/admin/adminFooter') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('addCategoryForm');
+            const nameInput = document.getElementById('categoryName');
+            const descriptionInput = document.getElementById('categoryDescription');
+            const nameError = document.getElementById('nameError');
+            const descriptionError = document.getElementById('descriptionError');
+            const submitButton = document.getElementById('submitButton');
+
+            // Real-time validation for name
+            nameInput.addEventListener('input', function() {
+                validateName(this.value);
+            });
+
+            // Real-time validation for description
+            descriptionInput.addEventListener('input', function() {
+                validateDescription(this.value);
+            });
+
+            function validateName(name) {
+                nameError.textContent = '';
+                if (name.trim().length < 2) {
+                    nameError.textContent = 'Category name must be at least 2 characters';
+                    return false;
+                }
+                if (name.trim().length > 50) {
+                    nameError.textContent = 'Category name cannot exceed 50 characters';
+                    return false;
+                }
+                return true;
+            }
+
+            function validateDescription(description) {
+                descriptionError.textContent = '';
+                if (description.trim().length < 10) {
+                    descriptionError.textContent = 'Description must be at least 10 characters';
+                    return false;
+                }
+                if (description.trim().length > 500) {
+                    descriptionError.textContent = 'Description cannot exceed 500 characters';
+                    return false;
+                }
+                return true;
+            }
+
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                
+                // Disable submit button
+                submitButton.disabled = true;
+                
+                // Clear previous errors
+                nameError.textContent = '';
+                descriptionError.textContent = '';
+                
+                const name = nameInput.value.trim();
+                const description = descriptionInput.value.trim();
+                const isListed = document.getElementById('isListed').checked;
+
+                // Validate inputs
+                const isNameValid = validateName(name);
+                const isDescriptionValid = validateDescription(description);
+
+                if (!isNameValid || !isDescriptionValid) {
+                    submitButton.disabled = false;
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/admin/categoryAdd', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name,
+                            description,
+                            isListed
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Failed to add category');
+                    }
+
+                    await Swal.fire({
+                        title: 'Success!',
+                        text: 'Category added successfully',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+
+                    // Redirect to category list
+                    window.location.href = '/admin/category';
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: error.message || 'Something went wrong. Please try again.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                    submitButton.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

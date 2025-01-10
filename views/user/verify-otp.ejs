@@ -100,63 +100,7 @@
     </style> 
 </head> 
 <body> 
-    <!-- <div class="container"> 
-        <div class="row justify-content-center"> 
-            <div class="col-12 col-sm-10 col-md-8 col-lg-6"> 
-                <div class="otp-card"> 
-                    <h2 class="text-center mb-4">OTP Verification</h2> 
-                    <p class="text-center mb-4">Enter the 6-digit code sent to your phone</p> 
-                    <form id="otp-form" > 
-                        <div class="otp-input-group mb-4"> 
-                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,1)" name="otp-text-1"> 
-                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,2)" name="otp-text-2"> 
-                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,3)" name="otp-text-3"> 
-                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,4)" name="otp-text-4"> 
-                            <input type="text" class="form-control otp-input" maxlength="1"oninput="moveToNext(this,5)" name="otp-text-5"> 
-                            <input type="text" class="form-control otp-input" maxlength="1" oninput="moveToNext(this,6)"name="otp-text-6"> 
-                        </div> 
-                        <div class="d-grid"> 
-                            <button type="submit" class="btn btn-primary btn-verify"  id="verifyBtn">Verify OTP</button> 
-                        </div> 
-                    </form> 
-                   
-                        <div class="text-center mt-3"> 
-                            <p class="mb-2"> 
-                                Didn't receive the code?  
-                                <a href="#" class="resend-link" id="resent-otp" onclick="resetTimer(60)">Resend OTP</a> 
-                            </p> 
-                            <p class="timer" id="timer"> OTP Expires in 00:30</p>    
-                        </div> 
-                  
-                    
-                </div> 
-            </div> 
-        </div> 
-    </div>  -->
-    <!-- <div class="container"> 
-        <div class="row justify-content-center"> 
-            <div class="col-12 col-sm-10 col-md-8 col-lg-6"> 
-                <div class="otp-card"> 
-                    <h2 class="text-center mb-4">OTP Verification</h2> 
-                    <p class="text-center mb-4">Enter the 6-digit code sent to your phone</p> 
-                    <form id="otp-form"> 
-                       
-                        <div class="d-grid"> 
-                            <button type="submit" class="btn btn-primary btn-verify" id="verifyBtn">Verify OTP</button> 
-                        </div> 
-                    </form> 
-                    <div class="text-center mt-3">  
-                        <p class="mb-2"> 
-                            Didn't receive the code?  
-                            <a href="#" class="resend-link" id="resend-otp" >Resend OTP</a> 
-                        </p> 
-                        <p class="timer" id="timer">OTP Expires in 00:60</p>
-                    </div> 
-                </div> 
-            </div> 
-        </div> 
-    </div>
-     -->
+   
 
      <div class="container">
         <div class="row justify-content-center">
@@ -317,6 +261,7 @@ document.getElementById("otp-form").addEventListener("submit", async (e) => {
             Swal.fire({
                 icon: "error",
                 title: "Invalid OTP",
+                
                 text: result.message || "Please try again.",
             });
         }

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANAMIT - Topwear for Men</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/user/categoryWear.css">
+    
+
+</head>
+<body>
+    
+
+    <%- include('../../views/partials/user/header.ejs') %>
+<main class="height-75vh">
+
+    <div class="container" style="padding-top: 100px;">
+        <div class="custom-breadcrumb">
+            <a href="/">Home</a> > <a href="/clothing">Clothing</a> > Men's Topwear
+        </div>
+
+        <div class="row">
+            <!-- Filters Column -->
+            <div class="col-12 col-lg-3">
+                <div class="filters-container" style="position: absolute; left: 0; top: 50;">
+                    <div class="filters-header d-flex justify-content-between align-items-center">
+                        <span>Filters</span>
+                        <a href="/category/mens-topwear" class="clear-all">CLEAR ALL</a>
+                    </div>
+
+                  
+
+                        <!-- Brand Filter -->
+                        <div class="filter-section">
+                            <div class="filter-title">BRAND</div>
+                            <% filters.brands.forEach(brand => { %>
+                                <div class="filter-option">
+                                    <input type="checkbox" class="filter-checkbox" 
+                                           id="brand-<%= brand %>" 
+                                           name="brand" 
+                                           value="<%= brand %>"
+                                           <%= filters.selected.brand === brand ? 'checked' : '' %>>
+                                    <label class="filter-label" for="brand-<%= brand %>">
+                                        <%= brand %>
+                                        <span class="filter-count">
+                                            (<%= products.filter(p => p.name.includes(brand)).length %>)
+                                        </span>
+                                    </label>
+                                </div>
+                            <% }); %>
+                        </div>
+
+                        <!-- Price Filter -->
+                        <div class="filter-section">
+                            <div class="filter-title">PRICE</div>
+                            <input type="range" class="price-slider" 
+                                   min="<%= filters.priceRange.min %>" 
+                                   max="<%= filters.priceRange.max %>" 
+                                   step="100">
+                            <div class="price-inputs">
+                                <input type="number" class="price-input" name="minPrice" 
+                                       placeholder="Min" value="<%= filters.priceRange.selected.min %>">
+                                <input type="number" class="price-input" name="maxPrice" 
+                                       placeholder="Max" value="<%= filters.priceRange.selected.max %>">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-9">
+                <div class="product-container">
+                    <div class="row">
+                        <% products.forEach(product => { %>
+                            <div class="col-6 col-md-4">
+                                <!-- Wrap the product card in an anchor tag -->
+                                <a href="/product/<%= product.id %>" class="text-decoration-none">
+                                    <div class="product-card">
+                                        <div class="product-image-container">
+                                            <img src="<%= product.image %>" 
+                                                 class="product-image" 
+                                                 alt="<%= product.name %>">
+                                            <button class="wishlist-button" onclick="event.preventDefault();">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" 
+                                                     stroke="currentColor" stroke-width="2">
+                                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div class="product-details">
+                                            <div class="product-brand"><%= product.name.split(' ')[0] %></div>
+                                            <div class="product-name"><%= product.description %></div>
+                                            <div class="price-container">
+                                                <span class="current-price">₹<%= product.price %></span>
+                                                <% if (product.discount > 0) { %>
+                                                    <span class="original-price">
+                                                        ₹<%= Math.round(product.originalPrice) %>
+                                                    </span>
+                                                    <span class="discount"><%= product.discount %>% off</span>
+                                                <% } %>
+                                            </div>
+                                            <% if (product.status !== 'Available') { %>
+                                                <div class="out-of-stock">Out of Stock</div>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        <% }); %>
+                    </div>
+                </div>
+            </div>
+
+</main>
+   
+    <%- include('../partials/user/footer') %>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Handle filter form submission
+        document.querySelectorAll('.filter-checkbox, .price-input').forEach(element => {
+            element.addEventListener('change', () => {
+                document.getElementById('filterForm').submit();
+            });
+        });
+
+        // Handle price range slider
+        const priceSlider = document.querySelector('.price-slider');
+        const minPriceInput = document.querySelector('input[name="minPrice"]');
+        const maxPriceInput = document.querySelector('input[name="maxPrice"]');
+
+        priceSlider.addEventListener('input', (e) => {
+            const value = e.target.value;
+            maxPriceInput.value = value;
+        });
+    </script>
+     
+</body>
+</html>

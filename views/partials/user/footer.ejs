@@ -1,77 +1,138 @@
-<!-- footer -->
-<footer class="footer">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-3">
-                <h5>Need Help</h5>
-                <ul class="list-unstyled">
-                    <li><a href="#">Contact Us</a></li>
-                    <li><a href="#">Track Order</a></li>
-                    <li><a href="#">Return & Exchange Policy</a></li>
-                    <li><a href="#">FAQs</a></li>
-                    <li><a href="#">Career</a></li>
-                </ul>
-            </div>
-            <div class="col-md-3">
-                <h5>Company</h5>
-                <ul class="list-unstyled">
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">ANAMIT Blog</a></li>
-                    <li><a href="#">Collaboration</a></li>
-                    <li><a href="#">Media</a></li>
-                </ul>
-            </div>
-            <div class="col-md-3">
-                <h5>More Info</h5>
-                <ul class="list-unstyled">
-                    <li><a href="#">Terms and Condition</a></li>
-                    <li><a href="#">Privacy Policy</a></li>
-                    <li><a href="#">Shipping Policy</a></li>
-                    <li><a href="#">Sitemap</a></li>
-                </ul>
-            </div>
-            <div class="col-md-3">
-                <h5>Social Media</h5>
-                <div class="social-icons">
-                    <a href="#"><i class="bi bi-instagram"></i></a>
-                    <a href="#"><i class="bi bi-twitter"></i></a>
-                    <a href="#"><i class="bi bi-youtube"></i></a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANAMIT - Footer Example</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <style>
+        html, body {
+            height: 100%;
+        }
+        
+        .content {
+            flex: 1 0 auto;
+        }
+        .footer {
+            flex-shrink: 0;
+            background-color: #e9ecef;
+            padding: 40px 0;
+            color: #6c757d;
+        }
+        .footer h5 {
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .footer a {
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        .footer .copyright {
+            border-top: 1px solid #dee2e6;
+            margin-top: 20px;
+            padding-top: 10px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .social-icons a {
+            color: #6c757d;
+            margin-right: 15px;
+            font-size: 18px;
+        }
+        .social-icons a:hover {
+            color: #000;
+        }
+
+        @media (max-width: 768px) {
+            .footer {
+                text-align: center;
+            }
+            .footer .row > div {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <!-- Your page content goes here -->
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3">
+                    <h5>Need Help</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Track Order</a></li>
+                        <li><a href="#">Return & Exchange Policy</a></li>
+                        <li><a href="#">FAQs</a></li>
+                        <li><a href="#">Career</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Company</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">ANAMIT Blog</a></li>
+                        <li><a href="#">Collaboration</a></li>
+                        <li><a href="#">Media</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>More Info</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#">Terms and Condition</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Shipping Policy</a></li>
+                        <li><a href="#">Sitemap</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Social Media</h5>
+                    <div class="social-icons">
+                        <a href="#"><i class="bi bi-instagram"></i></a>
+                        <a href="#"><i class="bi bi-twitter"></i></a>
+                        <a href="#"><i class="bi bi-youtube"></i></a>
+                    </div>
                 </div>
             </div>
+            <div class="copyright">
+                Copyright &copy; 2024 Anamit Folks Pvt Ltd. All rights reserved.
+            </div>
         </div>
-        <div class="copyright">
-            Copyright &copy; 2024 Anamit Folks Pvt Ltd. All rights reserved.
-        </div>
-    </div>
-</footer>
+    </footer>
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-<!-- Bootstrap Icons -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-</body>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-function toggleDropdown() {
-  const dropdown = document.getElementById("dropdown");
-  dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    // Function to toggle the dropdown menu
+    function toggleDropdown() {
+    const dropdown = document.getElementById('dropdown');
+    if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+        dropdown.style.display = 'block';
+    } else {
+        dropdown.style.display = 'none';
+    }
 }
 
-// Close dropdown when clicking outside
-document.addEventListener("click", (event) => {
-  const dropdown = document.getElementById("dropdown");
-  if (!event.target.closest(".profile-menu")) {
-    dropdown.style.display = "none";
-  }
-});
+// Close the dropdown if clicked outside
+document.addEventListener('click', function (event) {
+    const dropdown = document.getElementById('dropdown');
+    const profileIcon = document.querySelector('.bi-person-circle');
 
-document.querySelectorAll('.profile-menu .icon, .bi-heart, .bi-cart-fill').forEach(icon => {
-  icon.addEventListener('focus', (event) => {
-    event.target.blur(); // Removes focus from the icon and stops the cursor from blinking
-  });
+    // Check if the click is outside the dropdown or the profile icon
+    if (!dropdown.contains(event.target) && !profileIcon.contains(event.target)) {
+        dropdown.style.display = 'none';
+    }
 });
-
 
 </script>
 
+</body>
 </html>

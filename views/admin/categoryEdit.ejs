@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/admin/categoryEdit.css">
+    <title>Document</title>
+</head>
+<body>
+    <%- include('../partials/admin/adminHeader') %>
+    <main class="main-content" style="margin-left: var(--sidebar-width); padding: 2rem; transition: margin-left 0.3s ease, width 0.3s ease; background-color: #f3f4f6; width: calc(100% - var(--sidebar-width)); min-height: 100vh; box-sizing: border-box;">
+        <h1 class="dashboard-title" style="font-size: 2rem; font-weight: 700; color: #6d28d9; margin-bottom: 1.5rem;">Categories Edit</h1>
+        <div class="container mt-4">
+            <div class="card" style="background-color: white; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #4f46e5; color: white; padding: 1rem; border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem;">
+                    <h5 style="margin: 0; font-size: 1.25rem; font-weight: 600;">Edit Category</h5>
+                    <a href="/admin/Category" class="btn btn-secondary btn-sm" style="background-color: #9ca3af; border: none; padding: 0.375rem 0.75rem; border-radius: 0.25rem; color: white; text-decoration: none; font-weight: 500; transition: background-color 0.3s ease;">Back</a>
+                </div>
+                <div class="card-body" style="padding: 1.5rem;">
+                    <form id="editCategoryForm" onsubmit="handleEdit(event)">
+                        <input type="hidden" id="categoryId" value="<%= category._id %>">
+                        <div class="mb-3">
+                            <label for="name" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #4b5563;">Category Name</label>
+                            <input type="text" id="name" class="form-control" value="<%= category.name %>" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.25rem; font-size: 1rem; transition: border-color 0.3s ease;">
+                        </div>
+    
+                        <div class="mb-3">
+                            <label for="description" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #4b5563;">Description</label>
+                            <textarea id="description" class="form-control" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.25rem; font-size: 1rem; transition: border-color 0.3s ease; min-height: 100px;"><%= category.description %></textarea>
+                        </div>
+    
+                        <div class="mb-3">
+                            <div class="form-check" style="display: flex; align-items: center;">
+                                <input type="checkbox" id="isListed" class="form-check-input" <%= category.isListed ? 'checked' : '' %> style="margin-right: 0.5rem; cursor: pointer;">
+                                <label for="isListed" class="form-check-label" style="color: #4b5563; cursor: pointer;">List this category</label>
+                            </div>
+                        </div>
+    
+                        <button type="submit" class="btn btn-primary" id="submitBtn" style="background-color: #6d28d9; border: none; padding: 0.5rem 1rem; border-radius: 0.25rem; color: white; font-weight: 500; transition: background-color 0.3s ease;">Update Category</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+    <%- include('../partials/admin/adminFooter')%>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+async function handleEdit(event) {
+    event.preventDefault();
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+
+    try {
+        const formData = {
+            name: document.getElementById('name').value.trim(),
+            description: document.getElementById('description').value.trim(),
+            isListed: document.getElementById('isListed').checked
+        };
+
+        const response = await fetch(`/admin/category/update/${document.getElementById('categoryId').value}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message);
+        }
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: 'Category updated successfully',
+            showConfirmButton: false,
+            timer: 1500
+        });
+
+        window.location.href = '/admin/category';
+
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: error.message
+        });
+    } finally {
+        submitBtn.disabled = false;
+    }
+}
+</script>
+
+
+</body>
+</html>
+
+
