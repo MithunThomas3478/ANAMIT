@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const slugify = require('slugify');
 
 const categorySchema = new mongoose.Schema({
     name: {
@@ -6,7 +7,8 @@ const categorySchema = new mongoose.Schema({
         required: [true, 'Category name is required'],
         trim: true,
         minlength: [2, 'Category name must be at least 2 characters'],
-        maxlength: [50, 'Category name cannot exceed 50 characters']
+        maxlength: [50, 'Category name cannot exceed 50 characters'],
+        unique: true
     },
     description: {
         type: String,
@@ -18,44 +20,33 @@ const categorySchema = new mongoose.Schema({
     slug: {
         type: String,
         unique: true,
-        required: true,
-        trim: true,
         lowercase: true
     },
     isListed: {
         type: Boolean,
         default: true
     },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-        immutable: true
-    },
-    updatedAt: {
-        type: Date,
-        default: Date.now
-    },
     categoryOffer: {
         type: Number,
         default: 0,
         min: [0, 'Offer cannot be negative'],
         max: [100, 'Offer cannot exceed 100%']
-    },
-    productOffer: {
-        type: Number,
-        default: 0,
-        min: [0, 'Offer cannot be negative'],
-        max: [100, 'Offer cannot exceed 100%']
     }
+}, {
+    timestamps: true // Automatically manage createdAt and updatedAt
 });
 
-// Add updatedAt middleware
+// Generate slug before saving
 categorySchema.pre('save', function(next) {
-    this.updatedAt = new Date();
+    if (this.isModified('name')) {
+        this.slug = slugify(this.name, {
+            lower: true,
+            strict: true
+        });
+    }
     next();
 });
 
-categorySchema.index({ name: 1 });
 
 const Category = mongoose.model('Category', categorySchema);
 

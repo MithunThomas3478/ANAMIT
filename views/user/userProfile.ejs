@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 3rem auto;
+            padding: 0 3rem;
+            width: 90%;
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            font-size: 32px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .profile-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 3rem;
+            min-height: 600px;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            height: fit-content;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: #f0f0f0;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-avatar i {
+            font-size: 48px;
+            color: #999;
+        }
+
+        .edit-btn {
+            display: flex; /* Enables flexbox */
+            justify-content: center; /* Centers horizontally */
+            align-items: center; /* Centers vertically */
+            margin: auto; /* Ensures centering within its container */
+            background-color: #ff8800;
+            border-radius: 8px;
+            border: none;
+            color: #ffffff;
+            font-size: 16px;
+            height: 30px; /* Optional: Set a height for better centering */
+            width: 100px; /* Optional: Set a width for better centering */
+        }
+
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            margin: 0.75rem 0;
+            cursor: pointer;
+            border-radius: 8px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+
+        .menu-item:hover {
+            background-color: #f5f5f5;
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background-color: #e7f3ff;
+            color: #0066cc;
+        }
+
+        .menu-item i {
+            margin-right: 1rem;
+            width: 24px;
+            font-size: 18px;
+        }
+
+        .logout-btn {
+            background: #ff8800;
+            color: white;
+            border: none;
+            padding: 1.25rem;
+            width: 100%;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 3rem;
+            font-weight: bold;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #ff7700;
+        }
+
+        /* Profile Content Styles */
+        .profile-content {
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        .profile-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 2.5rem;
+            font-weight: bold;
+        }
+
+        .profile-info {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .info-field {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            padding: 1.5rem;
+            background: #f8f8f8;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .field-label {
+            min-width: 120px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .field-value {
+            flex-grow: 1;
+            color: #333;
+            font-size: 16px;
+        }
+
+      
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.75rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f5f5f5;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #ff8800;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            background: #eee;
+            border: none;
+            color: #333;
+        }
+
+        .btn-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-save {
+            background: #ff8800;
+            border: none;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #ff7700;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                width: 95%;
+                padding: 0 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .profile-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .container {
+                padding: 0 1rem;
+            }
+
+            .profile-content {
+                padding: 2rem;
+            }
+
+            .info-field {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .edit-icon {
+                top: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/user/header')%>
+    <div class="container">
+        <h1 class="page-title">MY ACCOUNT</h1>
+        
+        <div class="profile-container">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="profile-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <button class="edit-btn">Edit</button>
+                
+                <a href="#" class="menu-item active">
+                    <i class="fas fa-user"></i>
+                    Account Overview
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-box"></i>
+                    My Orders
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Manage Address
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-wallet"></i>
+                    Wallet
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-lock"></i>
+                    Manage Password
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-heart"></i>
+                    Wishlist
+                </a>
+                
+                <button class="logout-btn">LOG OUT</button>
+            </div>
+
+            <!-- Profile Content -->
+            <div class="profile-content">
+                <h2 class="profile-title">Account Overview</h2>
+
+                <div class="profile-info">
+                    <div class="info-field">
+                        <span class="field-label">Name</span>
+                        <span class="field-value"><%= user.name %></span>
+                       
+                    </div>
+                
+                    <div class="info-field">
+                        <span class="field-label">Email</span>
+                        <span class="field-value"><%= user.email %></span>
+                       
+                    </div>
+                
+                    <div class="info-field">
+                        <span class="field-label">Phone</span>
+                        <span class="field-value"><%= user.phone || 'Not provided' %></span>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    <%- include('../partials/user/footer')%>
+    <script>
+        // Show/Hide edit form
+        function showEditForm() {
+            document.querySelector('.profile-info').style.display = 'none';
+            document.querySelector('.edit-form').style.display = 'block';
+        }
+
+        function hideEditForm() {
+            document.querySelector('.profile-info').style.display = 'grid';
+            document.querySelector('.edit-form').style.display = 'none';
+        }
+
+        // Add click handlers to edit icons
+        document.querySelectorAll('.edit-icon').forEach(icon => {
+            icon.addEventListener('click', showEditForm);
+        });
+
+        // Handle form submission
+        document.querySelector('.edit-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // Here you would typically send the data to a server
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+
+            // Update displayed values
+            document.querySelectorAll('.field-value')[0].textContent = name;
+            document.querySelectorAll('.field-value')[1].textContent = email;
+            document.querySelectorAll('.field-value')[2].textContent = phone;
+
+            hideEditForm();
+        });
+
+        // Menu item click handler
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+
+        const logoutButton = document.querySelector('.logout-btn');
+
+    // Add a click event listener to the button
+    logoutButton.addEventListener('click', () => {
+      // Redirect to the /logout route
+      window.location.href = '/logout';
+    });
+    </script>
+</body>
+</html>

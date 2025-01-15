@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Account - Anamit</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        /* Main Content Styles */
+        .container {
+            max-width: 1600px; /* Increased from 1200px */
+            margin: 3rem auto; /* Increased from 2rem */
+            padding: 0 3rem; /* Increased from 1rem */
+            width: 90%; /* Added to ensure consistent width */
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 3rem; /* Increased from 2rem */
+            font-size: 32px; /* Increased from 24px */
+            color: #333;
+            font-weight: bold;
+        }
+
+        .profile-container {
+            display: grid;
+            grid-template-columns: 300px 1fr; /* Increased sidebar width from 250px */
+            gap: 3rem; /* Increased from 2rem */
+            min-height: 600px; /* Added minimum height */
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            background: white;
+            border-radius: 12px; /* Increased from 8px */
+            padding: 3rem 2rem; /* Increased padding */
+            height: fit-content;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .profile-avatar {
+            width: 120px; /* Increased from 100px */
+            height: 120px; /* Increased from 100px */
+            background: #f0f0f0;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-avatar i {
+            font-size: 48px; /* Increased from 40px */
+            color: #999;
+        }
+
+        .edit-text {
+            text-align: center;
+            margin-bottom: 3rem; /* Increased from 2rem */
+            color: #333;
+            font-size: 18px; /* Added font size */
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem; /* Increased padding */
+            margin: 0.75rem 0; /* Increased margin */
+            cursor: pointer;
+            border-radius: 8px; /* Increased from 4px */
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 16px; /* Added font size */
+        }
+
+        .menu-item:hover {
+            background-color: #f5f5f5;
+            transform: translateX(5px);
+        }
+
+        .menu-item i {
+            margin-right: 1rem; /* Increased from 0.75rem */
+            width: 24px; /* Increased from 20px */
+            font-size: 18px; /* Added font size */
+        }
+
+        .logout-btn {
+            background: #ff8800;
+            color: white;
+            border: none;
+            padding: 1.25rem; /* Increased from 1rem */
+            width: 100%;
+            border-radius: 8px; /* Increased from 4px */
+            cursor: pointer;
+            margin-top: 3rem; /* Increased from 2rem */
+            font-weight: bold;
+            font-size: 16px; /* Added font size */
+            transition: background-color 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #ff7700;
+        }
+
+        /* Form Styles */
+        .profile-form {
+            background: white;
+            padding: 3rem; /* Increased from 2rem */
+            border-radius: 12px; /* Increased from 8px */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        .form-title {
+            font-size: 24px; /* Increased from 20px */
+            color: #333;
+            margin-bottom: 3rem; /* Increased from 2rem */
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 2rem; /* Increased from 1.5rem */
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.75rem; /* Increased from 0.5rem */
+            color: #333;
+            font-size: 16px; /* Added font size */
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem; /* Increased from 0.75rem */
+            border: 1px solid #ddd;
+            border-radius: 8px; /* Increased from 4px */
+            background: #f5f5f5;
+            font-size: 16px; /* Added font size */
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #ff8800;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1.5rem; /* Increased from 1rem */
+            margin-top: 3rem; /* Increased from 2rem */
+        }
+
+        .btn {
+            padding: 1rem 2rem; /* Increased padding */
+            border-radius: 8px; /* Increased from 4px */
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 16px; /* Added font size */
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            background: #eee;
+            border: none;
+            color: #333;
+        }
+
+        .btn-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-save {
+            background: #ff8800;
+            border: none;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #ff7700;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                width: 95%;
+                padding: 0 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .profile-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .container {
+                padding: 0 1rem;
+            }
+
+            .profile-form {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Content -->
+    <div class="container">
+        <h1 class="page-title">MY ACCOUNT</h1>
+        
+        <div class="profile-container">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="profile-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <p class="edit-text">Edit</p>
+                
+                <a href="#" class="menu-item">
+                    <i class="fas fa-user"></i>
+                    Account Overview
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-box"></i>
+                    My Orders
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Manage Address
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-wallet"></i>
+                    Wallet
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-lock"></i>
+                    Manage Password
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-heart"></i>
+                    Wishlist
+                </a>
+                
+                <button class="logout-btn">LOG OUT</button>
+            </div>
+
+            <!-- Profile Form -->
+            <div class="profile-form">
+                <h2 class="form-title">Edit your Profile</h2>
+                
+                <div class="form-group">
+                    <label for="firstName">First name</label>
+                    <input type="text" id="firstName" name="firstName" placeholder="Enter your first name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="lastName">Last Name</label>
+                    <input type="text" id="lastName" name="lastName" placeholder="Enter your last name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" placeholder="Enter your phone number">
+                </div>
+                
+                <div class="form-actions">
+                    <button class="btn btn-cancel">Cancel</button>
+                    <button class="btn btn-save">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add event listeners for form submission
+        document.querySelector('.profile-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            // Add your form submission logic here
+        });
+
+        // Add event listeners for navigation
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Add your navigation logic here
+            });
+        });
+
+        // Logout functionality
+        document.querySelector('.logout-btn').addEventListener('click', () => {
+            // Add your logout logic here
+        });
+    </script>
+</body>
+</html>

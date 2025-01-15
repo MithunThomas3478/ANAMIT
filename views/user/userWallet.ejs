@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wallet</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 3rem auto;
+            padding: 0 3rem;
+            width: 90%;
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            font-size: 32px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .profile-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 3rem;
+            min-height: 600px;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            height: fit-content;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: #f0f0f0;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-avatar i {
+            font-size: 48px;
+            color: #999;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            margin: 0.75rem 0;
+            cursor: pointer;
+            border-radius: 8px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+
+        .menu-item:hover {
+            background-color: #f5f5f5;
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background-color: #e7f3ff;
+            color: #0066cc;
+        }
+
+        .menu-item i {
+            margin-right: 1rem;
+            width: 24px;
+            font-size: 18px;
+        }
+
+        .logout-btn {
+            background: #ff8800;
+            color: white;
+            border: none;
+            padding: 1.25rem;
+            width: 100%;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 3rem;
+            font-weight: bold;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #ff7700;
+        }
+
+        /* Wallet Content Styles */
+        .wallet-container {
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .wallet-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 2.5rem;
+            font-weight: bold;
+        }
+
+        .wallet-balance {
+            background: linear-gradient(135deg, #ff8800 0%, #ff6600 100%);
+            border-radius: 12px;
+            padding: 2rem;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        .balance-label {
+            font-size: 16px;
+            margin-bottom: 0.5rem;
+        }
+
+        .balance-amount {
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .wallet-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .btn-add-money {
+            background: #ff8800;
+            color: white;
+        }
+
+        .btn-add-money:hover {
+            background: #ff7700;
+            transform: translateY(-2px);
+        }
+
+        .btn-withdraw {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-withdraw:hover {
+            background: #e5e5e5;
+            transform: translateY(-2px);
+        }
+
+        .transactions-section {
+            margin-top: 3rem;
+        }
+
+        .section-title {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .transaction-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: transform 0.3s;
+        }
+
+        .transaction-item:hover {
+            transform: translateX(5px);
+        }
+
+        .transaction-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .transaction-icon {
+            width: 40px;
+            height: 40px;
+            background: #e7f3ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0066cc;
+        }
+
+        .transaction-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .transaction-title {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .transaction-date {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .transaction-amount {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .amount-credit {
+            color: #28a745;
+        }
+
+        .amount-debit {
+            color: #dc3545;
+        }
+
+        /* Add Money Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 1.5rem;
+            font-weight: bold;
+        }
+
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input {
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                width: 95%;
+                padding: 0 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .profile-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .container {
+                padding: 0 1rem;
+            }
+
+            .wallet-container {
+                padding: 2rem;
+            }
+
+            .wallet-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="page-title">MY ACCOUNT</h1>
+        
+        <div class="profile-container">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="profile-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                
+                <a href="#" class="menu-item">
+                    <i class="fas fa-user"></i>
+                    Account Overview
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-box"></i>
+                    My Orders
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Manage Address
+                </a>
+                <a href="#" class="menu-item active">
+                    <i class="fas fa-wallet"></i>
+                    Wallet
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-lock"></i>
+                    Manage Password
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-heart"></i>
+                    Wishlist
+                </a>
+                
+                <button class="logout-btn">LOG OUT</button>
+            </div>
+
+            <!-- Wallet Content -->
+            <div class="wallet-container">
+                <h2 class="wallet-title">My Wallet</h2>
+                
+                <div class="wallet-balance">
+                    <div class="balance-label">Available Balance</div>
+                    <div class="balance-amount">₹5,000.00</div>
+                </div>
+
+                <div class="wallet-actions">
+                    <button class="action-btn btn-add-money" onclick="showAddMoneyModal()">
+                        <i class="fas fa-plus"></i>
+                        Add Money
+                    </button>
+                    <button class="action-btn btn-withdraw">
+                        <i class="fas fa-arrow-right"></i>
+                        Withdraw
+                    </button>
+                </div>
+
+                <div class="transactions-section">
+                    <h3 class="section-title">Recent Transactions</h3>
+                    <div class="transaction-list">
+                        <div class="transaction-item">
+                            <div class="transaction-info">
+                                <div class="transaction-icon">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                <div class="transaction-details">
+                                    <div class="transaction-title">Money Added</div>
+                                    <div class="transaction-date">Jan 15, 2025</div>
+                                </div>
+                            </div>
+                            <div class="transaction-amount amount-credit">+₹2,000.00</div>
+                        </div>
+
+                        <div class="transaction-item">
+                            <div class="transaction-info">
+                                <div class="transaction-icon">
+                                    <i class="fas fa-shopping-bag"></i>
+                                </div>
+                                <div class="transaction-details">
+                                    <div class="transaction-title">Order Payment</div>
+                                    <div class="transaction-date">Jan 14, 2025</div>
+                                </div>
+                            </div>
+                            <div class="transaction-amount amount-debit">-₹1,500.00</div>
+                        </div>
+
+                        <div class="transaction-item">
+                            <div class="transaction-info">
+                                <div class="transaction-icon">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                <div class="transaction-details">
+                                    <div class="transaction-title">Money Added</div>
+                                    <div class="transaction-date">Jan 10, 2025</div>
+                                </div>
+                            </div>
+                            <div class="transaction-amount amount-credit">+₹5,000.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Money Modal -->
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal" id="addMoneyModal">
+        <h3 class="modal-title">Add Money to Wallet</h3>
+        <form class="modal-form" onsubmit="handleAddMoney(event)">
+            <div class="form-group">
+                <label for="amount">Amount (₹)</label>
+                <input type="number" id="amount" name="amount" min="100" step="100" required>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="action-btn btn-withdraw" onclick="hideAddMoneyModal()">Cancel</button>
+                <button type="submit" class="action-btn btn-add-money">Add Money</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function showAddMoneyModal() {
+            document.getElementById('modalOverlay').style.display = 'block';
+            document.getElementById('addMoneyModal').style.display = 'block';
+        }
+
+        function hideAddMoneyModal() {
+            document.getElementById('modalOverlay').style.display = 'none';
+            document.getElementById('addMoneyModal').style.display = 'none';
+        }
+
+        function handleAddMoney(event) {
+            event.preventDefault();
+            const amount = document.getElementById('amount').value;
+            alert(`Adding ₹${amount} to your wallet`);
+            hideAddMoneyModal();
+        }
+
+        // Menu item click handler
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+
+        // Close modal when clicking overlay

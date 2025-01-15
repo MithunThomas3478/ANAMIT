@@ -60,7 +60,7 @@ router.put('/category/update/:id',categoryController.updateCategory);
 router.patch('/category/:id/toggle-status', categoryController.toggleStatus);
 router.delete('/category/:id/delete',categoryController.deleteCategory);
 
-router.delete('/product/delete/:id', productController.deleteProduct);
+
 router.get('/addProduct',productController.loadAddCategory);
 router.post('/addProduct',newUploads,productController.addProducts);
 router.get('/product',productController.loadProductPage);
@@ -78,4 +78,4 @@ router.get('/editProduct',productController.loadEditProduct);
 router.post('/editProduct/:id',newUploads,productController.editProduct);
 
 
-module.exports = router;
+module.exports = router;    

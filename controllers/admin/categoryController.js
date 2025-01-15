@@ -2,31 +2,53 @@ const Category = require("../../models/categorySchema");
 
 const loadCategory = async (req, res) => {
     try {
-      const page = parseInt(req.query.page, 10) || 1; // Current page number
-      const pageSize = 4; // Number of items per page
-      const skip = (page - 1) * pageSize; // Calculate offset for pagination
-  
-      // Fetch paginated categories and total count
-      const [categories, totalCount] = await Promise.all([
-        Category.find().skip(skip).limit(pageSize),
-        Category.countDocuments(),
-      ]);
-  
-      const totalPages = Math.ceil(totalCount / pageSize); // Calculate total pages
-  
-      // Pass variables to the EJS template
-      res.render('categoryManagement', {
-        categories,
-        currentPage: page,
-        totalPages,
-        pageSize, // Pass pageSize to the template
-      });
+        const page = parseInt(req.query.page, 10) || 1;
+        const pageSize = 4;
+        const skip = (page - 1) * pageSize;
+
+        // Enhanced query with explicit field selection and sorting
+        const [categories, totalCount] = await Promise.all([
+            Category.find({})
+                .select('name description isListed createdAt') // Explicitly select fields
+                .sort({ createdAt: -1 }) // Sort by creation date, newest first
+                .skip(skip)
+                .limit(pageSize)
+                .lean(), // Convert to plain JavaScript objects for better performance
+            Category.countDocuments()
+        ]);
+
+        // Log categories for debugging
+        console.log('Fetched categories:', categories);
+
+        const totalPages = Math.ceil(totalCount / pageSize);
+        const startIndex = (page - 1) * pageSize;
+        const endIndex = Math.min(startIndex + pageSize, totalCount);
+
+        res.render('categoryManagement', {
+            categories,
+            currentPage: page,
+            totalPages,
+            pageSize,
+            totalCount,
+            startIndex,
+            endIndex,
+            error: null
+        });
+
     } catch (error) {
-      console.error('Error fetching categories:', error);
-      res.status(500).send('An error occurred while fetching categories.');
+        console.error('Error fetching categories:', error);
+        res.render('categoryManagement', {
+            categories: [],
+            currentPage: 1,
+            totalPages: 0,
+            pageSize: 4,
+            totalCount: 0,
+            startIndex: 0,
+            endIndex: 0,
+            error: 'Failed to load categories'
+        });
     }
-  };
-  
+};
 
 
 const renderAddCategoryForm = (req, res) => {

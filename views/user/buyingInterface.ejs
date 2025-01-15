@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Similar Products Styles */
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .carousel-control-prev,
+        .carousel-control-next {
+            width: 40px;
+            height: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0,0,0,0.5);
+            border-radius: 50%;
+            opacity: 0.8;
+        }
+
+        .carousel-control-prev:hover,
+        .carousel-control-next:hover {
+            opacity: 1;
+        }
+
+        .card-img-top {
+            height: 200px;
+            object-fit: cover;
+        }
+
+        /* Original Styles */
+        .zoom-container {
+            position: relative;
+            overflow: hidden;
+            cursor: zoom-in;
+        }
+
+        .zoom-container img {
+            transition: transform 0.3s ease;
+        }
+
+        .zoom-container:hover img {
+            transform: scale(2);
+        }
+
+        .thumbnail {
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        .thumbnail:hover {
+            border-color: #007bff !important;
+        }
+
+        .thumbnail.active {
+            border: 2px solid #007bff !important;
+        }
+
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.active {
+            border: 2px solid #007bff;
+        }
+
+        .price-tag {
+            font-size: 2rem;
+            color: #212529;
+        }
+
+        .original-price {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+
+        .discount {
+            color: #28a745;
+        }
+
+        .feature-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+        }
+
+        .btn-custom {
+            transition: all 0.3s ease;
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .product-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1;
+        }
+
+        .rating-stars {
+            color: #ffc107;
+        }
+
+        .size-guide-popup {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+
+        .zoom-container {
+            position: relative;
+            overflow: hidden;
+            cursor: zoom-in;
+        }
+
+        .zoom-container img {
+            transition: transform 0.3s ease;
+        }
+
+        .zoom-container:hover img {
+            transform: scale(2);
+        }
+
+        .thumbnail {
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        .thumbnail:hover {
+            border-color: #007bff !important;
+        }
+
+        .thumbnail.active {
+            border: 2px solid #007bff !important;
+        }
+
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.active {
+            border: 2px solid #007bff;
+        }
+
+        .quantity-selector {
+            max-width: 120px;
+        }
+
+        @media (max-width: 768px) {
+            .zoom-container:hover img {
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row">
+            <!-- Product Images Section -->
+            <div class="col-md-6 mb-4">
+                <div class="zoom-container rounded border">
+                    <% if (product.productOffer > 0) { %>
+                        <span class="badge bg-danger product-badge"><%= product.productOffer %>% OFF!</span>
+                    <% } %>
+                    <img src="<%= product.variants[0].productImage[0] %>" 
+                         id="mainImage" 
+                         class="img-fluid" 
+                         alt="<%= product.name %>">
+                </div>
+                <div class="row mt-3">
+                    <% product.variants[0].productImage.forEach((image, index) => { %>
+                        <div class="col-3">
+                            <img src="<%= image %>" 
+                                 class="img-fluid thumbnail <%= index === 0 ? 'active' : '' %> border rounded" 
+                                 onclick="changeImage(this)" 
+                                 alt="<%= product.name %> view <%= index + 1 %>">
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+
+            <!-- Product Details Section -->
+            <div class="col-md-6">
+                <h1 class="h2 mb-2"><%= product.name %></h1>
+
+                <div class="mb-4 price-container">
+                    <% const basePrice = product.variants[0].colorVariant[0].price; %>
+                    <% const discountedPrice = product.productOffer ? basePrice * (1 - product.productOffer/100) : basePrice; %>
+                    
+                    <span class="price-tag">₹<%= discountedPrice.toFixed(2) %></span>
+                    <% if (product.productOffer > 0) { %>
+                        <span class="original-price ms-2">₹<%= basePrice %></span>
+                        <span class="discount ms-2">(<%= product.productOffer %>% OFF)</span>
+                    <% } %>
+                    <p class="text-success mb-0">inclusive of all taxes</p>
+                </div>
+
+                <!-- Color Selection -->
+                <div class="mb-4">
+                    <h6 class="mb-3">Select Color</h6>
+                    <div class="d-flex gap-2">
+                        <% product.variants.forEach((variant, index) => { %>
+                            <div class="color-option <%= index === 0 ? 'active' : '' %>" 
+                                style="background-color: <%= variant.colorValue %>;" 
+                                 onclick="selectColor(this, '<%= variant.colorName %>', <%= index %>)"
+                                 data-color-name="<%= variant.colorName %>"
+                                 title="<%= variant.colorName %>">
+                            </div>
+                        <% }); %>
+                    </div>
+                    <small class="text-muted d-block mt-2">Selected: <span id="selectedColorName"><%= product.variants[0].colorName %></span></small>
+                </div>
+
+                <!-- Size Selection -->
+                <div class="mb-4">
+                    <h6 class="mb-3">Select Size</h6>
+                    <div class="d-flex gap-2 size-options">
+                        <% product.variants[0].colorVariant.forEach(cv => { %>
+                            <button class="btn btn-outline-secondary <%= cv.stock === 0 || cv.status !== 'available' ? 'disabled' : '' %>"
+                                    onclick="selectSize(this, '<%= cv.size %>')"
+                                    <%= cv.stock === 0 || cv.status !== 'available' ? 'disabled' : '' %>>
+                                <%= cv.size %>
+                                <% if (cv.stock === 0) { %>
+                                    <br><small>(Out of Stock)</small>
+                                <% } %>
+                            </button>
+                        <% }); %>
+                    </div>
+                    <small class="text-muted d-block mt-2">
+                        Select size to check availability
+                    </small>
+                </div>
+                <!-- Quantity Selector -->
+                <div class="mb-4">
+                    <h6 class="mb-3">Quantity</h6>
+                    <div class="input-group quantity-selector">
+                        <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(-1)">-</button>
+                        <input type="number" class="form-control text-center" id="quantity" value="1" min="1">
+                        <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(1)">+</button>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2 d-md-flex mb-4">
+                    <button class="btn btn-custom btn-warning flex-fill" onclick="addToCart()">Add to Cart</button>
+                    <button class="btn btn-custom btn-primary flex-fill" onclick="buyNow()">Buy Now</button>
+                </div>
+
+                <!-- Product Description -->
+                <div class="mb-4">
+                    <h6 class="mb-3">Product Description</h6>
+                    <div class="product-description">
+                        <%= product.description %>
+                    </div>
+                </div>
+
+                <!-- Additional Features -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center p-3 border rounded">
+                            <i class="fas fa-truck text-primary me-3"></i>
+                            <div>
+                                <h6 class="mb-1">Free Delivery</h6>
+                                <small class="text-muted">2-3 business days</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center p-3 border rounded">
+                            <i class="fas fa-shield-alt text-primary me-3"></i>
+                            <div>
+                                <h6 class="mb-1">1 Year Warranty</h6>
+                                <small class="text-muted">Brand warranty</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Similar Products Section -->
+    <div class="container py-5">
+        <h2 class="mb-4">Similar Products</h2>
+        <div id="similarProducts" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                <!-- First Slide -->
+                <div class="carousel-item active">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100">
+                                <div class="badge bg-danger position-absolute" style="top: 10px; left: 10px">-20%</div>
+                                <img src="/api/placeholder/300/300" class="card-img-top" alt="Similar Product 1">
+                                <div class="card-body">
+                                    <h5 class="card-title">Wireless Earbuds Pro</h5>
+                                    <div class="mb-2">
+                                        <span class="rating-stars">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="far fa-star"></i>
+                                        </span>
+                                        <small class="text-muted">(1,234)</small>
+                                    </div>
+                                    <p class="card-text">
+                                        <span class="h5">₹8,999</span>
+                                        <span class="text-decoration-line-through text-muted ms-2">₹11,999</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100">
+                                <div class="badge bg-success position-absolute" style="top: 10px; left: 10px">New</div>
+                                <img src="/api/placeholder/300/300" class="card-img-top" alt="Similar Product 2">
+                                <div class="card-body">
+                                    <h5 class="card-title">Over-Ear Studio Phones</h5>
+                                    <div class="mb-2">
+                                        <span class="rating-stars">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star-half-alt"></i>
+                                        </span>
+                                        <small class="text-muted">(2,156)</small>
+                                    </div>
+                                    <p class="card-text">
+                                        <span class="h5">₹16,999</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100">
+                                <img src="/api/placeholder/300/300" class="card-img-top" alt="Similar Product 3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Gaming Headset RGB</h5>
+                                    <div class="mb-2">
+                                        <span class="rating-stars">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                        </span>
+                                        <small class="text-muted">(3,789)</small>
+                                    </div>
+                                    <p class="card-text">
+                                        <span class="h5">₹12,999</span>
+                                        <span class="text-decoration-line-through text-muted ms-2">₹15,999</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100">
+                                <div class="badge bg-warning position-absolute" style="top: 10px; left: 10px">Limited</div>
+                                <img src="/api/placeholder/300/300" class="card-img-top" alt="Similar Product 4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Sport Wireless Buds</h5>
+                                    <div class="mb-2">
+                                        <span class="rating-stars">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="far fa-star"></i>
+                                        </span>
+                                        <small class="text-muted">(956)</small>
+                                    </div>
+                                    <p class="card-text">
+                                        <span class="h5">₹7,999</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Second Slide -->
+                <div class="carousel-item">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100">
+                                <img src="/api/placeholder/300/300" class="card-img-top" alt="Similar Product 5">
+                                <div class="card-body">
+                                    <h5 class="card-title">Premium DJ Headphones</h5>
+                                    <div class="mb-2">
+                                        <span class="rating-stars">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star-half-alt"></i>
+                                        </span>
+                                        <small class="text-muted">(1,567)</small>
+                                    </div>
+                                    <p class="card-text">
+                                        <span class="h5">₹19,999</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Add more similar products here -->
+                    </div>
+                </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#similarProducts" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon bg-dark rounded-circle" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#similarProducts" data-bs-slide="next">
+                <span class="carousel-control-next-icon bg-dark rounded-circle" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+     const productData = <%- JSON.stringify(product) %>;
+        let currentVariant = 0;
+        let selectedSize = null;
+
+        function changeImage(element) {
+            document.getElementById('mainImage').src = element.src;
+            document.querySelectorAll('.thumbnail').forEach(thumb => {
+                thumb.classList.remove('active');
+            });
+            element.classList.add('active');
+        }
+
+        function selectColor(element, colorName, variantIndex) {
+    currentVariant = variantIndex;
+    document.querySelectorAll('.color-option').forEach(option => {
+        option.classList.remove('active');
+    });
+    element.classList.add('active');
+    document.getElementById('selectedColorName').textContent = colorName;
+
+    // Update images for selected color variant
+    const variant = productData.variants[variantIndex];
+    document.getElementById('mainImage').src = variant.productImage[0];
+    
+    // Update thumbnails
+    const thumbnailContainer = document.querySelector('.row.mt-3');
+    thumbnailContainer.innerHTML = variant.productImage.map((image, index) => `
+        <div class="col-3">
+            <img src="${image}" 
+                 class="img-fluid thumbnail ${index === 0 ? 'active' : ''} border rounded" 
+                 onclick="changeImage(this)" 
+                 alt="${productData.name} view ${index + 1}">
+        </div>
+    `).join('');
+
+    // Update size options and reset price to first available size
+    updateSizeOptions(variant);
+    if (variant.colorVariant && variant.colorVariant.length > 0) {
+        const firstAvailableSize = variant.colorVariant.find(cv => cv.stock > 0);
+        if (firstAvailableSize) {
+            updatePrice(firstAvailableSize.price);
+        }
+    }
+} 
+
+function updateSizeOptions(variant) {
+    const sizeContainer = document.querySelector('.size-options');
+    sizeContainer.innerHTML = variant.colorVariant.map(cv => `
+        <button class="btn btn-outline-secondary ${cv.stock === 0 || cv.status !== 'available' ? 'disabled' : ''}"
+                onclick="selectSize(this, '${cv.size}')"
+                ${cv.stock === 0 || cv.status !== 'available' ? 'disabled' : ''}>
+            ${cv.size}
+            ${cv.stock === 0 ? '<br><small>(Out of Stock)</small>' : ''}
+        </button>
+    `).join('');
+    selectedSize = null;
+}
+
+
+  function selectSize(element, size) {
+    if (element.classList.contains('disabled')) return;
+    
+    selectedSize = size;
+    document.querySelectorAll('[onclick^="selectSize"]').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    element.classList.add('active');
+
+    // Update price for selected size
+    const variant = productData.variants[currentVariant];
+    const sizeVariant = variant.colorVariant.find(cv => cv.size === size);
+    if (sizeVariant) {
+        updatePrice(sizeVariant.price);
+    }
+}
+
+function updatePrice(basePrice) {
+    const priceContainer = document.querySelector('.price-container');
+    const offer = productData.productOffer || 0;
+    const discountedPrice = offer > 0 ? basePrice * (1 - offer/100) : basePrice;
+
+    priceContainer.innerHTML = `
+        <span class="price-tag">₹${discountedPrice.toFixed(2)}</span>
+        ${offer > 0 ? `
+            <span class="original-price ms-2">₹${basePrice}</span>
+            <span class="discount ms-2">(${offer}% OFF)</span>
+        ` : ''}
+        <p class="text-success mb-0">inclusive of all taxes</p>
+    `;
+}
+
+   function updateQuantity(change) {
+    const quantityInput = document.getElementById('quantity');
+    let newValue = parseInt(quantityInput.value) + change;
+    if (newValue >= 1) {
+        if (selectedSize) {
+            const variant = productData.variants[currentVariant];
+            const sizeData = variant.colorVariant.find(cv => cv.size === selectedSize);
+            if (sizeData && newValue <= sizeData.stock) {
+                quantityInput.value = newValue;
+            }
+        } else {
+            quantityInput.value = newValue;
+        }
+    }
+}
+
+        // Keep the zoom functionality
+        const zoomContainer = document.querySelector('.zoom-container');
+        const mainImage = document.getElementById('mainImage');
+
+        zoomContainer.addEventListener('mousemove', (e) => {
+            const bounds = zoomContainer.getBoundingClientRect();
+            const x = ((e.clientX - bounds.left) / bounds.width) * 100;
+            const y = ((e.clientY - bounds.top) / bounds.height) * 100;
+            mainImage.style.transformOrigin = `${x}% ${y}%`;
+        });
+
+        async function addToCart() {
+            if (!selectedSize) {
+                alert('Please select a size');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/cart/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        productId: productData.id,
+                        variantId: productData.variants[currentVariant]._id,
+                        size: selectedSize,
+                        quantity: parseInt(document.getElementById('quantity').value)
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert('Added to cart successfully!');
+                } else {
+                    alert(data.message || 'Failed to add to cart');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to add to cart');
+            }
+        }
+
+        function buyNow() {
+            if (!selectedSize) {
+                alert('Please select a size');
+                return;
+            }
+            // Add buy now functionality
+            window.location.href = `/checkout?product=${productData.id}&variant=${currentVariant}&size=${selectedSize}&quantity=${document.getElementById('quantity').value}`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 3rem auto;
+            padding: 0 3rem;
+            width: 90%;
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            font-size: 32px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .profile-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 3rem;
+            min-height: 600px;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            height: fit-content;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: #f0f0f0;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-avatar i {
+            font-size: 48px;
+            color: #999;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            margin: 0.75rem 0;
+            cursor: pointer;
+            border-radius: 8px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+
+        .menu-item:hover {
+            background-color: #f5f5f5;
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background-color: #e7f3ff;
+            color: #0066cc;
+        }
+
+        .menu-item i {
+            margin-right: 1rem;
+            width: 24px;
+            font-size: 18px;
+        }
+
+        .logout-btn {
+            background: #ff8800;
+            color: white;
+            border: none;
+            padding: 1.25rem;
+            width: 100%;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 3rem;
+            font-weight: bold;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #ff7700;
+        }
+
+        /* Orders Content Styles */
+        .orders-container {
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .orders-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 2.5rem;
+            font-weight: bold;
+        }
+
+        .order-card {
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .order-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .order-id {
+            font-weight: bold;
+            color: #333;
+            font-size: 18px;
+        }
+
+        .order-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-delivered {
+            background: #e6f4ea;
+            color: #1e7e34;
+        }
+
+        .status-processing {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .order-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .info-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .info-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .order-items {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .item:last-child {
+            border-bottom: none;
+        }
+
+        .item-image {
+            width: 80px;
+            height: 80px;
+            background: #eee;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .item-details {
+            flex-grow: 1;
+        }
+
+        .item-name {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-price {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .btn-track {
+            background: #ff8800;
+            color: white;
+        }
+
+        .btn-track:hover {
+            background: #ff7700;
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            background: #f8f9fa;
+            color: #dc3545;
+        }
+
+        .btn-cancel:hover {
+            background: #f1f3f5;
+            transform: translateY(-2px);
+        }
+
+        .tracking-info {
+            display: none;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #eee;
+        }
+
+        .tracking-info.active {
+            display: block;
+        }
+
+        .tracking-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .tracking-steps::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #eee;
+            z-index: 1;
+        }
+
+        .step {
+            position: relative;
+            z-index: 2;
+            background: white;
+            padding: 0 1rem;
+            text-align: center;
+        }
+
+        .step-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+        }
+
+        .step.completed .step-icon {
+            background: #28a745;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .step.completed .step-label {
+            color: #28a745;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                width: 95%;
+                padding: 0 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .profile-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .container {
+                padding: 0 1rem;
+            }
+
+            .orders-container {
+                padding: 2rem;
+            }
+
+            .order-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .order-info {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="page-title">MY ACCOUNT</h1>
+        
+        <div class="profile-container">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="profile-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                
+                <a href="#" class="menu-item">
+                    <i class="fas fa-user"></i>
+                    Account Overview
+                </a>
+                <a href="#" class="menu-item active">
+                    <i class="fas fa-box"></i>
+                    My Orders
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Manage Address
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-wallet"></i>
+                    Wallet
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-lock"></i>
+                    Manage Password
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-heart"></i>
+                    Wishlist
+                </a>
+                
+                <button class="logout-btn">LOG OUT</button>
+            </div>
+
+            <!-- Orders Content -->
+            <div class="orders-container">
+                <h2 class="orders-title">My Orders</h2>
+                
+                <!-- Order Card -->
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-id">Order #12345</div>
+                        <span class="order-status status-processing">Processing</span>
+                    </div>
+                    
+                    <div class="order-info">
+                        <div class="info-group">
+                            <span class="info-label">Order Date</span>
+                            <span class="info-value">January 15, 2025</span>
+                        </div>
+                        <div class="info-group">
+                            <span class="info-label">Total Amount</span>
+                            <span class="info-value">₹1,999.00</span>
+                        </div>
+                        <div class="info-group">
+                            <span class="info-label">Delivery Expected</span>
+                            <span class="info-value">January 20, 2025</span>
+                        </div>
+                    </div>
+                    
+                    <div class="order-items">
+                        <div class="item">
+                            <div class="item-image">
+                                <i class="fas fa-tshirt fa-2x" style="color: #999;"></i>
+                            </div>
+                            <div class="item-details">
+                                <div class="item-name">Cotton T-Shirt - Black</div>
+                                <div class="item-price">₹999.00</div>
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-image">
+                                <i class="fas fa-tshirt fa-2x" style="color: #999;"></i>
+                            </div>
+                            <div class="item-details">
+                                <div class="item-name">Denim Jeans - Blue</div>
+                                <div class="item-price">₹1,000.00</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="order-actions">
+                        <button class="btn btn-cancel">Cancel Order</button>
+                        <button class="btn btn-track" onclick="toggleTracking(this)">Track Order</button>
+                    </div>
+                    
+                    <div class="tracking-info">
+                        <div class="tracking-steps">
+                            <div class="step completed">
+                                <div class="step-icon">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="step-label">Order Placed</div>
+                            </div>
+                            <div class="step completed">
+                                <div class="step-icon">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="step-label">Confirmed</div>
+                            </div>
+                            <div class="step">
+                                <div class="step-icon">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                                <div class="step-label">Shipped</div>
+                            </div>
+                            <div class="step">
+                                <div class="step-icon">
+                                    <i class="fas fa-home"></i>
+                                </div>
+                                <div class="step-label">Delivered</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Order Card (Delivered) -->
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-id">Order #12344</div>
+                        <span class="order-status status-delivered">Delivered</span>
+                    </div>
+                    
+                    <div class="order-info">
+                        <div class="info-group">
+                            <span class="info-label">Order Date</span>
+                            <span class="info-value">January 10,

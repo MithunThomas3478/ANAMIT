@@ -15,8 +15,8 @@
 
       
         <div class="nav-item d-flex align-items-center gap-4">
-            <a class="nav-link" href="/topwear">TOPWEAR</a>
-            <a class="nav-link" href="/bottomwear">BOTTOMWEAR</a>
+            <a class="nav-link" href="/mens">MEN</a>
+            <a class="nav-link" href="/womens">WOMEN</a>
         </div>
 
         <div class="d-flex align-items-center">
@@ -37,12 +37,11 @@
                     background: rgba(26, 26, 26, 0.95);
                     border-radius: 8px;
                     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-                    width: 200px; /* Optional: Adjust dropdown width */
-                ">
+                    width: 200px; /* Optional: Adjust dropdown width */">
                     <a href="#" class="username" style="display: block; padding: 10px 15px; color: #ff9900; font-weight: bold;">
                         <%= user.authProvider === 'google' ? '' : '' %><%= user.name %>
                     </a>
-                    <a href="/profile" style="display: block; padding: 10px 15px; color: white; text-decoration: none;">Profile</a>
+                    <a href="/userProfile" style="display: block; padding: 10px 15px; color: white; text-decoration: none;">Profile</a>
                     <a href="/logout" style="display: block; padding: 10px 15px; color: white; text-decoration: none;">Logout</a>
                 </div>
         

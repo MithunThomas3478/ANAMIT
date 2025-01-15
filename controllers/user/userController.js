@@ -26,10 +26,10 @@ const loadHomepage = async (req, res) => {
 
     // Group products by category type (TOPWEAR, BOTTOMWEAR)
     const topwear = products.filter((product) =>
-      product.category?.name.toUpperCase().includes("TOPWEAR")
+      product.category?.name.toUpperCase().includes("MEN")
     );
     const bottomwear = products.filter((product) =>
-      product.category?.name.toUpperCase().includes("BOTTOMWEAR")
+      product.category?.name.toUpperCase().includes("WOMEN")
     );
 
     let userData = null;
@@ -293,278 +293,223 @@ const logout = async (req, res) => {
   }
 };
 
-const getMensTopwear = async (req, res) => {
+
+const getMensFashion = async (req, res) => {
   try {
-    // Get category ID for Men's Topwear
-    const topwearCategory = await Category.findOne({ name: "TOPWEAR" });
-    if (!topwearCategory) {
-      return res.status(404).render("error", { message: "Category not found" });
-    }
+      // Get the men's category
+      const menCategory = await Category.findOne({
+          isListed: true,
+          name: 'MEN'
+      });
 
-    // Get filter parameters
-    const { categories, brand, minPrice, maxPrice, size, color } = req.query;
+      if (!menCategory) {
+          return res.status(404).render('error', {
+              message: 'Category not found'
+          });
+      }
 
-    // Build filter object
-    let filters = {
-      category: topwearCategory._id,
-      isBlocked: false,
-    };
-
-    // Category filter (subcategories like t-shirts, shirts)
-    if (categories) {
-      filters.productName = { $regex: categories, $options: "i" };
-    }
-
-    // Brand filter
-    if (brand) {
-      filters.productName = { $regex: brand, $options: "i" };
-    }
-
-    // Price filter
-    if (minPrice || maxPrice) {
-      filters["variants.price"] = {};
-      if (minPrice) filters["variants.price"].$gte = Number(minPrice);
-      if (maxPrice) filters["variants.price"].$lte = Number(maxPrice);
-    }
-
-    // Size filter
-    if (size) {
-      filters["variants.size"] = size;
-    }
-
-    // Color filter
-    if (color) {
-      filters["variants.colorName"] = color;
-    }
-
-    // Get products with filters
-    const products = await Product.find(filters)
-      .populate("category")
-      .sort({ createdOn: -1 });
-
-    // Process products for frontend display
-    const processedProducts = products.map((product) => {
-      // Get the lowest priced variant
-      const minPriceVariant = product.variants.reduce(
-        (min, variant) => (variant.price < min.price ? variant : min),
-        product.variants[0]
-      );
-
-      return {
-        id: product._id,
-        name: product.productName,
-        description: product.description,
-        price: minPriceVariant.price,
-        originalPrice: minPriceVariant.price * (1 + product.productOffer / 100),
-        discount: product.productOffer,
-        image: minPriceVariant.productImage[0],
-        color: minPriceVariant.colorName,
-        size: minPriceVariant.size,
-        stock: minPriceVariant.stock,
-        status: minPriceVariant.status,
-        variants: product.variants.map((v) => ({
-          color: v.colorName,
-          size: v.size,
-          price: v.price,
-          stock: v.stock,
-          status: v.status,
-        })),
+      // Get men's products
+      const query = {
+          isListed: true,
+          category: menCategory._id  // Filter by men's category ID
       };
-    });
 
-    // Get aggregated data for filters
-    const aggregatedData = await Product.aggregate([
-      { $match: { category: topwearCategory._id, isBlocked: false } },
-      { $unwind: "$variants" },
-      {
-        $group: {
-          _id: null,
-          brands: { $addToSet: "$productName" },
-          sizes: { $addToSet: "$variants.size" },
-          colors: { $addToSet: "$variants.colorName" },
-          minPrice: { $min: "$variants.price" },
-          maxPrice: { $max: "$variants.price" },
-        },
-      },
-    ]);
+      // Apply price filter if exists
+      if (req.query.maxPrice) {
+          query['variants.colorVariant.price'] = { 
+              $lte: parseFloat(req.query.maxPrice) 
+          };
+      }
 
-    const filterData = aggregatedData[0] || {
-      brands: [],
-      sizes: [],
-      colors: [],
-      minPrice: 0,
-      maxPrice: 5000,
-    };
-    
+      // Apply size filter if exists
+      if (req.query.sizes) {
+          const sizes = Array.isArray(req.query.sizes) 
+              ? req.query.sizes 
+              : [req.query.sizes];
+          query['variants.colorVariant.size'] = { $in: sizes };
+      }
 
-    res.render('categoryTopwear', {
-        products: processedProducts,
-        filters: {
-            brands: filterData.brands,
-            sizes: filterData.sizes,
-            colors: filterData.colors,
-            priceRange: {
-                min: filterData.minPrice,
-                max: filterData.maxPrice,
-                selected: {
-                    min: minPrice || filterData.minPrice,
-                    max: maxPrice || filterData.maxPrice
-                }
-            },
-            selected: {
-                categories: categories || [],
-                brand: brand || '',
-                size: size || '',
-                color: color || ''
-            }
-        }
-    });
+      // Apply color filter if exists
+      if (req.query.colors) {
+          const colors = Array.isArray(req.query.colors) 
+              ? req.query.colors 
+              : [req.query.colors];
+          query['variants.colorName'] = { $in: colors };
+      }
+
+      // Apply sorting
+      let sort = {};
+      switch (req.query.sort) {
+          case 'price_asc':
+              sort = { 'variants.colorVariant.price': 1 };
+              break;
+          case 'price_desc':
+              sort = { 'variants.colorVariant.price': -1 };
+              break;
+          case 'newest':
+              sort = { createdAt: -1 };
+              break;
+          default:
+              sort = { createdAt: -1 }; // Default sort
+      }
+
+      // Get filtered and sorted products
+      const products = await Product.find(query)
+          .sort(sort)
+          .populate('category')  // Populate category information
+          .lean();
+
+      // Get unique colors from all products
+      const colors = [...new Set(products.flatMap(product => 
+          product.variants.map(variant => ({
+              colorName: variant.colorName,
+              colorValue: variant.colorValue
+          }))
+      ))];
+
+      // Remove duplicate colors
+      const uniqueColors = Array.from(new Map(colors.map(item => 
+          [item.colorName, item])).values());
+
+      res.render('categoryMenwear', {
+          title: "MEN",
+          category: menCategory,  // Pass single category instead of categories array
+          products,
+          colors: uniqueColors,
+          currentFilters: req.query
+      });
 
   } catch (error) {
-    console.error("Error in getMensTopwear:", error);
-    res.status(500).render("page_404", {
-      message: "Error loading products",
-    });
+      console.error('Error in getMensFashion:', error);
+      res.status(500).render('error', {
+          message: 'Internal server error'
+      });
+  }
+};
+
+const getWomensFashion = async (req, res) => {
+  try {
+      // First find the women's category
+      const womenCategory = await Category.findOne({ 
+          name: 'WOMEN',
+          isListed: true 
+      });
+
+      if (!womenCategory) {
+          return res.status(404).render('error', {
+              message: 'Category not found'
+          });
+      }
+
+      // Get all products for women
+      const query = {
+          isListed: true,
+          category: womenCategory._id  // Filter products by women's category
+      };
+
+      // Apply price filter if exists
+      if (req.query.maxPrice) {
+          query['variants.colorVariant.price'] = { 
+              $lte: parseFloat(req.query.maxPrice) 
+          };
+      }
+
+      // Apply size filter if exists
+      if (req.query.sizes) {
+          const sizes = Array.isArray(req.query.sizes) 
+              ? req.query.sizes 
+              : [req.query.sizes];
+          query['variants.colorVariant.size'] = { $in: sizes };
+      }
+
+      // Apply color filter if exists
+      if (req.query.colors) {
+          const colors = Array.isArray(req.query.colors) 
+              ? req.query.colors 
+              : [req.query.colors];
+          query['variants.colorName'] = { $in: colors };
+      }
+
+      // Apply sorting
+      let sort = {};
+      switch (req.query.sort) {
+          case 'price_asc':
+              sort = { 'variants.colorVariant.price': 1 };
+              break;
+          case 'price_desc':
+              sort = { 'variants.colorVariant.price': -1 };
+              break;
+          case 'newest':
+              sort = { createdAt: -1 };
+              break;
+          default:
+              sort = { createdAt: -1 }; // Default sort
+      }
+
+      const products = await Product.find(query)
+          .sort(sort)
+          .lean();
+
+      // Get unique colors from all products
+      const colors = [...new Set(products.flatMap(product => 
+          product.variants.map(variant => ({
+              colorName: variant.colorName,
+              colorValue: variant.colorValue
+          }))
+      ))];
+
+      // Remove duplicate colors
+      const uniqueColors = Array.from(new Map(colors.map(item => 
+          [item.colorName, item])).values());
+
+      res.render('categoryWomenwear', {
+          title: "WOMEN",
+          products,
+          colors: uniqueColors,
+          currentFilters: req.query
+      });
+
+  } catch (error) {
+      console.error('Error in getWomensFashion:', error);
+      res.status(500).render('error', {
+          message: 'Internal server error'
+      });
   }
 };
 
 
-const getMensBottomwear = async (req, res) => {
-  try {
-    // Get category ID for Men's Topwear
-    const topwearCategory = await Category.findOne({ name: "BOTTOMWEAR" });
-    if (!topwearCategory) {
-      return res.status(404).render("error", { message: "Category not found" });
+const loadUserProfile = async (req,res) => {
+  
+    try {
+     
+      const userId = req?.session?.user || req.session?.passport?.user;
+      console.log("users",req?.session?.user);
+      console.log("user google",req.session?.passport?.user);
+      
+      const user = await User.findById(userId);
+
+      console.log("finded",user);
+      
+
+      if (!user) {
+        return res.status(404).render('error', { 
+            message: 'User not found'
+        });
     }
 
-    // Get filter parameters
-    const { categories, brand, minPrice, maxPrice, size, color } = req.query;
+    res.render('userProfile', { 
+      user: user,  // This sends the user data to your template
+      title: 'My Profile'
+  });
 
-    // Build filter object
-    let filters = {
-      category: topwearCategory._id,
-      isBlocked: false,
-    };
-
-    // Category filter (subcategories like t-shirts, shirts)
-    if (categories) {
-      filters.productName = { $regex: categories, $options: "i" };
-    }
-
-    // Brand filter
-    if (brand) {
-      filters.productName = { $regex: brand, $options: "i" };
-    }
-
-    // Price filter
-    if (minPrice || maxPrice) {
-      filters["variants.price"] = {};
-      if (minPrice) filters["variants.price"].$gte = Number(minPrice);
-      if (maxPrice) filters["variants.price"].$lte = Number(maxPrice);
-    }
-
-    // Size filter
-    if (size) {
-      filters["variants.size"] = size;
-    }
-
-    // Color filter
-    if (color) {
-      filters["variants.colorName"] = color;
-    }
-
-    // Get products with filters
-    const products = await Product.find(filters)
-      .populate("category")
-      .sort({ createdOn: -1 });
-
-    // Process products for frontend display
-    const processedProducts = products.map((product) => {
-      // Get the lowest priced variant
-      const minPriceVariant = product.variants.reduce(
-        (min, variant) => (variant.price < min.price ? variant : min),
-        product.variants[0]
-      );
-
-      return {
-        id: product._id,
-        name: product.productName,
-        description: product.description,
-        price: minPriceVariant.price,
-        originalPrice: minPriceVariant.price * (1 + product.productOffer / 100),
-        discount: product.productOffer,
-        image: minPriceVariant.productImage[0],
-        color: minPriceVariant.colorName,
-        size: minPriceVariant.size,
-        stock: minPriceVariant.stock,
-        status: minPriceVariant.status,
-        variants: product.variants.map((v) => ({
-          color: v.colorName,
-          size: v.size,
-          price: v.price,
-          stock: v.stock,
-          status: v.status,
-        })),
-      };
-    });
-
-    // Get aggregated data for filters
-    const aggregatedData = await Product.aggregate([
-      { $match: { category: topwearCategory._id, isBlocked: false } },
-      { $unwind: "$variants" },
-      {
-        $group: {
-          _id: null,
-          brands: { $addToSet: "$productName" },
-          sizes: { $addToSet: "$variants.size" },
-          colors: { $addToSet: "$variants.colorName" },
-          minPrice: { $min: "$variants.price" },
-          maxPrice: { $max: "$variants.price" },
-        },
-      },
-    ]);
-
-    const filterData = aggregatedData[0] || {
-      brands: [],
-      sizes: [],
-      colors: [],
-      minPrice: 0,
-      maxPrice: 5000,
-    };
-
-    res.render('categoryBottomwear', {
-        products: processedProducts,
-        filters: {
-            brands: filterData.brands,
-            sizes: filterData.sizes,
-            colors: filterData.colors,
-            priceRange: {
-                min: filterData.minPrice,
-                max: filterData.maxPrice,
-                selected: {
-                    min: minPrice || filterData.minPrice,
-                    max: maxPrice || filterData.maxPrice
-                }
-            },
-            selected: {
-                categories: categories || [],
-                brand: brand || '',
-                size: size || '',
-                color: color || ''
-            }
-        }
-    });
-
-  } catch (error) {
-    console.error("Error in getMensTopwear:", error);
-    res.status(500).render("page_404", {
-      message: "Error loading products",
-    });
-  }
-};
-
-
-    
+    } catch (error) {
+      console.error('Profile fetch error:', error);
+        res.status(500).render('error', { 
+            message: 'Error fetching profile'
+        });
+    }  
+} 
+ 
 
 
 module.exports = {
@@ -578,6 +523,7 @@ module.exports = {
   loadLoginPage,
   login,
   logout,
-  getMensTopwear,
-  getMensBottomwear
+  getMensFashion,
+  getWomensFashion,
+  loadUserProfile
 };

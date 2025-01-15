@@ -216,18 +216,18 @@
             <div class="login-container">
                 <h2>Admin Login</h2>
                 
-                <% if (locals.message) { %>
-                <div id="alertMessage" class="alert alert-danger">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    <%= message %>
-                </div>
-                <% } %>
+                <% if (locals.error) { %>
+                    <div id="alertMessage" class="alert alert-danger">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <%= error === 'password' ? 'Incorrect password' : 'Admin account not found' %>
+                    </div>
+                    <% } %>
                 
-                <form id="adminLoginForm" method="POST" action="/admin/login" novalidate>
+                    <form id="adminLoginForm" method="POST" action="/admin/login" novalidate>
                     <div class="form-group">
                         <label for="email">Email Address</label>
                         <input type="email" id="email" name="email" 
@@ -253,96 +253,122 @@
     </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const form = document.getElementById("adminLoginForm");
-            const emailInput = document.getElementById("email");
-            const passwordInput = document.getElementById("password");
-            const emailError = document.getElementById("emailError");
-            const passwordError = document.getElementById("passwordError");
-            const submitButton = document.getElementById("submitButton");
-            const alertMessage = document.getElementById("alertMessage");
+      document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("adminLoginForm");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const emailError = document.getElementById("emailError");
+    const passwordError = document.getElementById("passwordError");
+    const submitButton = document.getElementById("submitButton");
 
-            // Validation functions
-            function isValidEmail(email) {
-                const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-                return emailPattern.test(email);
+    // Check for URL query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorMessage = urlParams.get('error');
+    
+    // Show error message if present in URL
+    if (errorMessage) {
+        const alertContainer = document.createElement('div');
+        alertContainer.id = 'alertMessage';
+        alertContainer.className = 'alert alert-danger';
+        
+        alertContainer.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            ${errorMessage}
+        `;
+
+        const loginContainer = document.querySelector('.login-container h2');
+        loginContainer.insertAdjacentElement('afterend', alertContainer);
+
+        // Auto-hide alert message after 5 seconds
+        setTimeout(function() {
+            alertContainer.style.opacity = "0";
+            alertContainer.style.transition = "opacity 0.5s ease";
+            setTimeout(() => alertContainer.remove(), 500);
+        }, 5000);
+    }
+
+    // Validation functions
+    function isValidEmail(email) {
+        const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+        return emailPattern.test(email);
+    }
+
+    function showError(input, errorElement, message) {
+        input.classList.add("is-invalid");
+        errorElement.textContent = message;
+        errorElement.style.display = "block";
+    }
+
+    function hideError(input, errorElement) {
+        input.classList.remove("is-invalid");
+        errorElement.textContent = "";
+        errorElement.style.display = "none";
+    }
+
+    function validateForm() {
+        let isValid = true;
+
+        // Clear previous errors
+        hideError(emailInput, emailError);
+        hideError(passwordInput, passwordError);
+
+        // Validate email
+        if (emailInput.value.trim() === "") {
+            showError(emailInput, emailError, "Email is required");
+            isValid = false;
+        } else if (!isValidEmail(emailInput.value)) {
+            showError(emailInput, emailError, "Please enter a valid email address");
+            isValid = false;
+        }
+
+        // Validate password
+        if (passwordInput.value.trim() === "") {
+            showError(passwordInput, passwordError, "Password is required");
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    // Real-time validation for email
+    emailInput.addEventListener("input", function() {
+        if (this.value.trim() !== "") {
+            if (!isValidEmail(this.value)) {
+                showError(this, emailError, "Please enter a valid email address");
+            } else {
+                hideError(this, emailError);
             }
+        } else {
+            hideError(this, emailError);
+        }
+    });
 
-            function showError(input, errorElement, message) {
-                input.classList.add("is-invalid");
-                errorElement.textContent = message;
-                errorElement.style.display = "block";
-            }
+    // Real-time validation for password
+    passwordInput.addEventListener("input", function() {
+        if (this.value.trim() !== "") {
+            hideError(this, passwordError);
+        }
+    });
 
-            function hideError(input, errorElement) {
-                input.classList.remove("is-invalid");
-                errorElement.textContent = "";
-                errorElement.style.display = "none";
-            }
-
-            // Real-time validation
-            emailInput.addEventListener("input", function() {
-                if (this.value.trim() === "") {
-                    showError(this, emailError, "Email is required");
-                } else if (!isValidEmail(this.value)) {
-                    showError(this, emailError, "Please enter a valid email address");
-                } else {
-                    hideError(this, emailError);
-                }
-            });
-
-            passwordInput.addEventListener("input", function() {
-                if (this.value.trim() === "") {
-                    showError(this, passwordError, "Password is required");
-                } else if (this.value.length < 8) {
-                    showError(this, passwordError, "Password must be at least 8 characters");
-                } else {
-                    hideError(this, passwordError);
-                }
-            });
-
-            // Form submission
-            form.addEventListener("submit", function(event) {
-                event.preventDefault();
-                let isValid = true;
-
-                // Validate email
-                if (emailInput.value.trim() === "") {
-                    showError(emailInput, emailError, "Email is required");
-                    isValid = false;
-                } else if (!isValidEmail(emailInput.value)) {
-                    showError(emailInput, emailError, "Please enter a valid email address");
-                    isValid = false;
-                }
-
-                // Validate password
-                if (passwordInput.value.trim() === "") {
-                    showError(passwordInput, passwordError, "Password is required");
-                    isValid = false;
-                } else if (passwordInput.value.length < 8) {
-                    showError(passwordInput, passwordError, "Password must be at least 8 characters");
-                    isValid = false;
-                }
-
-                if (isValid) {
-                    // Show loading state
-                    submitButton.classList.add("btn-loading");
-                    submitButton.textContent = "";
-                    
-                    // Submit the form
-                    this.submit();
-                }
-            });
-
-            // Auto-hide alert message
-            if (alertMessage) {
-                setTimeout(function() {
-                    alertMessage.style.opacity = "0";
-                    alertMessage.style.transition = "opacity 0.5s ease";
-                    setTimeout(() => alertMessage.remove(), 500);
-                }, 5000);
-            }
-        });
+    // Form submission
+    form.addEventListener("submit", function(event) {
+        event.preventDefault();
+        
+        if (validateForm()) {
+            // Show loading state
+            submitButton.classList.add("btn-loading");
+            submitButton.textContent = "";
+            
+            // Submit the form
+            this.submit();
+        }
+    });
+});
+       
     </script>
 </body>
 </html>

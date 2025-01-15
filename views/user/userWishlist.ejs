@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wishlist</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 3rem auto;
+            padding: 0 3rem;
+            width: 90%;
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            font-size: 32px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .profile-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 3rem;
+            min-height: 600px;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            height: fit-content;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: #f0f0f0;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-avatar i {
+            font-size: 48px;
+            color: #999;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            margin: 0.75rem 0;
+            cursor: pointer;
+            border-radius: 8px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+
+        .menu-item:hover {
+            background-color: #f5f5f5;
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background-color: #e7f3ff;
+            color: #0066cc;
+        }
+
+        .menu-item i {
+            margin-right: 1rem;
+            width: 24px;
+            font-size: 18px;
+        }
+
+        .logout-btn {
+            background: #ff8800;
+            color: white;
+            border: none;
+            padding: 1.25rem;
+            width: 100%;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 3rem;
+            font-weight: bold;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #ff7700;
+        }
+
+        /* Wishlist Content Styles */
+        .wishlist-container {
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .wishlist-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 2.5rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .wishlist-count {
+            font-size: 16px;
+            color: #666;
+            font-weight: normal;
+        }
+
+        .wishlist-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .product-card {
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 280px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .product-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: white;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .remove-btn:hover {
+            background: #ff8800;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .product-info {
+            padding: 1.5rem;
+        }
+
+        .product-name {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 16px;
+        }
+
+        .product-price {
+            color: #ff8800;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 1rem;
+        }
+
+        .product-actions {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s;
+            border: none;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #ff8800;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #ff7700;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .empty-wishlist {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .empty-wishlist i {
+            font-size: 48px;
+            color: #ccc;
+            margin-bottom: 1rem;
+        }
+
+        .empty-wishlist p {
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                width: 95%;
+                padding: 0 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .profile-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .container {
+                padding: 0 1rem;
+            }
+
+            .wishlist-container {
+                padding: 2rem;
+            }
+
+            .wishlist-grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="page-title">MY ACCOUNT</h1>
+        
+        <div class="profile-container">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="profile-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                
+                <a href="#" class="menu-item">
+                    <i class="fas fa-user"></i>
+                    Account Overview
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-box"></i>
+                    My Orders
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Manage Address
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-wallet"></i>
+                    Wallet
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-lock"></i>
+                    Manage Password
+                </a>
+                <a href="#" class="menu-item active">
+                    <i class="fas fa-heart"></i>
+                    Wishlist
+                </a>
+                
+                <button class="logout-btn">LOG OUT</button>
+            </div>
+
+            <!-- Wishlist Content -->
+            <div class="wishlist-container">
+                <div class="wishlist-title">
+                    My Wishlist
+                    <span class="wishlist-count">4 items</span>
+                </div>
+
+                <div class="wishlist-grid">
+                    <!-- Product Card 1 -->
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="/api/placeholder/280/280" alt="Product Image">
+                            <button class="remove-btn" onclick="removeFromWishlist(1)">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name">Premium Cotton T-Shirt</h3>
+                            <div class="product-price">₹999.00</div>
+                            <div class="product-actions">
+                                <button class="btn btn-primary">Add to Cart</button>
+                                <button class="btn btn-secondary">Buy Now</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product Card 2 -->
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="/api/placeholder/280/280" alt="Product Image">
+                            <button class="remove-btn" onclick="removeFromWishlist(2)">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name">Slim Fit Jeans</h3>
+                            <div class="product-price">₹1,499.00</div>
+                            <div class="product-actions">
+                                <button class="btn btn-primary">Add to Cart</button>
+                                <button class="btn btn-secondary">Buy Now</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product Card 3 -->
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="/api/placeholder/280/280" alt="Product Image">
+                            <button class="remove-btn" onclick="removeFromWishlist(3)">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name">Casual Sneakers</h3>
+                            <div class="product-price">₹2,499.00</div>
+                            <div class="product-actions">
+                                <button class="btn btn-primary">Add to Cart</button>
+                                <button class="btn btn-secondary">Buy Now</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product Card 4 -->
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="/api/placeholder/280/280" alt="Product Image">
+                            <button class="remove-btn" onclick="removeFromWishlist(4)">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name">Classic Watch</h3>
+                            <div class="product-price">₹3,999.00</div>
+                            <div class="product-actions">
+                                <button class="btn btn-primary">Add to Cart</button>
+                                <button class="btn btn-secondary">Buy Now</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State (Hidden by default) -->
+                <div class="empty-wishlist" style="display: none;">
+                    <i class="fas fa-heart-broken"></i>
+                    <p>Your wishlist is empty</p>
+                    <button class="btn btn-primary">Continue Shopping</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function removeFromWishlist(productId) {
+            const card = event.target.closest('.product-card');
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.9)';
+            card.style.transition = 'all 0.3s';
+            
+            setTimeout(() => {
+                card.remove();
+                updateWishlistCount();
+                checkEmptyWishlist();
+            }, 300);
+        }
+
+        function updateWishlistCount() {
+            const count = document.querySelectorAll('.product-card').length;
+            document.querySelector('.wishlist-count').textContent = `${count} items`;
+        }
+
+        function checkEmptyWishlist() {
+            const hasItems = document.querySelectorAll('.product-card').length > 0;
+            document.querySelector('.wishlist-grid').style.display = hasItems ? 'grid' : 'none';
+            document.querySelector('.empty-wishlist').style.display = hasItems ? 'none' : 'block';
+        }
+
+        // Menu item click handler
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

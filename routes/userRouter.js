@@ -27,15 +27,15 @@ router.get(
     failureRedirect: "/login",
   }),
   (req, res) => {
-    req.session.user = req.user; // Store the authenticated user in session
+    req.session.passport.user = req.user; // Store the authenticated user in session
     res.redirect("/"); // Redirect to the homepage or desired route
   }
 );
 
 router.use(userAuth);
-router.get("/topwear", userController.getMensTopwear);
-router.get("/bottomwear", userController.getMensBottomwear);
-
-router.get("/product/:id", productController.getProductDetails);
+router.get('/mens',userController.getMensFashion);
+router.get('/womens',userController.getWomensFashion);
+router.get('/productDetails/:id',productController.getProductDetails);
+router.get('/userProfile',userController.loadUserProfile)
 
 module.exports = router;
