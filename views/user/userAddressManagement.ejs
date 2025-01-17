@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Address Management</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+       
+
+        body {
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 3rem auto;
+            padding: 0 3rem;
+            width: 90%;
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            font-size: 32px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .profile-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 3rem;
+            min-height: 600px;
+            min-width: 500px;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            height: fit-content;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: #f0f0f0;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-avatar i {
+            font-size: 48px;
+            color: #999;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            margin: 0.75rem 0;
+            cursor: pointer;
+            border-radius: 8px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+
+        .menu-item:hover {
+            background-color: #f5f5f5;
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background-color: #e7f3ff;
+            color: #0066cc;
+        }
+
+        .menu-item i {
+            margin-right: 1rem;
+            width: 24px;
+            font-size: 18px;
+        }
+
+        .logout-btn {
+            background: #ff8800;
+            color: white;
+            border: none;
+            padding: 1.25rem;
+            width: 100%;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 3rem;
+            font-weight: bold;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #ff7700;
+        }
+
+        /* Address Content Styles */
+        .address-container {
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+            width : 1200px;
+        }
+
+        .address-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 2rem;
+            font-weight: bold;
+        }
+
+        .address-list {
+            margin-bottom: 2rem;
+        }
+
+        .address-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            background: #f8f8f8;
+            position: relative;
+        }
+
+        .address-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .address-details, .phone-number {
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 0.5rem;
+        }
+
+        .address-actions {
+            display: flex;
+            gap: 1rem;
+            position: absolute;
+            right: 1.5rem;
+            top: 1.5rem;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            font-size: 18px;
+            transition: color 0.3s;
+        }
+
+        .action-btn:hover {
+            color: #ff8800;
+        }
+
+        /* Form Styles */
+        .address-form {
+            display: none;
+            margin-top: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f5f5f5;
+            font-size: 16px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #ff8800;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            background: #eee;
+            border: none;
+            color: #333;
+        }
+
+        .btn-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-save {
+            background: #ff8800;
+            border: none;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #ff7700;
+        }
+
+        .btn-add {
+            background: #ff8800;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .btn-add:hover {
+            background: #ff7700;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                width: 95%;
+                padding: 0 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .profile-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .container {
+                padding: 0 1rem;
+            }
+
+            .address-container {
+                padding: 2rem;
+            }
+
+            .address-actions {
+                position: static;
+                margin-top: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="page-title">MY ACCOUNT</h1>
+        
+        <div class="profile-container">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="profile-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                
+                <a href="/userProfile" class="menu-item">
+                    <i class="fas fa-user"></i>
+                    Account Overview
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-box"></i>
+                    My Orders
+                </a>
+                <a href="#" class="menu-item active">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Manage Address
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-wallet"></i>
+                    Wallet
+                </a>
+                <a href="passwordMangement" class="menu-item">
+                    <i class="fas fa-lock"></i>
+                    Manage Password
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-heart"></i>
+                    Wishlist
+                </a>
+                
+                <a href="/logout"><button class="logout-btn">LOG OUT</button></a>
+            </div>
+
+            <!-- Address Content -->
+            <div class="container">
+                
+                    <!-- Address Content -->
+                    <div class="address-container">
+                        <h2 class="address-title">Manage Addresses</h2>
+                        
+                        <div class="address-list">
+                            <% addresses.forEach(function(address) { %>
+                                <div class="address-card" data-id="<%= address._id %>">
+                                    <div class="address-name"><%= address.fullName %></div>
+                                    <div class="address-details"><%= address.streetAddress %>, <%= address.city %>, <%= address.state %>, India, pincode-<%= address.pincode %></div>
+                                    <div class="phone-number">Ph No.: <%= address.phoneNumber %></div>
+                                    <div class="address-actions">
+                                        <a href="/updateAddress/<%= address._id %>" class="action-btn" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>  
+                                        <button class="action-btn" onclick="deleteAddress('<%= address._id %>')" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+        
+                        <button class="btn-add" onclick="showAddForm()">Add Address</button>
+        
+                        <!-- Address Form -->
+                        <form class="address-form" id="addressForm" action="/addAdress" method="POST">
+                            <input type="hidden" id="addressId" name="addressId">
+                            
+                            <div class="form-group">
+                                <label for="name">Full Name</label>
+                                <input type="text" id="name" name="name" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="street">Street Address</label>
+                                <input type="text" id="street" name="street" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="city">City</label>
+                                <input type="text" id="city" name="city" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="state">State</label>
+                                <input type="text" id="state" name="state" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="pincode">Pincode</label>
+                                <input type="text" id="pincode" name="pincode" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="phone">Phone Number</label>
+                                <input type="tel" id="phone" name="phone" required>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-cancel" onclick="hideAddressForm()">Cancel</button>
+                                <button type="submit" class="btn btn-save">Save Address</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add in the <head> section -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Add this script section after your existing script
+
+// Validation functions
+function validateForm() {
+    let isValid = true;
+    
+    // Validate Full Name
+    const name = document.getElementById('name');
+    if (name.value.trim().length < 2) {
+        showError(name, 'Name must be at least 2 characters long');
+        isValid = false;
+    } else if (!/^[a-zA-Z\s]*$/.test(name.value)) {
+        showError(name, 'Name should contain only letters and spaces');
+        isValid = false;
+    } else {
+        clearError(name);
+    }
+
+    // Validate Street Address
+    const street = document.getElementById('street');
+    if (street.value.trim().length < 5) {
+        showError(street, 'Street address must be at least 5 characters long');
+        isValid = false;
+    } else {
+        clearError(street);
+    }
+
+    // Validate City
+    const city = document.getElementById('city');
+    if (!/^[a-zA-Z\s]*$/.test(city.value)) {
+        showError(city, 'City should contain only letters and spaces');
+        isValid = false;
+    } else {
+        clearError(city);
+    }
+
+    // Validate State
+    const state = document.getElementById('state');
+    if (!/^[a-zA-Z\s]*$/.test(state.value)) {
+        showError(state, 'State should contain only letters and spaces');
+        isValid = false;
+    } else {
+        clearError(state);
+    }
+
+    // Validate Pincode
+    const pincode = document.getElementById('pincode');
+    if (!/^\d{6}$/.test(pincode.value)) {
+        showError(pincode, 'Pincode must be exactly 6 digits');
+        isValid = false;
+    } else {
+        clearError(pincode);
+    }
+
+    // Validate Phone Number
+    const phone = document.getElementById('phone');
+    if (!/^\d{10}$/.test(phone.value)) {
+        showError(phone, 'Phone number must be exactly 10 digits');
+        isValid = false;
+    } else {
+        clearError(phone);
+    }
+
+    return isValid;
+}
+
+function showError(input, message) {
+    const formGroup = input.closest('.form-group');
+    const existingError = formGroup.querySelector('.error-message');
+    
+    if (!existingError) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.style.color = '#ff0000';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.marginTop = '5px';
+        errorDiv.textContent = message;
+        formGroup.appendChild(errorDiv);
+    } else {
+        existingError.textContent = message;
+    }
+    
+    input.style.borderColor = '#ff0000';
+}
+
+function clearError(input) {
+    const formGroup = input.closest('.form-group');
+    const existingError = formGroup.querySelector('.error-message');
+    if (existingError) {
+        existingError.remove();
+    }
+    input.style.borderColor = '#ddd';
+}
+
+// Real-time validation
+document.querySelectorAll('#addressForm input').forEach(input => {
+    input.addEventListener('input', function() {
+        // Clear error when user starts typing
+        clearError(this);
+        
+        // Validate specific fields on input
+        switch(this.id) {
+            case 'name':
+                if (!/^[a-zA-Z\s]*$/.test(this.value)) {
+                    showError(this, 'Name should contain only letters and spaces');
+                }
+                break;
+            case 'pincode':
+                if (this.value && !/^\d{0,6}$/.test(this.value)) {
+                    showError(this, 'Pincode must contain only digits');
+                    this.value = this.value.replace(/\D/g, '').slice(0, 6);
+                }
+                break;
+            case 'phone':
+                if (this.value && !/^\d{0,10}$/.test(this.value)) {
+                    showError(this, 'Phone number must contain only digits');
+                    this.value = this.value.replace(/\D/g, '').slice(0, 10);
+                }
+                break;
+            case 'city':
+            case 'state':
+                if (!/^[a-zA-Z\s]*$/.test(this.value)) {
+                    showError(this, `${this.id.charAt(0).toUpperCase() + this.id.slice(1)} should contain only letters and spaces`);
+                }
+                break;
+        }
+    });
+});
+
+// Update form submission handling
+document.getElementById('addressForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Validation Error',
+            text: 'Please check all fields and try again',
+            confirmButtonColor: '#ff8800'
+        });
+        return;
+    }
+
+    // Get form data
+    const formData = {
+        name: document.getElementById('name').value,
+        street: document.getElementById('street').value,
+        city: document.getElementById('city').value,
+        state: document.getElementById('state').value,
+        pincode: document.getElementById('pincode').value,
+        phone: document.getElementById('phone').value
+    };
+
+    try {
+        const response = await fetch('/addAddress', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: data.message || 'Address added successfully',
+                confirmButtonColor: '#ff8800'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.reload();
+                }
+            });
+        } else {
+            throw new Error(data.message || 'Failed to add address');
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: error.message || 'Something went wrong! Please try again.',
+            confirmButtonColor: '#ff8800'
+        });
+    }
+});
+
+
+// Update showAddForm to clear any existing errors
+const originalShowAddForm = showAddForm;
+showAddForm = function() {
+    originalShowAddForm();
+    document.querySelectorAll('#addressForm input').forEach(input => {
+        clearError(input);
+    });
+};
+
+// Update showEditForm to clear any existing errors
+const originalShowEditForm = showEditForm;
+showEditForm = function(button) {
+    originalShowEditForm(button);
+    document.querySelectorAll('#addressForm input').forEach(input => {
+        clearError(input);
+    });
+};
+       function showAddForm() {
+        const form = document.querySelector('.address-form');
+        form.action = '/addAddress';
+        form.style.display = 'block';
+        document.querySelector('.btn-add').style.display = 'none';
+        document.getElementById('addressId').value = '';
+        form.reset();
+    }
+
+    function hideAddressForm() {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You will lose all entered information!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ff8800',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, cancel it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.querySelector('.address-form');
+            form.style.display = 'none';
+            document.querySelector('.btn-add').style.display = 'block';
+            form.reset();
+        }
+    });
+}
+
+  
+function deleteAddress(addressId) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ff8800',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/deleteAddress/${addressId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire(
+                        'Deleted!',
+                        'Your address has been deleted.',
+                        'success'
+                    ).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    throw new Error(data.message || 'Failed to delete');
+                }
+            })
+            .catch(error => {
+                Swal.fire(
+                    'Error!',
+                    error.message || 'Failed to delete address.',
+                    'error'
+                );
+                console.error('Error:', error);
+            });
+        }
+    });
+}
+
+function setFormLoading(isLoading) {
+    const submitBtn = document.querySelector('.btn-save');
+    const cancelBtn = document.querySelector('.btn-cancel');
+    
+    if (isLoading) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        cancelBtn.disabled = true;
+    } else {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Save Address';
+        cancelBtn.disabled = false;
+    }
+}
+    // Menu item click handler
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+        });
+    });
+    function showServerMessage(type, message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `alert alert-${type}`;
+    messageDiv.role = 'alert';
+    messageDiv.textContent = message;
+    
+    const container = document.querySelector('.address-container');
+    container.insertBefore(messageDiv, container.firstChild);
+    
+    setTimeout(() => messageDiv.remove(), 5000);
+}
+    </script>
+</body>
+</html>

@@ -47,7 +47,8 @@ router.get("/logout", adminController.logout);
 router.get("/users", customerController.loadUsers);
 
 // Route for toggling user block status
-router.post("/users/toggle-block/:id", customerController.toggleBlock);
+// In your admin routes file
+router.post("/product/toggle/:id", productController.toggleProductStatus);
 
 // Category routes
 router.get('/category',categoryController.loadCategory);
@@ -65,7 +66,7 @@ router.get('/addProduct',productController.loadAddCategory);
 router.post('/addProduct',newUploads,productController.addProducts);
 router.get('/product',productController.loadProductPage);
 
-router.post('/product/toggle/:id',productController.toggleProductStatus);
+router.patch('/product/:id/toggle-status', productController.toggleProductStatus);
 
 // router.get('/blockProduct',productController.blockProduct);
 

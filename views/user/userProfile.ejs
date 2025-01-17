@@ -64,7 +64,7 @@
             color: #999;
         }
 
-        .edit-btn {
+         .edit-btn {
             display: flex; /* Enables flexbox */
             justify-content: center; /* Centers horizontally */
             align-items: center; /* Centers vertically */
@@ -74,10 +74,11 @@
             border: none;
             color: #ffffff;
             font-size: 16px;
-            height: 30px; /* Optional: Set a height for better centering */
-            width: 100px; /* Optional: Set a width for better centering */
+            height: 40px; /* Optional: Set a height for better centering */
+            width: 150px; /* Optional: Set a width for better centering */
+           text-decoration: none;
         }
-
+        
 
         .menu-item {
             display: flex;
@@ -232,11 +233,30 @@
             border: none;
             color: white;
         }
+        .button-container {
+            display: flex; /* Enables flexbox on the container */
+            justify-content: flex-end; /* Aligns items to the right */
+            align-items: center; /* Centers items vertically */
+            width: 100%; /* Ensures the container spans full width */
+        }
+
+        .btn-back {
+            background-color: #ff8800;
+            border-radius: 8px;
+            border: none;
+            color: #ffffff;
+            font-size: 16px;
+            height: 40px;
+            width: 250px;
+            cursor: pointer; /* Optional: Adds a pointer cursor */
+        }
+
 
         .btn-save:hover {
             background: #ff7700;
         }
-
+        
+        
         @media (max-width: 1200px) {
             .container {
                 width: 95%;
@@ -281,9 +301,9 @@
                 <div class="profile-avatar">
                     <i class="fas fa-user"></i>
                 </div>
-                <button class="edit-btn">Edit</button>
-                
-                <a href="#" class="menu-item active">
+                <a href="editProfile"><button style="text-decoration: none;" class="edit-btn">Edit Profile</button></a>
+                <br>
+                <a href="userProfile" class="menu-item active">
                     <i class="fas fa-user"></i>
                     Account Overview
                 </a>
@@ -291,7 +311,7 @@
                     <i class="fas fa-box"></i>
                     My Orders
                 </a>
-                <a href="#" class="menu-item">
+                <a href="userAddress" class="menu-item">
                     <i class="fas fa-map-marker-alt"></i>
                     Manage Address
                 </a>
@@ -299,7 +319,7 @@
                     <i class="fas fa-wallet"></i>
                     Wallet
                 </a>
-                <a href="#" class="menu-item">
+                <a href="passwordMangement" class="menu-item">
                     <i class="fas fa-lock"></i>
                     Manage Password
                 </a>
@@ -308,11 +328,15 @@
                     Wishlist
                 </a>
                 
-                <button class="logout-btn">LOG OUT</button>
+               <a href="/logout"><button class="logout-btn">LOG OUT</button></a> 
             </div>
 
             <!-- Profile Content -->
             <div class="profile-content">
+                <div class="button-container">
+                  <a href="/"><button class="btn-back">Back to Home</button></a>  
+                </div>
+                
                 <h2 class="profile-title">Account Overview</h2>
 
                 <div class="profile-info">
@@ -334,7 +358,9 @@
                         
                     </div>
                 </div>
+                
             </div>
+            
         </div>
         
     </div>
@@ -381,13 +407,9 @@
             });
         });
 
-        const logoutButton = document.querySelector('.logout-btn');
+       
 
-    // Add a click event listener to the button
-    logoutButton.addEventListener('click', () => {
-      // Redirect to the /logout route
-      window.location.href = '/logout';
-    });
+    
     </script>
 </body>
 </html>

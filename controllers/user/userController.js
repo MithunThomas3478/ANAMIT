@@ -228,6 +228,26 @@ const resendOtp = async (req, res) => {
   }
 };
 
+const handleGoogleCallback = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.redirect('/login');
+    }
+
+    // Store user in session
+    req.session.user = req.user._id;
+    
+    // Redirect to home page
+    res.redirect('/');
+  } catch (error) {
+    console.error('Google callback error:', error);
+    res.redirect('/login');
+  }
+};
+
+const handleGoogleFailure = (req, res) => {
+  res.redirect('/login');
+};
 
 const loadLoginPage = async (req, res) => {
   try {
@@ -244,11 +264,12 @@ const loadLoginPage = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    
     console.log(email, password);
 
     // Find the user by email, whether Google or local login
     const findUser = await User.findOne({ email });
-
+ console.log(findUser , "vjysagfv")
     if (!findUser) {
       return res.render("login", { message: "User not found" });
     }
@@ -510,8 +531,93 @@ const loadUserProfile = async (req,res) => {
     }  
 } 
  
+const getEditProfile = async (req, res) => {
+ 
+    try {
+      const user = await User.findById(req.user._id).select('-password');
+      res.render('userProfileEdit', { 
+          user,
+          messages: req.flash()
+      });
+  } catch (error) {
+      console.error('Error fetching user profile:', error);
+      req.flash('error', 'Error loading profile');
+      res.redirect('/');
+  }
+  }
 
+  const updateProfile = async (req, res) => {
+    try {
+        const { name, phone } = req.body;
+        const userId = req.session.user; // Changed from req.session.userId to req.session.user
 
+        // Check if user is logged in
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: 'Please login to update profile'
+            });
+        }
+
+        const errors = [];
+
+        // Name validation
+        const nameRegex = /^[A-Za-z\s]{3,50}$/;
+        if (!name || !nameRegex.test(name)) {
+            errors.push('Invalid name format');
+        }
+
+        // Phone validation
+        const phoneRegex = /^[0-9]{10}$/;
+        if (!phone || !phoneRegex.test(phone)) {
+            errors.push('Invalid phone number format');
+        }
+
+        if (errors.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: errors.join(', ')
+            });
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { 
+                name, 
+                phone,
+                updatedAt: new Date()
+            },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        // Update session with new user data
+        req.session.user = updatedUser._id;
+        
+        return res.status(200).json({
+            success: true,
+            message: 'Profile updated successfully',
+            user: {
+                name: updatedUser.name,
+                phone: updatedUser.phone,
+                email: updatedUser.email
+            }
+        });
+
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error updating profile'
+        });
+    }
+};
 module.exports = {
   loadHomepage,
   pageNotFound,
@@ -525,5 +631,10 @@ module.exports = {
   logout,
   getMensFashion,
   getWomensFashion,
-  loadUserProfile
+  loadUserProfile,
+  loadUserProfile,
+  handleGoogleCallback,
+  handleGoogleFailure,
+  getEditProfile,
+  updateProfile
 };

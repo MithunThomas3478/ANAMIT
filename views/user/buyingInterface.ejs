@@ -190,7 +190,8 @@
     </style>
 </head>
 <body>
-    <div class="container py-5">
+    <%- include('../partials/user/header')%>
+    <div class="container py-5" style="padding-top: 150px;">
         <div class="row">
             <!-- Product Images Section -->
             <div class="col-md-6 mb-4">
@@ -451,7 +452,7 @@
             </button>
         </div>
     </div>
-
+    <%- include('../partials/user/footer')%>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     <script>
      const productData = <%- JSON.stringify(product) %>;

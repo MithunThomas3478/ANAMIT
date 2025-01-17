@@ -68,11 +68,7 @@
                                    style="background-color: #8b5cf6; border: none;">
                                     <i class="bi bi-pencil-square"></i> Edit
                                 </a>
-                                <button onclick="deleteCategory('<%= category._id %>')"
-                                        class="btn btn-sm btn-danger"
-                                        style="background-color: #ef4444; border: none;">
-                                    <i class="bi bi-trash"></i> Delete
-                                </button>
+                                
                             </div>
                         </td>
                     </tr>
@@ -132,52 +128,7 @@
 <%- include('../partials/admin/adminFooter') %>
 
 <script>
-function deleteCategory(categoryId) {
-    Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/admin/category/${categoryId}/delete`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Find and remove the specific row
-                    const row = document.querySelector(`tr:has(button[onclick="deleteCategory('${categoryId}')"])`);
-                    if (row) {
-                        row.remove();
-                        // Update the S.No column for remaining rows
-                        updateSerialNumbers();
-                        Swal.fire(
-                            'Deleted!',
-                            'Category has been deleted.',
-                            'success'
-                        );
-                    }
-                } else {
-                    throw new Error('Failed to delete category');
-                }
-            })
-            .catch(error => {
-                Swal.fire(
-                    'Error!',
-                    error.message || 'Something went wrong',
-                    'error'
-                );
-            });
-        }
-    });
-}
+
 
 function updateSerialNumbers() {
     const rows = document.querySelectorAll('#category-data tr');

@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const path = require('path');
 const session = require('express-session');
+const flash = require('connect-flash');
 const passport = require('./config/passport');
 const env = require('dotenv').config();
 const db = require('./config/db');
@@ -34,7 +35,13 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.use(flash());
 
+// Make flash messages available to all views
+app.use((req, res, next) => {
+    res.locals.messages = req.flash();
+    next();
+});
 app.use((req,res,next)=>{
   res.set('cache-control','no-store')
   next();

@@ -197,33 +197,33 @@ const loadProductPage = async (req, res) => {
 };
 
 const toggleProductStatus = async (req, res) => {
-  try {
-    const productId = req.params.id;
-    const product = await Product.findById(productId);
+    try {
+        const productId = req.params.id;
+        const { isListed } = req.body;
+        
+        const product = await Product.findById(productId);
+        
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: "Product not found"
+            });
+        }
 
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
+        product.isListed = isListed;
+        await product.save();
+
+        res.json({
+            success: true,
+            message: `Product ${isListed ? 'listed' : 'unlisted'} successfully`
+        });
+    } catch (error) {
+        console.error("Error toggling product status:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error updating product status"
+        });
     }
-
-    product.isBlocked = !product.isBlocked;
-    await product.save();
-
-    res.json({
-      success: true,
-      message: `product ${
-        product.isBlocked ? "unlisted" : "listed"
-      } successfully`,
-    });
-  } catch (error) {
-    console.error("Error toggling product status:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error updating product status",
-    });
-  }
 };
 
 const loadEditProduct = async (req, res) => {

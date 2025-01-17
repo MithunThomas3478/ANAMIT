@@ -197,6 +197,36 @@
         .btn-save:hover {
             background: #ff7700;
         }
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .form-group input.error {
+            border-color: #dc3545;
+            background-color: #fff;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            font-size: 16px;
+        }
+
+        .alert-danger {
+            background-color: #ffe6e6;
+            color: #dc3545;
+            border: 1px solid #ffcccc;
+        }
+
+        .alert-success {
+            background-color: #e6ffe6;
+            color: #28a745;
+            border: 1px solid #ccffcc;
+        }
 
         @media (max-width: 1200px) {
             .container {
@@ -232,87 +262,253 @@
                 <div class="profile-avatar">
                     <i class="fas fa-user"></i>
                 </div>
-                <p class="edit-text">Edit</p>
+           
                 
-                <a href="#" class="menu-item">
+                <a href="/userProfile" class="menu-item">
                     <i class="fas fa-user"></i>
                     Account Overview
                 </a>
-                <a href="#" class="menu-item">
+                <a href="/orders" class="menu-item">
                     <i class="fas fa-box"></i>
                     My Orders
                 </a>
-                <a href="#" class="menu-item">
+                <a href="userAddress" class="menu-item">
                     <i class="fas fa-map-marker-alt"></i>
                     Manage Address
                 </a>
-                <a href="#" class="menu-item">
+                <a href="/wallet" class="menu-item">
                     <i class="fas fa-wallet"></i>
                     Wallet
                 </a>
-                <a href="#" class="menu-item">
+                <a href="passwordMangement" class="menu-item">
                     <i class="fas fa-lock"></i>
                     Manage Password
                 </a>
-                <a href="#" class="menu-item">
+                <a href="/wishlist" class="menu-item">
                     <i class="fas fa-heart"></i>
                     Wishlist
                 </a>
                 
-                <button class="logout-btn">LOG OUT</button>
+                <a href="/logout"><button class="logout-btn">LOG OUT</button></a> 
             </div>
 
             <!-- Profile Form -->
             <div class="profile-form">
                 <h2 class="form-title">Edit your Profile</h2>
                 
-                <div class="form-group">
-                    <label for="firstName">First name</label>
-                    <input type="text" id="firstName" name="firstName" placeholder="Enter your first name">
-                </div>
+                <% if (messages && messages.error) { %>
+                    <div class="alert alert-danger">
+                        <%= messages.error %>
+                    </div>
+                <% } %>
                 
-                <div class="form-group">
-                    <label for="lastName">Last Name</label>
-                    <input type="text" id="lastName" name="lastName" placeholder="Enter your last name">
-                </div>
-                
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" placeholder="Enter your email">
-                </div>
-                
-                <div class="form-group">
-                    <label for="phone">Phone Number</label>
-                    <input type="tel" id="phone" name="phone" placeholder="Enter your phone number">
-                </div>
-                
-                <div class="form-actions">
-                    <button class="btn btn-cancel">Cancel</button>
-                    <button class="btn btn-save">Save Changes</button>
-                </div>
+                <% if (messages && messages.success) { %>
+                    <div class="alert alert-success">
+                        <%= messages.success %>
+                    </div>
+                <% } %>
+        
+                <form action="/editProfile/update" method="POST" id="profileForm" novalidate>
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input 
+                            type="text" 
+                            id="name" 
+                            name="name" 
+                            placeholder="Enter your full name"
+                            value="<%= user.name %>"
+                            pattern="^[A-Za-z\s]{3,50}$"
+                            required
+                        >
+                        <span class="error-message" id="nameError"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            value="<%= user.email %>"
+                            readonly
+                            style="background-color: #f0f0f0; cursor: not-allowed;"
+                        >
+                        <span class="error-message" id="emailError"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input 
+                            type="tel" 
+                            id="phone" 
+                            name="phone" 
+                            placeholder="Enter your phone number"
+                            value="<%= user.phone || '' %>"
+                            pattern="^[0-9]{10}$"
+                            required
+                        >
+                        <span class="error-message" id="phoneError"></span>
+                    </div>
+                    
+                    <div id="formMessage" class="alert" style="display: none;"></div>
+                    <div class="form-actions">
+                        <a href="/userProfile" class="btn btn-cancel">Cancel</a>
+                        <button type="submit" class="btn btn-save">Save Changes</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
     <script>
-        // Add event listeners for form submission
-        document.querySelector('.profile-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            // Add your form submission logic here
-        });
+        // Update the form validation to only validate name and phone
+const form = document.getElementById('profileForm');
+const nameInput = document.getElementById('name');
+const phoneInput = document.getElementById('phone');
+const formMessage = document.getElementById('formMessage');
 
-        // Add event listeners for navigation
-        document.querySelectorAll('.menu-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                // Add your navigation logic here
+// Show message function
+function showMessage(type, message) {
+    formMessage.textContent = message;
+    formMessage.className = `alert alert-${type}`;
+    formMessage.style.display = 'block';
+    
+    // Auto hide after 5 seconds
+    setTimeout(() => {
+        formMessage.style.display = 'none';
+    }, 5000);
+}
+
+// Only proceed if we're on the edit profile page (form exists)
+if (form) {
+    // Validation messages
+    const errorMessages = {
+        name: {
+            required: 'Name is required',
+            pattern: 'Name should contain only letters and spaces, between 3-50 characters'
+        },
+        phone: {
+            required: 'Phone number is required',
+            pattern: 'Please enter a valid 10-digit phone number'
+        }
+    };
+
+    // Show error message
+    function showError(input, message) {
+        const errorElement = document.getElementById(input.id + 'Error');
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            input.classList.add('error');
+        }
+    }
+
+    // Hide error message
+    function hideError(input) {
+        const errorElement = document.getElementById(input.id + 'Error');
+        if (errorElement) {
+            errorElement.style.display = 'none';
+            input.classList.remove('error');
+        }
+    }
+
+    // Validate single input
+    function validateInput(input) {
+        if (input.hasAttribute('readonly')) return true;
+
+        if (input.required && !input.value.trim()) {
+            showError(input, errorMessages[input.id].required);
+            return false;
+        }
+
+        if (input.pattern && input.value.trim()) {
+            const regex = new RegExp(input.pattern);
+            if (!regex.test(input.value.trim())) {
+                showError(input, errorMessages[input.id].pattern);
+                return false;
+            }
+        }
+
+        hideError(input);
+        return true;
+    }
+
+    // Add input event listeners
+    [nameInput, phoneInput].forEach(input => {
+        if (input) {
+            input.addEventListener('input', () => {
+                validateInput(input);
             });
+
+            input.addEventListener('blur', () => {
+                validateInput(input);
+            });
+        }
+    });
+
+    // Form submission
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        let isValid = true;
+
+        // Validate only name and phone fields
+        [nameInput, phoneInput].forEach(input => {
+            if (!validateInput(input)) {
+                isValid = false;
+            }
         });
 
-        // Logout functionality
-        document.querySelector('.logout-btn').addEventListener('click', () => {
-            // Add your logout logic here
-        });
+        if (isValid) {
+            try {
+                const formData = new FormData(form);
+                const response = await fetch('/editProfile/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: formData.get('name'),
+                        phone: formData.get('phone')
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('success', data.message);
+                    // Redirect after successful update
+                    setTimeout(() => {
+                        window.location.href = '/userProfile';
+                    }, 2000);
+                } else {
+                    showMessage('danger', data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('danger', 'An error occurred while updating your profile');
+            }
+        }
+    });
+}
+
+// Navigation event listeners
+document.querySelectorAll('.menu-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+        const href = item.getAttribute('href');
+        if (href) {
+            window.location.href = href;
+        }
+    });
+});
+
+// Logout functionality
+const logoutBtn = document.querySelector('.logout-btn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+        window.location.href = '/logout';
+    });
+}
     </script>
 </body>
 </html>

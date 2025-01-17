@@ -1,26 +1,52 @@
 const  User = require('../models/userSchema');
 
 
-const userAuth = (req, res, next) => {
-    if (req.session.user) {
-      User.findById(req.session.user)
-        .then((user) => {
-          if (user && !user.isBlocked) {
-            next(); // Allow access
-          } else {
-            req.session.destroy(); // Destroy session if user is blocked
-            res.redirect('/login?error=blocked'); // Redirect to login with an error
-          }
-        })
-        .catch((error) => {
-          console.error('Error in userAuth middleware:', error);
-          res.status(500).send('Internal Server Error');
-        });
-    } else {
-      res.redirect('/login');
+const userAuth = async (req, res, next) => {
+  try {
+    // Check for user ID in session, with proper type checking
+    const userId = req.session?.user || req.session?.passport?.user;
+    
+    if (!userId) {
+      return res.redirect('/login');
     }
-  };
-  
+
+    // Find user and handle potential null/undefined cases
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      // User not found in database
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Error destroying session:', err);
+        }
+      });
+      return res.redirect('/login?error=invalid');
+    }
+
+    if (user.isBlocked) {
+      // Handle blocked user
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Error destroying session:', err);
+        }
+      });
+      return res.redirect('/login?error=blocked');
+    }
+
+    // Attach user to request object for later use
+    req.user = user;
+    return next();
+
+  } catch (error) {
+    console.error('Error in userAuth middleware:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error during authentication'
+    });
+  }
+};
+
+module.exports = userAuth;
 
   
 

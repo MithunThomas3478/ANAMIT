@@ -1,0 +1,659 @@
+<!-- views/address/editAddress.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Address</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+   <style>
+
+/* public/css/address.css */
+
+/* General Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background-color: #f5f5f5;
+}
+
+/* Container Styles */
+.container {
+    max-width: 1600px;
+    margin: 3rem auto;
+    padding: 0 3rem;
+    width: 90%;
+}
+
+.page-title {
+    text-align: center;
+    margin-bottom: 3rem;
+    font-size: 32px;
+    color: #333;
+    font-weight: bold;
+}
+
+.profile-container {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 3rem;
+    min-height: 600px;
+    min-width: 500px;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    background: white;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    height: fit-content;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    margin: 0 auto 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-avatar i {
+    font-size: 48px;
+    color: #999;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    margin: 0.75rem 0;
+    cursor: pointer;
+    border-radius: 8px;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.3s;
+    font-size: 16px;
+}
+
+.menu-item:hover {
+    background-color: #f5f5f5;
+    transform: translateX(5px);
+}
+
+.menu-item.active {
+    background-color: #e7f3ff;
+    color: #0066cc;
+}
+
+.menu-item i {
+    margin-right: 1rem;
+    width: 24px;
+    font-size: 18px;
+}
+
+.logout-btn {
+    background: #ff8800;
+    color: white;
+    border: none;
+    padding: 1.25rem;
+    width: 100%;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 3rem;
+    font-weight: bold;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.logout-btn:hover {
+    background: #ff7700;
+}
+
+/* Address Content Styles */
+.address-container {
+    background: white;
+    padding: 3rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    height: fit-content;
+    width: 1200px;
+}
+
+.address-title {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 2rem;
+    font-weight: bold;
+}
+
+.address-list {
+    margin-bottom: 2rem;
+}
+
+.address-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    background: #f8f8f8;
+    position: relative;
+}
+
+.address-name {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.address-details, .phone-number {
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+.address-actions {
+    display: flex;
+    gap: 1rem;
+    position: absolute;
+    right: 1.5rem;
+    top: 1.5rem;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    font-size: 18px;
+    transition: color 0.3s;
+}
+
+.action-btn:hover {
+    color: #ff8800;
+}
+
+/* Form Styles */
+.address-form {
+    display: none;
+    margin-top: 2rem;
+}
+
+.edit-form {
+    display: block;
+    margin-top: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #333;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #f5f5f5;
+    font-size: 16px;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #ff8800;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.btn {
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 16px;
+    transition: all 0.3s;
+    text-decoration: none;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+.btn-cancel {
+    background: #eee;
+    border: none;
+    color: #333;
+}
+
+.btn-cancel:hover {
+    background: #e0e0e0;
+}
+
+.btn-save {
+    background: #ff8800;
+    border: none;
+    color: white;
+}
+
+.btn-save:hover {
+    background: #ff7700;
+}
+
+.btn-add {
+    background: #ff8800;
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.btn-add:hover {
+    background: #ff7700;
+    transform: translateY(-2px);
+}
+
+/* Error Message Styles */
+.error-message {
+    color: #ff0000;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+/* Responsive Styles */
+@media (max-width: 1200px) {
+    .container {
+        width: 95%;
+        padding: 0 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-container {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    
+    .container {
+        padding: 0 1rem;
+    }
+
+    .address-container {
+        padding: 2rem;
+        width: 100%;
+    }
+
+    .address-actions {
+        position: static;
+        margin-top: 1rem;
+    }
+}
+
+/* Additional Edit Page Specific Styles */
+.edit-address-container .address-form {
+    display: block;
+}
+
+.back-link {
+    color: #666;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    transition: color 0.3s;
+}
+
+.back-link i {
+    margin-right: 0.5rem;
+}
+
+.back-link:hover {
+    color: #ff8800;
+}
+.swal2-popup {
+        font-family: Arial, sans-serif;
+    }
+
+    .swal2-styled.swal2-confirm {
+        background-color: #ff8800 !important;
+        border-color: #ff8800 !important;
+    }
+
+    .swal2-styled.swal2-cancel {
+        background-color: #eee !important;
+        color: #333 !important;
+    }
+
+    .swal2-styled.swal2-confirm:focus {
+        box-shadow: 0 0 0 3px rgba(255, 136, 0, 0.3);
+    }
+
+   </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="page-title">MY ACCOUNT</h1>
+        
+        <div class="profile-container">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="profile-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                
+                <a href="/account" class="menu-item">
+                    <i class="fas fa-user"></i>
+                    Account Overview
+                </a>
+                <a href="/orders" class="menu-item">
+                    <i class="fas fa-box"></i>
+                    My Orders
+                </a>
+                <a href="/address" class="menu-item active">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Manage Address
+                </a>
+                <a href="/wallet" class="menu-item">
+                    <i class="fas fa-wallet"></i>
+                    Wallet
+                </a>
+                <a href="passwordMangement" class="menu-item">
+                    <i class="fas fa-lock"></i>
+                    Manage Password
+                </a>
+                <a href="/wishlist" class="menu-item">
+                    <i class="fas fa-heart"></i>
+                    Wishlist
+                </a>
+                
+                <a href="/logout"><button class="logout-btn">LOG OUT</button></a>
+            </div>
+
+            <!-- Edit Address Content -->
+            <div class="container">
+                <div class="address-container">
+                    <h2 class="address-title">Edit Address</h2>
+                    
+                    <form class="address-form" id="editAddressForm" action="/updateAddress" method="POST" style="display: block;">
+                        <input type="hidden" id="addressId" name="addressId" value="<%= address._id %>">
+                        
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" name="name" value="<%= address.fullName %>" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="street">Street Address</label>
+                            <input type="text" id="street" name="street" value="<%= address.streetAddress %>" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="city">City</label>
+                            <input type="text" id="city" name="city" value="<%= address.city %>" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="state">State</label>
+                            <input type="text" id="state" name="state" value="<%= address.state %>" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pincode">Pincode</label>
+                            <input type="text" id="pincode" name="pincode" value="<%= address.pincode %>" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" value="<%= address.phoneNumber %>" required>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <a href="/userAddress" class="btn btn-cancel">Cancel</a>
+                            <button type="submit" class="btn btn-save">Update Address</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+   
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Validation functions
+        function validateForm() {
+            let isValid = true;
+            
+            // Validate Full Name
+            const name = document.getElementById('name');
+            if (name.value.trim().length < 2) {
+                showError(name, 'Name must be at least 2 characters long');
+                isValid = false;
+            } else if (!/^[a-zA-Z\s]*$/.test(name.value)) {
+                showError(name, 'Name should contain only letters and spaces');
+                isValid = false;
+            } else {
+                clearError(name);
+            }
+
+            // Validate Street Address
+            const street = document.getElementById('street');
+            if (street.value.trim().length < 5) {
+                showError(street, 'Street address must be at least 5 characters long');
+                isValid = false;
+            } else {
+                clearError(street);
+            }
+
+            // Validate City
+            const city = document.getElementById('city');
+            if (!/^[a-zA-Z\s]*$/.test(city.value)) {
+                showError(city, 'City should contain only letters and spaces');
+                isValid = false;
+            } else {
+                clearError(city);
+            }
+
+            // Validate State
+            const state = document.getElementById('state');
+            if (!/^[a-zA-Z\s]*$/.test(state.value)) {
+                showError(state, 'State should contain only letters and spaces');
+                isValid = false;
+            } else {
+                clearError(state);
+            }
+
+            // Validate Pincode
+            const pincode = document.getElementById('pincode');
+            if (!/^\d{6}$/.test(pincode.value)) {
+                showError(pincode, 'Pincode must be exactly 6 digits');
+                isValid = false;
+            } else {
+                clearError(pincode);
+            }
+
+            // Validate Phone Number
+            const phone = document.getElementById('phone');
+            if (!/^\d{10}$/.test(phone.value)) {
+                showError(phone, 'Phone number must be exactly 10 digits');
+                isValid = false;
+            } else {
+                clearError(phone);
+            }
+
+            return isValid;
+        }
+
+        function showError(input, message) {
+            const formGroup = input.closest('.form-group');
+            const existingError = formGroup.querySelector('.error-message');
+            
+            if (!existingError) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.style.color = '#ff0000';
+                errorDiv.style.fontSize = '12px';
+                errorDiv.style.marginTop = '5px';
+                errorDiv.textContent = message;
+                formGroup.appendChild(errorDiv);
+            } else {
+                existingError.textContent = message;
+            }
+            
+            input.style.borderColor = '#ff0000';
+        }
+
+        function clearError(input) {
+            const formGroup = input.closest('.form-group');
+            const existingError = formGroup.querySelector('.error-message');
+            if (existingError) {
+                existingError.remove();
+            }
+            input.style.borderColor = '#ddd';
+        }
+
+        // Real-time validation
+        document.querySelectorAll('#editAddressForm input').forEach(input => {
+            input.addEventListener('input', function() {
+                clearError(this);
+                
+                switch(this.id) {
+                    case 'name':
+                        if (!/^[a-zA-Z\s]*$/.test(this.value)) {
+                            showError(this, 'Name should contain only letters and spaces');
+                        }
+                        break;
+                    case 'pincode':
+                        if (this.value && !/^\d{0,6}$/.test(this.value)) {
+                            showError(this, 'Pincode must contain only digits');
+                            this.value = this.value.replace(/\D/g, '').slice(0, 6);
+                        }
+                        break;
+                    case 'phone':
+                        if (this.value && !/^\d{0,10}$/.test(this.value)) {
+                            showError(this, 'Phone number must contain only digits');
+                            this.value = this.value.replace(/\D/g, '').slice(0, 10);
+                        }
+                        break;
+                    case 'city':
+                    case 'state':
+                        if (!/^[a-zA-Z\s]*$/.test(this.value)) {
+                            showError(this, `${this.id.charAt(0).toUpperCase() + this.id.slice(1)} should contain only letters and spaces`);
+                        }
+                        break;
+                }
+            });
+        });
+
+       
+
+    // Form submission with SweetAlert2
+    document.getElementById('editAddressForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (!validateForm()) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Validation Error',
+                text: 'Please check all fields and try again',
+                confirmButtonColor: '#ff8800'
+            });
+            return;
+        }
+
+        // Get form data
+        const formData = new FormData(this);
+        const formDataObject = {};
+        formData.forEach((value, key) => {
+            formDataObject[key] = value;
+        });
+
+        try {
+            const response = await fetch('/updateAddress', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formDataObject)
+            });
+
+            if (response.ok) {
+                // Show success message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Address Updated!',
+                    text: 'Your address has been updated successfully',
+                    confirmButtonColor: '#ff8800'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/userAddress';
+                    }
+                });
+            } else {
+                throw new Error('Failed to update address');
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Something went wrong! Please try again.',
+                confirmButtonColor: '#ff8800'
+            });
+        }
+    });
+
+    // Enhance form interactions with SweetAlert2
+    document.querySelector('.btn-cancel').addEventListener('click', function(e) {
+        e.preventDefault();
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "Your changes will not be saved!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ff8800',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, leave page',
+            cancelButtonText: 'No, stay here'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '/userAddress';
+            }
+        });
+    });
+
+    // Function to show loading state
+    function showLoading() {
+        Swal.fire({
+            title: 'Updating...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+    }
+
+    </script>
+</body>
+</html>

@@ -2,8 +2,11 @@ const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/user/userController");
 const productController = require("../controllers/user/productController");
+const addressController = require('../controllers/user/addressController');
+const passwordController = require('../controllers/user/passwordController')
 const { userAuth } = require("../middlewares/auth");
 const passport = require("passport");
+
 
 router.get("/pageNotFound", userController.pageNotFound);
 router.get("/", userController.loadHomepage);
@@ -21,21 +24,32 @@ router.get(
   "/auth/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
+
 router.get(
   "/auth/google/callback",
   passport.authenticate("google", {
     failureRedirect: "/login",
+    failureHandler: userController.handleGoogleFailure
   }),
-  (req, res) => {
-    req.session.passport.user = req.user; // Store the authenticated user in session
-    res.redirect("/"); // Redirect to the homepage or desired route
-  }
+  userController.handleGoogleCallback
 );
 
 router.use(userAuth);
 router.get('/mens',userController.getMensFashion);
 router.get('/womens',userController.getWomensFashion);
 router.get('/productDetails/:id',productController.getProductDetails);
-router.get('/userProfile',userController.loadUserProfile)
+
+
+router.get('/userProfile',userController.loadUserProfile);
+router.get('/editProfile',userController.getEditProfile);
+router.post('/editProfile/update',userController.updateProfile);
+router.get('/userAddress',addressController.getAllAdress);
+router.post('/addAddress',addressController.addAddress);
+router.get('/updateAddress/:id',addressController.getEditAddress);
+router.post('/updateAddress',addressController.updateAddress);
+router.delete('/deleteAddress/:id',addressController.deleteAddress);
+
+router.get('/passwordMangement',passwordController.loadPasswordManager);
+router.post('/changePassword',passwordController.changePassword);
 
 module.exports = router;
