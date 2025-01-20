@@ -3,7 +3,7 @@ const router = express.Router();
 const userController = require("../controllers/user/userController");
 const productController = require("../controllers/user/productController");
 const addressController = require('../controllers/user/addressController');
-const passwordController = require('../controllers/user/passwordController')
+const passwordController = require('../controllers/user/passwordController');
 const { userAuth } = require("../middlewares/auth");
 const passport = require("passport");
 
@@ -18,6 +18,13 @@ router.post("/resend-otp", userController.resendOtp);
 router.get("/login", userController.loadLoginPage);
 router.post("/login", userController.login);
 router.get("/logout", userController.logout);
+router.get('/forgotPassword', userController.loadForgotPassword);
+router.post('/forgot-password', userController.forgotPassword);
+router.post('/verify-forgot-password-otp', userController.verifyForgotPasswordOtp);
+router.post('/reset-password', userController.resetPassword);
+router.post('/resend-forgot-password-otp', userController.resendForgotPasswordOtp);
+
+
 
 // Google login
 router.get(
@@ -51,5 +58,6 @@ router.delete('/deleteAddress/:id',addressController.deleteAddress);
 
 router.get('/passwordMangement',passwordController.loadPasswordManager);
 router.post('/changePassword',passwordController.changePassword);
+
 
 module.exports = router;

@@ -81,7 +81,7 @@ async function sendVerificationEmail(email, otp) {
     subject: "Your Verification Code",
     html: `
         <p>Your OTP is <strong>${otp}</strong>.</p>
-        <p>This code is valid for 10 minutes.</p>
+        <p>This code is valid for 1 minutes.</p>
       `,
   };
 
@@ -618,6 +618,204 @@ const getEditProfile = async (req, res) => {
         });
     }
 };
+
+const loadForgotPassword = async (req, res) => {
+  try {
+      res.render('forgotPassword', {
+          messages: {
+              success: req.flash('success'),
+              error: req.flash('error')
+          }
+      });
+  } catch (error) {
+      console.error('Error loading forgot password page:', error);
+      res.status(500).render('error', { message: 'Internal server error' });
+  }
+};
+
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found with this email' 
+      });
+    }
+
+    // Generate OTP using your existing function
+    const otp = generateOtp();
+
+    // Save OTP and its expiry in session
+    req.session.resetPasswordOtp = {
+      email,
+      otp,
+      createdAt: new Date()
+    };
+
+    // Send email using your existing function
+    const emailSent = await sendVerificationEmail(email, otp);
+
+    if (!emailSent) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to send OTP email'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'OTP has been sent to your email'
+    });
+
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+const verifyForgotPasswordOtp = async (req, res) => {
+  try {
+    const { otp } = req.body;
+    const sessionOtp = req.session.resetPasswordOtp;
+
+    if (!otp || !sessionOtp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid OTP request'
+      });
+    }
+
+    // Check if OTP has expired (1 minute validity as per your existing logic)
+    const now = new Date();
+    const elapsedTime = now - new Date(sessionOtp.createdAt);
+    const otpValidityDuration = 60 * 1000; // 1 minute
+
+    if (elapsedTime > otpValidityDuration) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP has expired'
+      });
+    }
+
+    if (otp !== sessionOtp.otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid OTP'
+      });
+    }
+
+    // OTP is valid - allow password reset
+    res.status(200).json({
+      success: true,
+      message: 'OTP verified successfully'
+    });
+
+  } catch (error) {
+    console.error('OTP verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { newPassword, confirmPassword } = req.body;
+    const sessionOtp = req.session.resetPasswordOtp;
+
+    if (!sessionOtp || !sessionOtp.email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid password reset request'
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Passwords do not match'
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update user's password
+    await User.findOneAndUpdate(
+      { email: sessionOtp.email },
+      { password: hashedPassword }
+    );
+
+    // Clear session OTP data
+    req.session.resetPasswordOtp = null;
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successful'
+    });
+
+  } catch (error) {
+    console.error('Password reset error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+const resendForgotPasswordOtp = async (req, res) => {
+  try {
+    const sessionData = req.session.resetPasswordOtp;
+    
+    if (!sessionData || !sessionData.email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid resend request'
+      });
+    }
+
+    // Generate new OTP
+    const newOtp = generateOtp();
+
+    // Send new OTP
+    const emailSent = await sendVerificationEmail(sessionData.email, newOtp);
+
+    if (!emailSent) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to resend OTP'
+      });
+    }
+
+    // Update session with new OTP
+    req.session.resetPasswordOtp = {
+      email: sessionData.email,
+      otp: newOtp,
+      createdAt: new Date()
+    };
+
+    res.status(200).json({
+      success: true,
+      message: 'New OTP has been sent to your email'
+    });
+
+  } catch (error) {
+    console.error('Resend OTP error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   loadHomepage,
   pageNotFound,
@@ -636,5 +834,10 @@ module.exports = {
   handleGoogleCallback,
   handleGoogleFailure,
   getEditProfile,
-  updateProfile
+  updateProfile,
+  forgotPassword,
+  loadForgotPassword,
+  verifyForgotPasswordOtp,
+  resetPassword,
+  resendForgotPasswordOtp
 };
