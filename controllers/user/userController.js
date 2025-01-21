@@ -317,6 +317,10 @@ const logout = async (req, res) => {
 
 const getMensFashion = async (req, res) => {
   try {
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = 12; // Products per page
+    const skip = (page - 1) * limit;
       // Get the men's category
       const menCategory = await Category.findOne({
           isListed: true,
@@ -373,10 +377,13 @@ const getMensFashion = async (req, res) => {
           default:
               sort = { createdAt: -1 }; // Default sort
       }
-
+      const totalProducts = await Product.countDocuments(query);
+      const totalPages = Math.ceil(totalProducts / limit);
       // Get filtered and sorted products
       const products = await Product.find(query)
           .sort(sort)
+          .skip(skip)
+          .limit(limit)
           .populate('category')  // Populate category information
           .lean();
 
@@ -397,7 +404,15 @@ const getMensFashion = async (req, res) => {
           category: menCategory,  // Pass single category instead of categories array
           products,
           colors: uniqueColors,
-          currentFilters: req.query
+          currentFilters: req.query,
+          pagination: {
+            currentPage: page,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPreviousPage: page > 1,
+            nextPage: page + 1,
+            previousPage: page - 1
+          }
       });
 
   } catch (error) {

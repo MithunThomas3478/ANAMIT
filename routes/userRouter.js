@@ -47,6 +47,10 @@ router.get('/womens',userController.getWomensFashion);
 router.get('/productDetails/:id',productController.getProductDetails);
 
 
+router.get('/cart', productController.getCart);
+router.post('/addToCart', productController.addToCart)
+
+
 router.get('/userProfile',userController.loadUserProfile);
 router.get('/editProfile',userController.getEditProfile);
 router.post('/editProfile/update',userController.updateProfile);

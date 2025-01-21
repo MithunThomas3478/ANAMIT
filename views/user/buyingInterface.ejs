@@ -7,191 +7,352 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <style>
-        /* Similar Products Styles */
+        @import url('https://fonts.cdnjs.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        body {
+            padding-top: 70px !important;
+            font-family: 'Poppins', sans-serif;
+            background: #f8f9fa;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            padding: 40px;
+            margin-top: 20px;
+        }
+
         .card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
+            border: none;
+            background: white;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border-radius: 16px;
+            overflow: hidden;
         }
 
         .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .zoom-container {
+            position: relative;
+            overflow: hidden;
+            cursor: zoom-in;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            background: white;
+        }
+
+        .zoom-container img {
+            transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .zoom-container:hover img {
+            transform: scale(2);
+        }
+
+        .thumbnail {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            opacity: 0.7;
+        }
+
+        .thumbnail:hover {
+            opacity: 1;
+            transform: translateY(-3px);
+        }
+
+        .thumbnail.active {
+            border: 3px solid #007bff !important;
+            opacity: 1;
+        }
+
+        .product-title {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #2d3436;
+            margin-bottom: 1.5rem;
+            line-height: 1.3;
+            position: relative;
+        }
+
+        .product-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: #007bff;
+            border-radius: 2px;
+        }
+
+        .price-tag {
+            font-size: 2.5rem;
+            color: #2d3436;
+            font-weight: 600;
+        }
+
+        .original-price {
+            font-size: 1.5rem;
+            text-decoration: line-through;
+            color: #a0a0a0;
+        }
+
+        .discount {
+            background: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-left: 10px;
+        }
+
+        .color-option {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .color-option:hover {
+            transform: scale(1.2);
+        }
+
+        .color-option.active::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border: 2px solid #007bff;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .btn-outline-secondary {
+            border: 2px solid #e9ecef;
+            color: #2d3436;
+            font-weight: 500;
+            padding: 8px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-secondary:hover:not(.disabled) {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline-secondary.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .quantity-selector {
+            max-width: 150px;
+            background: #f8f9fa;
+            border-radius: 25px;
+            overflow: hidden;
+        }
+
+        .quantity-selector .btn {
+            border: none;
+            background: transparent;
+            color: #2d3436;
+            font-weight: 600;
+        }
+
+        .quantity-selector .form-control {
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-weight: 600;
+            color: #2d3436;
+        }
+
+        .btn-custom {
+            padding: 15px 30px;
+            font-weight: 600;
+            border-radius: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-custom.btn-warning {
+            background: #ffd32a;
+            border: none;
+            color: #2d3436;
+        }
+
+        .btn-custom.btn-primary {
+            background: #007bff;
+            border: none;
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .product-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            animation: float 3s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
         }
 
         .carousel-control-prev,
         .carousel-control-next {
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
+            background: #2d3436;
+            border-radius: 50%;
+            opacity: 0.9;
             top: 50%;
             transform: translateY(-50%);
-            background-color: rgba(0,0,0,0.5);
-            border-radius: 50%;
-            opacity: 0.8;
         }
 
         .carousel-control-prev:hover,
         .carousel-control-next:hover {
             opacity: 1;
+            background: #007bff;
         }
 
-        .card-img-top {
-            height: 200px;
-            object-fit: cover;
-        }
-
-        /* Original Styles */
-        .zoom-container {
-            position: relative;
-            overflow: hidden;
-            cursor: zoom-in;
-        }
-
-        .zoom-container img {
-            transition: transform 0.3s ease;
-        }
-
-        .zoom-container:hover img {
-            transform: scale(2);
-        }
-
-        .thumbnail {
-            cursor: pointer;
-            transition: border-color 0.3s ease;
-        }
-
-        .thumbnail:hover {
-            border-color: #007bff !important;
-        }
-
-        .thumbnail.active {
-            border: 2px solid #007bff !important;
-        }
-
-        .color-option {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-
-        .color-option:hover {
-            transform: scale(1.1);
-        }
-
-        .color-option.active {
-            border: 2px solid #007bff;
-        }
-
-        .price-tag {
+        .similar-products-title {
             font-size: 2rem;
-            color: #212529;
+            font-weight: 600;
+            color: #2d3436;
+            margin-bottom: 2rem;
+            position: relative;
         }
 
-        .original-price {
-            text-decoration: line-through;
-            color: #6c757d;
+        .similar-products-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: #007bff;
+            border-radius: 2px;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            max-width: 350px;
+            min-width: 300px;
         }
 
-        .discount {
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toast-success {
+            border-left: 4px solid #28a745;
+        }
+
+        .toast-error {
+            border-left: 4px solid #dc3545;
+        }
+
+        .toast i {
+            font-size: 1.25rem;
+        }
+
+        .toast-success i {
             color: #28a745;
         }
 
-        .feature-icon {
-            width: 24px;
-            height: 24px;
-            margin-right: 10px;
+        .toast-error i {
+            color: #dc3545;
+        }
+        .text-danger {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
         }
 
-        .btn-custom {
-            transition: all 0.3s ease;
-        }
-
-        .btn-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        .product-badge {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 1;
-        }
-
-        .rating-stars {
-            color: #ffc107;
-        }
-
-        .size-guide-popup {
+        .d-none {
             display: none;
-            position: absolute;
-            background: white;
-            border: 1px solid #dee2e6;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            z-index: 1000;
         }
 
-
-        .zoom-container {
-            position: relative;
-            overflow: hidden;
-            cursor: zoom-in;
+        .toast {
+            z-index: 1056;
         }
-
-        .zoom-container img {
-            transition: transform 0.3s ease;
-        }
-
-        .zoom-container:hover img {
-            transform: scale(2);
-        }
-
-        .thumbnail {
-            cursor: pointer;
-            transition: border-color 0.3s ease;
-        }
-
-        .thumbnail:hover {
-            border-color: #007bff !important;
-        }
-
-        .thumbnail.active {
-            border: 2px solid #007bff !important;
-        }
-
-        .color-option {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-
-        .color-option:hover {
-            transform: scale(1.1);
-        }
-
-        .color-option.active {
-            border: 2px solid #007bff;
-        }
-
-        .quantity-selector {
-            max-width: 120px;
-        }
-
         @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .product-title {
+                font-size: 2rem;
+            }
+
             .zoom-container:hover img {
                 transform: none;
+            }
+
+            .btn-custom {
+                padding: 12px 20px;
             }
         }
     </style>
 </head>
+
 <body>
     <%- include('../partials/user/header')%>
-    <div class="container py-5" style="padding-top: 150px;">
+    <div class="container py-5" >
         <div class="row">
             <!-- Product Images Section -->
             <div class="col-md-6 mb-4">
@@ -218,8 +379,10 @@
 
             <!-- Product Details Section -->
             <div class="col-md-6">
-                <h1 class="h2 mb-2"><%= product.name %></h1>
-
+                
+                <div class="mb-3">
+                    <h1 class="product-title"><%= product.productName %></h1>
+                </div> 
                 <div class="mb-4 price-container">
                     <% const basePrice = product.variants[0].colorVariant[0].price; %>
                     <% const discountedPrice = product.productOffer ? basePrice * (1 - product.productOffer/100) : basePrice; %>
@@ -263,7 +426,8 @@
                             </button>
                         <% }); %>
                     </div>
-                    <small class="text-muted d-block mt-2">
+                    <small class="text-danger d-none" id="sizeError">Please select a size before adding to cart</small>
+                    <small class="text-muted d-block mt-2" id="sizeHelper">
                         Select size to check availability
                     </small>
                 </div>
@@ -272,9 +436,10 @@
                     <h6 class="mb-3">Quantity</h6>
                     <div class="input-group quantity-selector">
                         <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(-1)">-</button>
-                        <input type="number" class="form-control text-center" id="quantity" value="1" min="1">
+                        <input type="number" class="form-control text-center" id="quantity" value="1" min="1" max="5">
                         <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(1)">+</button>
                     </div>
+                    <small class="text-danger d-none" id="quantityError">Maximum quantity allowed is 5</small>
                 </div>
 
                 <!-- Action Buttons -->
@@ -316,148 +481,112 @@
         </div>
     </div>
     <!-- Similar Products Section -->
-    <div class="container py-5">
-        <h2 class="mb-4">Similar Products</h2>
+   <!-- Similar Products Section -->
+   <div class="container py-5">
+    <h2 class="mb-4">Similar Products</h2>
+    <% if (similarProducts && similarProducts.length > 0) { %>
         <div id="similarProducts" class="carousel slide" data-bs-ride="carousel">
             <div class="carousel-inner">
-                <!-- First Slide -->
-                <div class="carousel-item active">
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <div class="card h-100">
-                                <div class="badge bg-danger position-absolute" style="top: 10px; left: 10px">-20%</div>
-                                <img src="/api/placeholder/300/300" class="card-img-top" alt="Similar Product 1">
-                                <div class="card-body">
-                                    <h5 class="card-title">Wireless Earbuds Pro</h5>
-                                    <div class="mb-2">
-                                        <span class="rating-stars">
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="far fa-star"></i>
-                                        </span>
-                                        <small class="text-muted">(1,234)</small>
-                                    </div>
-                                    <p class="card-text">
-                                        <span class="h5">₹8,999</span>
-                                        <span class="text-decoration-line-through text-muted ms-2">₹11,999</span>
-                                    </p>
+                <% 
+                // Split products into groups of 4
+                const productsPerSlide = 4;
+                for(let i = 0; i < similarProducts.length; i += productsPerSlide) {
+                    const slideProducts = similarProducts.slice(i, i + productsPerSlide);
+                %>
+                    <div class="carousel-item <%= i === 0 ? 'active' : '' %>">
+                        <div class="row">
+                            <% slideProducts.forEach(prod => { 
+                                // Get the base price from the first variant and size
+                                const basePrice = prod.variants[0]?.colorVariant[0]?.price || 0;
+                                const discountedPrice = prod.productOffer ? basePrice * (1 - prod.productOffer/100) : basePrice;
+                            %>
+                                <div class="col-md-3 mb-3">
+                                    <a href="/productDetails/<%= prod._id %>" class="text-decoration-none">
+                                        <div class="card h-100">
+                                            <% if (prod.productOffer > 0) { %>
+                                                <div class="badge bg-danger position-absolute" style="top: 10px; left: 10px">
+                                                    -<%= prod.productOffer %>% OFF
+                                                </div>
+                                            <% } %>
+                                            <img src="<%= prod.variants[0].productImage[0] %>" 
+                                                 class="card-img-top" 
+                                                 alt="<%= prod.productName %>">
+                                            <div class="card-body">
+                                                <h5 class="card-title text-dark"><%= prod.productName %></h5>
+                                                <p class="card-text">
+                                                    <span class="h5">₹<%= discountedPrice.toFixed(2) %></span>
+                                                    <% if (prod.productOffer > 0) { %>
+                                                        <span class="text-decoration-line-through text-muted ms-2">
+                                                            ₹<%= basePrice %>
+                                                        </span>
+                                                    <% } %>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </a>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="card h-100">
-                                <div class="badge bg-success position-absolute" style="top: 10px; left: 10px">New</div>
-                                <img src="/api/placeholder/300/300" class="card-img-top" alt="Similar Product 2">
-                                <div class="card-body">
-                                    <h5 class="card-title">Over-Ear Studio Phones</h5>
-                                    <div class="mb-2">
-                                        <span class="rating-stars">
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star-half-alt"></i>
-                                        </span>
-                                        <small class="text-muted">(2,156)</small>
-                                    </div>
-                                    <p class="card-text">
-                                        <span class="h5">₹16,999</span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="card h-100">
-                                <img src="/api/placeholder/300/300" class="card-img-top" alt="Similar Product 3">
-                                <div class="card-body">
-                                    <h5 class="card-title">Gaming Headset RGB</h5>
-                                    <div class="mb-2">
-                                        <span class="rating-stars">
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                        </span>
-                                        <small class="text-muted">(3,789)</small>
-                                    </div>
-                                    <p class="card-text">
-                                        <span class="h5">₹12,999</span>
-                                        <span class="text-decoration-line-through text-muted ms-2">₹15,999</span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="card h-100">
-                                <div class="badge bg-warning position-absolute" style="top: 10px; left: 10px">Limited</div>
-                                <img src="/api/placeholder/300/300" class="card-img-top" alt="Similar Product 4">
-                                <div class="card-body">
-                                    <h5 class="card-title">Sport Wireless Buds</h5>
-                                    <div class="mb-2">
-                                        <span class="rating-stars">
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="far fa-star"></i>
-                                        </span>
-                                        <small class="text-muted">(956)</small>
-                                    </div>
-                                    <p class="card-text">
-                                        <span class="h5">₹7,999</span>
-                                    </p>
-                                </div>
-                            </div>
+                            <% }); %>
                         </div>
                     </div>
-                </div>
-                <!-- Second Slide -->
-                <div class="carousel-item">
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <div class="card h-100">
-                                <img src="/api/placeholder/300/300" class="card-img-top" alt="Similar Product 5">
-                                <div class="card-body">
-                                    <h5 class="card-title">Premium DJ Headphones</h5>
-                                    <div class="mb-2">
-                                        <span class="rating-stars">
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star-half-alt"></i>
-                                        </span>
-                                        <small class="text-muted">(1,567)</small>
-                                    </div>
-                                    <p class="card-text">
-                                        <span class="h5">₹19,999</span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Add more similar products here -->
-                    </div>
-                </div>
+                <% } %>
             </div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#similarProducts" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon bg-dark rounded-circle" aria-hidden="true"></span>
-                <span class="visually-hidden">Previous</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#similarProducts" data-bs-slide="next">
-                <span class="carousel-control-next-icon bg-dark rounded-circle" aria-hidden="true"></span>
-                <span class="visually-hidden">Next</span>
-            </button>
+            <% if (similarProducts.length > 4) { %>
+                <button class="carousel-control-prev" type="button" data-bs-target="#similarProducts" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon bg-dark rounded-circle" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#similarProducts" data-bs-slide="next">
+                    <span class="carousel-control-next-icon bg-dark rounded-circle" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            <% } %>
         </div>
-    </div>
+    <% } else { %>
+        <div class="text-center text-muted">
+            <p>No similar products found</p>
+        </div>
+    <% } %>
+</div>
     <%- include('../partials/user/footer')%>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     <script>
      const productData = <%- JSON.stringify(product) %>;
         let currentVariant = 0;
         let selectedSize = null;
+
+        function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    const content = document.createElement('div');
+    content.className = 'toast-content';
+    
+    const icon = document.createElement('i');
+    icon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+    
+    const text = document.createElement('span');
+    text.textContent = message;
+    
+    content.appendChild(icon);
+    content.appendChild(text);
+    toast.appendChild(content);
+    
+    document.body.appendChild(toast);
+    
+    // Trigger reflow
+    toast.offsetHeight;
+    
+    // Show toast
+    toast.classList.add('show');
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 300);
+    }, 3000);
+}
 
         function changeImage(element) {
             document.getElementById('mainImage').src = element.src;
@@ -514,8 +643,11 @@ function updateSizeOptions(variant) {
 }
 
 
-  function selectSize(element, size) {
+function selectSize(element, size) {
     if (element.classList.contains('disabled')) return;
+    
+    const sizeError = document.getElementById('sizeError');
+    sizeError.classList.add('d-none');
     
     selectedSize = size;
     document.querySelectorAll('[onclick^="selectSize"]').forEach(btn => {
@@ -546,14 +678,25 @@ function updatePrice(basePrice) {
     `;
 }
 
-   function updateQuantity(change) {
+function updateQuantity(change) {
     const quantityInput = document.getElementById('quantity');
+    const quantityError = document.getElementById('quantityError');
     let newValue = parseInt(quantityInput.value) + change;
+    
+    // Reset error message
+    quantityError.classList.add('d-none');
+    
+    // Check maximum limit of 5
+    if (newValue > 5) {
+        quantityError.classList.remove('d-none');
+        return;
+    }
+    
     if (newValue >= 1) {
         if (selectedSize) {
             const variant = productData.variants[currentVariant];
             const sizeData = variant.colorVariant.find(cv => cv.size === selectedSize);
-            if (sizeData && newValue <= sizeData.stock) {
+            if (sizeData && newValue <= Math.min(sizeData.stock, 5)) {
                 quantityInput.value = newValue;
             }
         } else {
@@ -561,6 +704,7 @@ function updatePrice(basePrice) {
         }
     }
 }
+
 
         // Keep the zoom functionality
         const zoomContainer = document.querySelector('.zoom-container');
@@ -574,45 +718,147 @@ function updatePrice(basePrice) {
         });
 
         async function addToCart() {
-            if (!selectedSize) {
-                alert('Please select a size');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/cart/add', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        productId: productData.id,
-                        variantId: productData.variants[currentVariant]._id,
-                        size: selectedSize,
-                        quantity: parseInt(document.getElementById('quantity').value)
-                    })
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    alert('Added to cart successfully!');
-                } else {
-                    alert(data.message || 'Failed to add to cart');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Failed to add to cart');
-            }
+    try {
+        // Show size error if no size selected
+        const sizeError = document.getElementById('sizeError');
+        if (!selectedSize) {
+            sizeError.classList.remove('d-none');
+            showToast('Please select a size', 'error');
+            return;
+        }
+        
+        // Check quantity limit
+        const quantity = parseInt(document.getElementById('quantity').value);
+        const quantityError = document.getElementById('quantityError');
+        
+        if (quantity > 5) {
+            quantityError.classList.remove('d-none');
+            showToast('Maximum quantity allowed is 5', 'error');
+            return;
         }
 
-        function buyNow() {
-            if (!selectedSize) {
-                alert('Please select a size');
+        // Rest of your existing addToCart logic...
+        const variant = productData.variants[currentVariant];
+        if (!variant) {
+            showToast('Invalid product variant', 'error');
+            return;
+        }
+
+        if (isNaN(quantity) || quantity < 1) {
+            showToast('Please select a valid quantity', 'error');
+            return;
+        }
+
+        const sizeVariant = variant.colorVariant.find(cv => cv.size === selectedSize);
+        if (!sizeVariant || sizeVariant.stock < quantity) {
+            showToast('Selected quantity not available in stock', 'error');
+            return;
+        }
+
+        const basePrice = sizeVariant.price;
+        const discountedPrice = productData.productOffer > 0 
+            ? basePrice * (1 - productData.productOffer/100) 
+            : basePrice;
+
+        const response = await fetch('/addToCart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                productId: productData._id,
+                colorName: variant.colorName,
+                size: selectedSize,
+                quantity: quantity,
+                price: discountedPrice
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Added to cart successfully', 'success');
+            
+            const cartCountElement = document.getElementById('cartCount');
+            if (cartCountElement && data.cartCount) {
+                cartCountElement.textContent = data.cartCount;
+            }
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showToast(data.message || 'Failed to add to cart', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to add to cart. Please try again.', 'error');
+    }
+}
+
+async function buyNow() {
+    try {
+        // 1. Validate size selection
+        if (!selectedSize) {
+            showToast('Please select a size', 'error');
+            return;
+        }
+
+        // 2. Get current variant
+        const variant = productData.variants[currentVariant];
+        if (!variant) {
+            showToast('Invalid product variant', 'error');
+            return;
+        }
+
+        // 3. Get quantity
+        const quantity = parseInt(document.getElementById('quantity').value);
+        if (isNaN(quantity) || quantity < 1) {
+            showToast('Please select a valid quantity', 'error');
+            return;
+        }
+
+        // 4. Check stock availability
+        const sizeVariant = variant.colorVariant.find(cv => cv.size === selectedSize);
+        if (!sizeVariant || sizeVariant.stock < quantity) {
+            showToast('Selected quantity not available in stock', 'error');
+            return;
+        }
+
+        // 5. Add to cart first (if needed)
+        try {
+            const cartResponse = await fetch('/addToCart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    productId: productData._id,
+                    variantId: variant._id,
+                    size: selectedSize,
+                    quantity: quantity
+                })
+            });
+
+            const cartData = await cartResponse.json();
+            if (!cartData.success) {
+                showToast(cartData.message || 'Failed to process order', 'error');
                 return;
             }
-            // Add buy now functionality
-            window.location.href = `/checkout?product=${productData.id}&variant=${currentVariant}&size=${selectedSize}&quantity=${document.getElementById('quantity').value}`;
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+            showToast('Failed to process order', 'error');
+            return;
         }
+
+        // 6. Redirect to checkout
+        window.location.href = '/checkout';
+
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to process order', 'error');
+    }
+}
     </script>
 </body>
 </html>

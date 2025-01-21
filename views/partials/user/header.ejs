@@ -47,7 +47,11 @@
         
                 <!-- Additional Icons -->
                 <span class="icon bi bi-heart" title="Wishlist"></span>
-                <span class="icon bi bi-cart-fill" title="Cart"></span>
+                <a href="/cart"><span class="icon bi bi-cart-fill" title="Cart">
+                    <% if (locals.cartCount && cartCount > 0) { %>
+                        <span class="cart-count"><%= cartCount %></span>
+                    <% } %>
+                </span></a>
             <% } else { %>
                 <a href="/login" class="auth-links">LOG IN</a>
                 <a href="/signup" class="auth-links">SIGN UP</a>

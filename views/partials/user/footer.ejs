@@ -7,53 +7,215 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
     <style>
-        html, body {
-            height: 100%;
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
         }
         
         .content {
             flex: 1 0 auto;
         }
+        
         .footer {
             flex-shrink: 0;
-            background-color: #e9ecef;
-            padding: 40px 0;
-            color: #6c757d;
+            background: linear-gradient(145deg, #2e5174, #78b3ee);
+            padding: 80px 0 30px;
+            color: #ecf0f1;
+            width: 100%;
+            margin-top: auto;
+            position: relative;
+            overflow: hidden;
         }
+        
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #2ecc71, #e74c3c);
+        }
+        
+        .footer .containers {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
         .footer h5 {
-            font-weight: bold;
-            margin-bottom: 20px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: #fff;
+            position: relative;
+            padding-bottom: 15px;
+            font-size: 1.4rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
+        
+        .footer h5::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 40px;
+            height: 3px;
+            background: #3498db;
+            transition: width 0.3s ease;
+        }
+        
+        .footer .col-md-3:hover h5::after {
+            width: 60px;
+        }
+        
+        .footer ul {
+            padding: 0;
+            margin: 0;
+        }
+        
+        .footer ul li {
+            margin-bottom: 16px;
+            transition: transform 0.3s ease;
+            list-style: none;
+        }
+        
+        .footer ul li:hover {
+            transform: translateX(8px);
+        }
+        
         .footer a {
-            color: #6c757d;
+            color: #bdc3c7;
             text-decoration: none;
-            font-size: 14px;
+            font-size: 1.05rem;
+            transition: all 0.3s ease;
+            position: relative;
+            display: inline-block;
+            padding: 2px 0;
+            font-weight: 400;
+            letter-spacing: 0.3px;
         }
+        
         .footer a:hover {
-            text-decoration: underline;
+            color: #3498db;
         }
-        .footer .copyright {
-            border-top: 1px solid #dee2e6;
+        
+        .footer a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background-color: #3498db;
+            transition: width 0.3s ease;
+        }
+        
+        .footer a:hover::after {
+            width: 100%;
+        }
+        
+        .social-icons {
+            display: flex;
+            gap: 25px;
             margin-top: 20px;
-            padding-top: 10px;
-            text-align: center;
-            font-size: 14px;
         }
+        
         .social-icons a {
-            color: #6c757d;
-            margin-right: 15px;
-            font-size: 18px;
+            color: #ecf0f1;
+            font-size: 28px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
         }
+        
         .social-icons a:hover {
-            color: #000;
+            color: #fff;
+            transform: translateY(-5px);
+            background: #3498db;
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        .copyright {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 60px;
+            padding-top: 25px;
+            text-align: center;
+            font-size: 1rem;
+            color: #bdc3c7;
+            letter-spacing: 0.5px;
         }
 
         @media (max-width: 768px) {
             .footer {
-                text-align: center;
+                padding: 50px 0 30px;
             }
+            
+            .footer h5 {
+                margin-bottom: 25px;
+                text-align: left;
+                font-size: 1.3rem;
+            }
+            
             .footer .row > div {
+                margin-bottom: 40px;
+                text-align: left;
+            }
+            
+            .footer a {
+                font-size: 1rem;
+            }
+            
+            .footer .social-icons {
+                justify-content: flex-start;
+                margin-top: 20px;
+                gap: 20px;
+            }
+            
+            .social-icons a {
+                width: 45px;
+                height: 45px;
+                font-size: 24px;
+            }
+            
+            .footer h5::after {
+                left: 0;
+                transform: none;
+            }
+            
+            .copyright {
+                margin-top: 40px;
+                padding-top: 20px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .footer {
+                padding: 40px 0 20px;
+            }
+            
+            .footer h5 {
+                font-size: 1.2rem;
                 margin-bottom: 20px;
+            }
+            
+            .footer a {
+                font-size: 0.95rem;
+            }
+            
+            .social-icons a {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
             }
         }
     </style>
@@ -64,47 +226,47 @@
     </div>
 
     <footer class="footer">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-3">
+        <div class="containers">
+            <div class="row gy-4">
+                <div class="col-md-3 col-sm-6">
                     <h5>Need Help</h5>
                     <ul class="list-unstyled">
-                        <li><a href="#">Contact Us</a></li>
-                        <li><a href="#">Track Order</a></li>
-                        <li><a href="#">Return & Exchange Policy</a></li>
-                        <li><a href="#">FAQs</a></li>
-                        <li><a href="#">Career</a></li>
+                        <li><a href="#"><i class="bi bi-chevron-right me-2"></i>Contact Us</a></li>
+                        <li><a href="#"><i class="bi bi-chevron-right me-2"></i>Track Order</a></li>
+                        <li><a href="#"><i class="bi bi-chevron-right me-2"></i>Returns & Exchange</a></li>
+                        <li><a href="#"><i class="bi bi-chevron-right me-2"></i>FAQs</a></li>
+                        <li><a href="#"><i class="bi bi-chevron-right me-2"></i>Career</a></li>
                     </ul>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 col-sm-6">
                     <h5>Company</h5>
                     <ul class="list-unstyled">
-                        <li><a href="#">About Us</a></li>
-                        <li><a href="#">ANAMIT Blog</a></li>
-                        <li><a href="#">Collaboration</a></li>
-                        <li><a href="#">Media</a></li>
+                        <li><a href="#"><i class="bi bi-chevron-right me-2"></i>About Us</a></li>
+                        <li><a href="#"><i class="bi bi-chevron-right me-2"></i>ANAMIT Blog</a></li>
+                        <li><a href="#"><i class="bi bi-chevron-right me-2"></i>Collaboration</a></li>
+                        <li><a href="#"><i class="bi bi-chevron-right me-2"></i>Media</a></li>
                     </ul>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 col-sm-6">
                     <h5>More Info</h5>
                     <ul class="list-unstyled">
-                        <li><a href="#">Terms and Condition</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Shipping Policy</a></li>
-                        <li><a href="#">Sitemap</a></li>
+                        <li><a href="#"><i class="bi bi-chevron-right me-2"></i>Terms & Conditions</a></li>
+                        <li><a href="#"><i class="bi bi-chevron-right me-2"></i>Privacy Policy</a></li>
+                        <li><a href="#"><i class="bi bi-chevron-right me-2"></i>Shipping Policy</a></li>
+                        <li><a href="#"><i class="bi bi-chevron-right me-2"></i>Sitemap</a></li>
                     </ul>
                 </div>
-                <div class="col-md-3">
-                    <h5>Social Media</h5>
+                <div class="col-md-3 col-sm-6">
+                    <h5>Connect With Us</h5>
                     <div class="social-icons">
-                        <a href="#"><i class="bi bi-instagram"></i></a>
-                        <a href="#"><i class="bi bi-twitter"></i></a>
-                        <a href="#"><i class="bi bi-youtube"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="bi bi-twitter"></i></a>
+                        <a href="#" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
                     </div>
                 </div>
             </div>
             <div class="copyright">
-                Copyright &copy; 2024 Anamit Folks Pvt Ltd. All rights reserved.
+                Copyright &copy; <%= new Date().getFullYear() %> Anamit Folks Pvt Ltd. All rights reserved.
             </div>
         </div>
     </footer>
@@ -131,6 +293,32 @@ document.addEventListener('click', function (event) {
         dropdown.style.display = 'none';
     }
 });
+window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Dropdown toggle function
+        function toggleDropdown() {
+            const dropdown = document.getElementById('dropdown');
+            if (dropdown) {
+                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('dropdown');
+            const profileIcon = document.querySelector('.bi-person-circle');
+            
+            if (dropdown && !event.target.closest('.profile-menu') && event.target !== profileIcon) {
+                dropdown.style.display = 'none';
+            }
+        });
 
 </script>
 
