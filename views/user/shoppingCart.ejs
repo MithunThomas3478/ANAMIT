@@ -288,6 +288,7 @@ body {
     }
 }
     </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 </head>
 <body>
     <%- include('../partials/user/header')%>
@@ -356,36 +357,138 @@ body {
         <% } %>
     </div>
     <%- include('../partials/user/footer')%>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+
         async function updateQuantity(productId, change, newValue = null) {
-            const quantity = newValue !== null ? parseInt(newValue) : null;
             try {
-                const response = await fetch(`/api/cart/update`, {
+                let finalQuantity;
+                const quantityInput = document.querySelector(`[data-item-id="${productId}"] .quantity-input`);
+                const currentQuantity = parseInt(quantityInput.value);
+
+                if (newValue !== null) {
+                    finalQuantity = parseInt(newValue);
+                } else {
+                    finalQuantity = currentQuantity + change;
+                }
+
+                // Ensure quantity is between 1 and 5
+                if (finalQuantity < 1) finalQuantity = 1;
+                if (finalQuantity > 5) {
+                    alert('Maximum quantity allowed is 5 items');
+                    quantityInput.value = currentQuantity;
+                    return;
+                }
+
+                const response = await fetch('/updateQuantity', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
                         productId,
-                        quantity: quantity !== null ? quantity : change
+                        quantity: finalQuantity
                     })
                 });
 
-                if (!response.ok) throw new Error('Failed to update quantity');
+                const result = await response.json();
 
-                // Reload the page to reflect changes
-                window.location.reload();
+                if (!response.ok) {
+                    // Reset the input to previous value on error
+                    quantityInput.value = currentQuantity;
+                    throw new Error(result.message || 'Failed to update quantity');
+                }
+                
+                // Update the UI without page reload
+                if (result.success) {
+                    updateCartUI(result.cart);
+                } else {
+                    // Reset the input to previous value if update wasn't successful
+                    quantityInput.value = currentQuantity;
+                    throw new Error(result.message);
+                }
             } catch (error) {
                 console.error('Error updating quantity:', error);
-                alert('Failed to update quantity. Please try again.');
+                alert(error.message || 'Failed to update quantity. Please try again.');
             }
         }
 
-        async function removeItem(productId) {
-            if (!confirm('Are you sure you want to remove this item?')) return;
+// Function to update cart UI
+function updateCartUI(cartData) {
+    // Update item quantities and totals
+    cartData.items.forEach(item => {
+        const itemElement = document.querySelector(`[data-item-id="${item.productId}"]`);
+        if (itemElement) {
+            // Update quantity input
+            const quantityInput = itemElement.querySelector('.quantity-input');
+            if (quantityInput) {
+                quantityInput.value = item.quantity;
+            }
 
+            // Update item total price
+            const totalPrice = itemElement.querySelector('.price:last-child');
+            if (totalPrice) {
+                totalPrice.textContent = `₹${item.total.toLocaleString('en-IN')}`;
+            }
+        }
+    });
+
+    // Update cart summary
+    const subtotalElement = document.querySelector('.summary-row:first-child span:last-child');
+    if (subtotalElement) {
+        subtotalElement.textContent = `₹${cartData.totalPrice.toLocaleString('en-IN')}`;
+    }
+
+    // Update total (including shipping)
+    const totalElement = document.querySelector('.total-row span:last-child');
+    if (totalElement) {
+        const total = cartData.totalPrice + 128; // Adding shipping cost
+        totalElement.textContent = `₹${total.toLocaleString('en-IN')}`;
+    }
+
+    // Update cart count in header if it exists
+    const cartCount = document.querySelector('.cart-count');
+    if (cartCount) {
+        cartCount.textContent = `${cartData.items.length} items`;
+    }
+}
+
+// Add event listeners for quantity input validation
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.quantity-input').forEach(input => {
+        input.addEventListener('input', function() {
+            const value = parseInt(this.value);
+            if (isNaN(value) || value < 1) {
+                this.value = 1;
+            }
+            if (value > 5) {
+                this.value = 5;
+                alert('Maximum quantity allowed is 5 items');
+            }
+        });
+
+        input.addEventListener('blur', function() {
+            const itemId = this.closest('.cart-item').dataset.itemId;
+            updateQuantity(itemId, 0, this.value);
+        });
+    });
+});
+
+        async function removeItem(productId) {
             try {
-                const response = await fetch(`/api/cart/remove`, {
+                const result = await Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, remove it!'
+                });
+
+                if (!result.isConfirmed) return;
+
+                const response = await fetch('/removeProduct', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -393,13 +496,43 @@ body {
                     body: JSON.stringify({ productId })
                 });
 
-                if (!response.ok) throw new Error('Failed to remove item');
+                const data = await response.json();
 
-                // Reload the page to reflect changes
-                window.location.reload();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Failed to remove item');
+                }
+
+                // Remove the item from DOM
+                const itemElement = document.querySelector(`[data-item-id="${productId}"]`);
+                if (itemElement) {
+                    itemElement.remove();
+                }
+
+                // Update cart UI with the new data
+                updateCartUI(data.cart);
+
+                // Show success message
+                await Swal.fire({
+                    title: 'Removed!',
+                    text: 'Product has been removed from cart.',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+
+                // If cart is empty, reload the page to show empty cart message
+                if (data.cart.items.length === 0) {
+                    window.location.reload();
+                }
+
             } catch (error) {
                 console.error('Error removing item:', error);
-                alert('Failed to remove item. Please try again.');
+                await Swal.fire({
+                    title: 'Error!',
+                    text: error.message || 'Failed to remove item. Please try again.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
             }
         }
 

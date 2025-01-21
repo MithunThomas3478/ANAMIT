@@ -1,92 +1,123 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-const cartSchema = new Schema({
-    userId: {
+const cartItemSchema = new Schema({
+    product: {
         type: Schema.Types.ObjectId,
-        ref: 'User',
-        required: [true, 'User ID is required']
+        ref: 'Product',
+        required: [true, 'Product reference is required']
     },
-    items: [{
-        productId: {
-            type: Schema.Types.ObjectId,
-            ref: 'Product',
-            required: [true, 'Product ID is required']
-        },
+    selectedColor: {
         colorName: {
             type: String,
             required: [true, 'Color name is required']
         },
-        size: {
+        colorValue: {
             type: String,
-            required: [true, 'Size is required'],
-            enum: {
-                values: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-                message: '{VALUE} is not a valid size'
-            }
-        },
-        quantity: {
-            type: Number,
-            required: [true, 'Quantity is required'],
-            min: [1, 'Quantity must be at least 1']
-        },
-        price: {
-            type: Number,
-            required: [true, 'Price is required'],
-            min: [0, 'Price cannot be negative']
-        },
-        total: {
-            type: Number,
-            required: true,
-            min: [0, 'Total cannot be negative']
+            required: [true, 'Color value is required']
         }
-    }],
-    totalPrice: {
-        type: Number,
-        required: true,
-        default: 0,
-        min: [0, 'Total price cannot be negative']
     },
-    createdOn: {
-        type: Date,
-        default: Date.now,
-        immutable: true
+    selectedSize: {
+        type: String,
+        required: [true, 'Size is required'],
+        enum: {
+            values: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+            message: '{VALUE} is not a valid size'
+        }
+    },
+    quantity: {
+        type: Number,
+        required: [true, 'Quantity is required'],
+        min: [1, 'Quantity must be at least 1'],
+        validate: {
+            validator: Number.isInteger,
+            message: 'Quantity must be a whole number'
+        }
+    },
+    price: {
+        type: Number,
+        required: [true, 'Price is required'],
+        min: [0, 'Price cannot be negative']
+    },
+    // Store the applied offers at the time of adding to cart
+    appliedProductOffer: {
+        type: Number,
+        default: 0,
+        min: [0, 'Product offer cannot be negative'],
+        max: [100, 'Product offer cannot exceed 100%']
+    },
+    appliedCategoryOffer: {
+        type: Number,
+        default: 0,
+        min: [0, 'Category offer cannot be negative'],
+        max: [100, 'Category offer cannot exceed 100%']
+    }
+});
+
+const cartSchema = new Schema({
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',  // Assuming you have a User model
+        required: [true, 'User reference is required']
+    },
+    items: [cartItemSchema],
+    totalAmount: {
+        type: Number,
+        default: 0
+    },
+    totalDiscount: {
+        type: Number,
+        default: 0
+    },
+    active: {
+        type: Boolean,
+        default: true
     }
 }, {
     timestamps: true
 });
 
-// Middleware to calculate total price for the cart
-cartSchema.pre('save', function(next) {
-    this.totalPrice = this.items.reduce((sum, item) => sum + item.total, 0);
-    next();
+// Virtual for calculating total items in cart
+cartSchema.virtual('totalItems').get(function() {
+    return this.items.reduce((total, item) => total + item.quantity, 0);
 });
 
-// Method to add an item to the cart
-cartSchema.methods.addItem = function(productId, colorName, size, quantity, price) {
-    const itemIndex = this.items.findIndex(
-        item => item.productId.equals(productId) && item.colorName === colorName && item.size === size
-    );
-
-    if (itemIndex > -1) {
-        // If item exists, update the quantity and total
-        this.items[itemIndex].quantity += quantity;
-        this.items[itemIndex].total = this.items[itemIndex].quantity * price;
-    } else {
-        // If item does not exist, add a new one
-        this.items.push({
-            productId,
-            colorName,
-            size,
-            quantity,
-            price,
-            total: quantity * price
-        });
-    }
-
-    // Recalculate total price
-    this.totalPrice = this.items.reduce((sum, item) => sum + item.total, 0);
+// Method to check if product is available before adding to cart
+cartSchema.methods.checkProductAvailability = async function(productId, colorName, size, quantity) {
+    const Product = mongoose.model('Product');
+    const product = await Product.findById(productId);
+    
+    if (!product) return false;
+    
+    const variant = product.variants.find(v => v.colorName === colorName);
+    if (!variant) return false;
+    
+    const sizeVariant = variant.colorVariant.find(sv => sv.size === size);
+    if (!sizeVariant) return false;
+    
+    return sizeVariant.stock >= quantity && sizeVariant.status === 'available';
 };
+
+// Calculate totals before saving
+cartSchema.pre('save', function(next) {
+    // Calculate total amount and discount
+    let totalAmount = 0;
+    let totalDiscount = 0;
+    
+    this.items.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        const productDiscount = (itemTotal * item.appliedProductOffer) / 100;
+        const categoryDiscount = (itemTotal * item.appliedCategoryOffer) / 100;
+        
+        totalAmount += itemTotal;
+        totalDiscount += (productDiscount + categoryDiscount);
+    });
+    
+    this.totalAmount = totalAmount;
+    this.totalDiscount = totalDiscount;
+    
+    next();
+});
 
 const Cart = mongoose.model('Cart', cartSchema);
 module.exports = Cart;

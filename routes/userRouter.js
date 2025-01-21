@@ -4,6 +4,7 @@ const userController = require("../controllers/user/userController");
 const productController = require("../controllers/user/productController");
 const addressController = require('../controllers/user/addressController');
 const passwordController = require('../controllers/user/passwordController');
+const cartController = require('../controllers/user/cartController');
 const { userAuth } = require("../middlewares/auth");
 const passport = require("passport");
 
@@ -46,9 +47,12 @@ router.get('/mens',userController.getMensFashion);
 router.get('/womens',userController.getWomensFashion);
 router.get('/productDetails/:id',productController.getProductDetails);
 
+router.post('/addToCart', productController.addToCart);
 
-router.get('/cart', productController.getCart);
-router.post('/addToCart', productController.addToCart)
+router.get('/cart', cartController.getCart);
+router.post('/updateQuantity',cartController.updateQuantity);
+router.post('/removeProduct',cartController.removeProduct)
+
 
 
 router.get('/userProfile',userController.loadUserProfile);

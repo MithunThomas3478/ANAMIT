@@ -8,7 +8,14 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.cdnjs.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
+        :root {
+            --primary-color: #ff5722;
+            --secondary-color: #ff8a65;
+            --accent-color: #ff9800;
+            --hover-color: #fff3e0;
+            --text-color: #333333;
+            --border-color: #eeeeee;
+        }
         body {
             padding-top: 70px !important;
             font-family: 'Poppins', sans-serif;
@@ -66,7 +73,7 @@
         }
 
         .thumbnail.active {
-            border: 3px solid #007bff !important;
+            border: 3px solid var(--primary-color) !important;
             opacity: 1;
         }
 
@@ -86,16 +93,18 @@
             left: 0;
             width: 60px;
             height: 3px;
-            background: #007bff;
+            background: var(--primary-color);
             border-radius: 2px;
         }
 
         .price-tag {
             font-size: 2.5rem;
-            color: #2d3436;
+            color: var(--primary-color);
             font-weight: 600;
         }
-
+        .bg-primary {
+            background-color: var(--primary-color) !important;
+        }
         .original-price {
             font-size: 1.5rem;
             text-decoration: line-through;
@@ -131,7 +140,7 @@
             left: -4px;
             right: -4px;
             bottom: -4px;
-            border: 2px solid #007bff;
+            border: 2px solid var(--primary-color);
             border-radius: 50%;
             animation: pulse 1.5s infinite;
         }
@@ -160,16 +169,16 @@
         }
 
         .btn-outline-secondary:hover:not(.disabled) {
-            background: #007bff;
+            background: var(--primary-color);
             color: white;
-            border-color: #007bff;
+            border-color: var(--primary-color);
             transform: translateY(-2px);
         }
 
         .btn-outline-secondary.active {
-            background: #007bff;
+            background: var(--primary-color);
             color: white;
-            border-color: #007bff;
+            border-color: var(--primary-color);
         }
 
         .quantity-selector {
@@ -204,23 +213,25 @@
         }
 
         .btn-custom.btn-warning {
-            background: #ffd32a;
+            background: var(--primary-color);
             border: none;
-            color: #2d3436;
+            color: #ffffff;
         }
 
         .btn-custom.btn-primary {
-            background: #007bff;
+            background: var(--accent-color);
             border: none;
         }
 
         .btn-custom:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 20px rgba(255, 87, 34, 0.2);
         }
-
+        .badge.bg-danger {
+            background-color: var(--primary-color) !important;
+        }
         .product-badge {
-            background: #ff6b6b;
+            background: var(--primary-color);
             color: white;
             padding: 8px 15px;
             border-radius: 20px;
@@ -242,7 +253,7 @@
         .carousel-control-next {
             width: 45px;
             height: 45px;
-            background: #2d3436;
+            background: var(--primary-color);
             border-radius: 50%;
             opacity: 0.9;
             top: 50%;
@@ -270,7 +281,7 @@
             left: 0;
             width: 50px;
             height: 3px;
-            background: #007bff;
+            background: var(--primary-color);
             border-radius: 2px;
         }
         .toast {
@@ -299,7 +310,7 @@
         }
 
         .toast-success {
-            border-left: 4px solid #28a745;
+            border-left: 4px solid var(--primary-color);
         }
 
         .toast-error {
@@ -311,7 +322,7 @@
         }
 
         .toast-success i {
-            color: #28a745;
+            color: var(--primary-color);
         }
 
         .toast-error i {
@@ -321,6 +332,9 @@
             color: #dc3545;
             font-size: 0.875rem;
             margin-top: 0.25rem;
+        }
+        .text-primary {
+            color: var(--primary-color) !important;
         }
 
         .d-none {
