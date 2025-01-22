@@ -360,62 +360,70 @@ body {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
 
-        async function updateQuantity(productId, change, newValue = null) {
-            try {
-                let finalQuantity;
-                const quantityInput = document.querySelector(`[data-item-id="${productId}"] .quantity-input`);
-                const currentQuantity = parseInt(quantityInput.value);
+async function updateQuantity(productId, change, newValue = null) {
+    try {
+        let finalQuantity;
+        const quantityInput = document.querySelector(`[data-item-id="${productId}"] .quantity-input`);
+        const currentQuantity = parseInt(quantityInput.value);
 
-                if (newValue !== null) {
-                    finalQuantity = parseInt(newValue);
-                } else {
-                    finalQuantity = currentQuantity + change;
-                }
-
-                // Ensure quantity is between 1 and 5
-                if (finalQuantity < 1) finalQuantity = 1;
-                if (finalQuantity > 5) {
-                    alert('Maximum quantity allowed is 5 items');
-                    quantityInput.value = currentQuantity;
-                    return;
-                }
-
-                const response = await fetch('/updateQuantity', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        productId,
-                        quantity: finalQuantity
-                    })
-                });
-
-                const result = await response.json();
-
-                if (!response.ok) {
-                    // Reset the input to previous value on error
-                    quantityInput.value = currentQuantity;
-                    throw new Error(result.message || 'Failed to update quantity');
-                }
-                
-                // Update the UI without page reload
-                if (result.success) {
-                    updateCartUI(result.cart);
-                } else {
-                    // Reset the input to previous value if update wasn't successful
-                    quantityInput.value = currentQuantity;
-                    throw new Error(result.message);
-                }
-            } catch (error) {
-                console.error('Error updating quantity:', error);
-                alert(error.message || 'Failed to update quantity. Please try again.');
-            }
+        if (newValue !== null) {
+            finalQuantity = parseInt(newValue);
+        } else {
+            finalQuantity = currentQuantity + change;
         }
+
+        // Ensure quantity is between 1 and 5
+        if (finalQuantity < 1) {
+            finalQuantity = 1;
+            quantityInput.value = 1;
+            return;
+        }
+        if (finalQuantity > 5) {
+            alert('Maximum quantity allowed is 5 items');
+            quantityInput.value = currentQuantity;
+            return;
+        }
+
+        const response = await fetch('/updateQuantity', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                productId,
+                quantity: finalQuantity
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            quantityInput.value = currentQuantity;
+            throw new Error(result.message || 'Failed to update quantity');
+        }
+        
+        if (result.success) {
+            // Immediately update the UI with the new cart data
+            updateCartUI(result.cart);
+        } else {
+            quantityInput.value = currentQuantity;
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        console.error('Error updating quantity:', error);
+        Swal.fire({
+            title: 'Error!',
+            text: error.message || 'Failed to update quantity. Please try again.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    }
+}
 
 // Function to update cart UI
 function updateCartUI(cartData) {
     // Update item quantities and totals
+    let subtotal = 0;
     cartData.items.forEach(item => {
         const itemElement = document.querySelector(`[data-item-id="${item.productId}"]`);
         if (itemElement) {
@@ -425,31 +433,35 @@ function updateCartUI(cartData) {
                 quantityInput.value = item.quantity;
             }
 
-            // Update item total price
-            const totalPrice = itemElement.querySelector('.price:last-child');
-            if (totalPrice) {
-                totalPrice.textContent = `₹${item.total.toLocaleString('en-IN')}`;
+            // Update individual item price
+            const prices = itemElement.querySelectorAll('.price');
+            if (prices.length >= 2) {
+                // Update unit price (first .price element)
+                prices[0].textContent = `₹${item.price.toLocaleString('en-IN')}`;
+                // Update total price for this item (second .price element)
+                prices[1].textContent = `₹${item.total.toLocaleString('en-IN')}`;
             }
+            subtotal += item.total;
         }
     });
 
-    // Update cart summary
+    // Update cart count
+    const cartCount = document.querySelector('.cart-count');
+    if (cartCount) {
+        cartCount.textContent = `${cartData.items.length} items`;
+    }
+
+    // Update cart summary with calculated values
     const subtotalElement = document.querySelector('.summary-row:first-child span:last-child');
     if (subtotalElement) {
-        subtotalElement.textContent = `₹${cartData.totalPrice.toLocaleString('en-IN')}`;
+        subtotalElement.textContent = `₹${subtotal.toLocaleString('en-IN')}`;
     }
 
     // Update total (including shipping)
     const totalElement = document.querySelector('.total-row span:last-child');
     if (totalElement) {
-        const total = cartData.totalPrice + 128; // Adding shipping cost
+        const total = subtotal + 128; // Adding shipping cost
         totalElement.textContent = `₹${total.toLocaleString('en-IN')}`;
-    }
-
-    // Update cart count in header if it exists
-    const cartCount = document.querySelector('.cart-count');
-    if (cartCount) {
-        cartCount.textContent = `${cartData.items.length} items`;
     }
 }
 

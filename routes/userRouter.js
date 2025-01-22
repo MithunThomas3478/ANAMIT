@@ -55,7 +55,9 @@ router.post('/updateQuantity',cartController.updateQuantity);
 router.post('/removeProduct',cartController.removeProduct);
 
 
-router.get('/checkout',checkoutController.getCheckout)
+router.get('/checkout',checkoutController.getCheckout);
+router.post('/placeOrder',checkoutController.placeOrder);
+router.get('/orderSuccess/:orderId',checkoutController.orderSuccess);
 
 
 router.get('/userProfile',userController.loadUserProfile);
