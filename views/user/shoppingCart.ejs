@@ -538,19 +538,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         async function proceedToCheckout() {
             try {
-                const response = await fetch('/api/checkout/initialize', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) throw new Error('Failed to initialize checkout');
-
-                const { checkoutUrl } = await response.json();
-                window.location.href = checkoutUrl;
+                window.location.href = '/checkout';
             } catch (error) {
-                console.error('Error proceeding to checkout:', error);
+                console.error('Error proceeding to checkout:', error.message);
                 alert('Failed to proceed to checkout. Please try again.');
             }
         }

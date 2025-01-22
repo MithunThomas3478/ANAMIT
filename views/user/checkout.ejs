@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+        :root {
+            --primary-color: #FF5722;
+            --primary-dark: #E64A19;
+            --primary-light: #FFCCBC;
+            --secondary-color: #FF9800;
+            --accent-color: #FFC107;
+            --danger-color: #f44336;
+            --success-color: #4CAF50;
+            --text-color: #333333;
+            --text-light: #757575;
+            --border-color: #EEEEEE;
+            --bg-color: #F5F5F5;
+            --white: #ffffff;
+        }
+
+           .checkout-items {
+            margin: 2rem 0;
+        }
+
+        .checkout-item {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .item-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .item-details h3 {
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .item-variant {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .item-quantity {
+            margin-top: 0.5rem;
+            color: var(--text-light);
+        }
+
+        .checkout-summary {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .total-row {
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-top: 2px solid var(--primary-color);
+            margin-top: 1rem;
+            padding-top: 1rem;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Enhanced Header Styles */
+        .header {
+            background: var(--white);
+            padding: 1rem;
+            box-shadow: 0 2px 15px rgba(255, 87, 34, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .header .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Dynamic Progress Bar */
+        .checkout-progress {
+            display: flex;
+            justify-content: space-between;
+            margin: 2rem auto;
+            max-width: 800px;
+            position: relative;
+            padding: 0 20px;
+        }
+
+        .progress-bar-line {
+            position: absolute;
+            top: 25px;
+            left: 50px;
+            right: 50px;
+            height: 3px;
+            background: var(--border-color);
+            z-index: 0;
+        }
+
+        .progress-bar-line::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .progress-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--white);
+            border: 3px solid var(--border-color);
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            font-weight: bold;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active .step-number {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: var(--white);
+            box-shadow: 0 0 15px rgba(255, 87, 34, 0.3);
+        }
+
+        .progress-step.completed .step-number {
+            background: var(--success-color);
+            border-color: var(--success-color);
+            color: var(--white);
+        }
+
+        /* Enhanced Card Styles */
+        .card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        /* Wallet Section */
+        .wallet-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: var(--white);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .wallet-balance {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+
+        .wallet-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .wallet-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            color: var(--white);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .wallet-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Enhanced Cart Items */
+        .cart-items {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .cart-item {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .cart-item:hover {
+            background: rgba(255, 87, 34, 0.02);
+        }
+
+        .item-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .item-details h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .quantity-btn:hover {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+        /* Payment Methods */
+        .payment-method {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .payment-method:hover {
+            border-color: var(--primary-color);
+            background: rgba(255, 87, 34, 0.02);
+        }
+
+        .payment-method.selected {
+            border-color: var(--primary-color);
+            background: rgba(255, 87, 34, 0.05);
+        }
+
+        .payment-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--primary-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+
+        /* Enhanced Buttons */
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: var(--white);
+            box-shadow: 0 4px 15px rgba(255, 87, 34, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 87, 34, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        .checkout-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr; /* Adjust the ratio as needed */
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.address-section {
+    margin-bottom: 0; /* Remove bottom margin as we're using gap */
+}
+
+@media (max-width: 768px) {
+    .checkout-grid {
+        grid-template-columns: 1fr;
+    }
+}
+        .btn-outline:hover {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+        #couponCode{
+            width: 250px;
+            height: 50px;
+            border-radius: 8px;
+        }
+        /* Order Summary Animation */
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 0;
+            border-bottom: 1px dashed var(--border-color);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .total-row {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            border-top: 2px solid var(--primary-color);
+            margin-top: 1rem;
+            padding-top: 1rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .checkout-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .wallet-section {
+                margin: 1rem 0;
+            }
+
+            .cart-item {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .item-image {
+                margin: 0 auto;
+            }
+
+            .quantity-selector {
+                justify-content: center;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--primary-light);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+  
+
+    <div class="container">
+        <!-- Progress Bar -->
+        <div class="checkout-progress">
+            <div class="progress-bar-line"></div>
+            <div class="progress-step active">
+                <div class="step-number">1</div>
+                <span>Cart</span>
+            </div>
+            <div class="progress-step">
+                <div class="step-number">2</div>
+                <span>Delivery</span>
+            </div>
+            <div class="progress-step">
+                <div class="step-number">3</div>
+                <span>Payment</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="checkout-grid">
+            <!-- Left Column -->
+            <div class="main-content">
+                <!-- Wallet Section -->
+                <!-- <div class="wallet-section">
+                    <h2>Wallet Balance</h2>
+                    <div class="wallet-balance">₹2,500</div>
+                    <div class="wallet-actions">
+                        <button class="wallet-btn" onclick="addMoney()">
+                            <i class="fas fa-plus"></i> Add Money
+                        </button>
+                        <button class="wallet-btn" onclick="toggleWalletUse()">
+                            <i class="fas fa-wallet"></i> Use Wallet
+                        </button>
+                    </div>
+                </div> -->
+
+                <!-- Cart Items -->
+                <div class="checkout-items">
+                    <% checkoutData.items.forEach(item => { %>
+                        <div class="checkout-item">
+                            <img 
+                                src="<%= item.product.variants.find(v => v.colorName === item.colorName).productImage[0] %>" 
+                                alt="<%= item.product.productName %>" 
+                                class="item-image"
+                            >
+                            <div class="item-details">
+                                <h3><%= item.product.productName %></h3>
+                                <div class="item-variant">
+                                    Color: <%= item.colorName %> | Size: <%= item.size %>
+                                </div>
+                                <div class="item-quantity">
+                                    Quantity: <%= item.quantity %>
+                                </div>
+                            </div>
+                            <div class="item-price">
+                                ₹<%= item.total.toLocaleString('en-IN') %>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+                <div class="card address-section">
+                    <h2>Delivery Address</h2>
+                    
+                    <!-- Saved Addresses -->
+                    <div class="saved-addresses" id="savedAddresses">
+                        <% if (addresses && addresses.length > 0) { %>
+                            <% addresses.forEach(address => { %>
+                                <div class="address-card" onclick="selectAddress('<%= address._id %>')">
+                                    <div class="address-details">
+                                        <p class="name"><%= address.fullName %></p>
+                                        <p><%= address.streetAddress %></p>
+                                        <p><%= address.city %>, <%= address.state %> <%= address.pincode %></p>
+                                        <p>Phone: <%= address.phoneNumber %></p>
+                                    </div>
+                                    <div class="address-actions">
+                                        <button class="btn-outline btn-sm" onclick="editAddress('<%= address._id %>', event)">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <button class="btn-outline btn-sm" onclick="deleteAddress('<%= address._id %>', event)">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <p>No saved addresses found.</p>
+                        <% } %>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="showAddAddressForm()">
+                        <i class="fas fa-plus"></i> Add New Address
+                    </button>
+        
+                    <!-- Add/Edit Address Form (Hidden by default) -->
+                    <div id="addressForm" class="address-form" style="display: none;">
+                        <h3>Add New Address</h3>
+                        <form id="newAddressForm" onsubmit="saveAddress(event)">
+                            <div class="form-group">
+                                <label for="fullName">Full Name *</label>
+                                <input type="text" id="fullName" name="fullName" required>
+                            </div>
+        
+                            <div class="form-group">
+                                <label for="streetAddress">Street Address *</label>
+                                <input type="text" id="streetAddress" name="streetAddress" required>
+                            </div>
+        
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="city">City *</label>
+                                    <input type="text" id="city" name="city" required>
+                                </div>
+        
+                                <div class="form-group">
+                                    <label for="state">State *</label>
+                                    <input type="text" id="state" name="state" required>
+                                </div>
+        
+                                <div class="form-group">
+                                    <label for="pincode">Pincode *</label>
+                                    <input type="text" id="pincode" name="pincode" required pattern="[0-9]{6}">
+                                </div>
+                            </div>
+        
+                            <div class="form-group">
+                                <label for="phoneNumber">Phone Number *</label>
+                                <input type="tel" id="phoneNumber" name="phoneNumber" required pattern="[0-9]{10}">
+                            </div>
+        
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">Save Address</button>
+                                <button type="button" class="btn btn-outline" onclick="hideAddressForm()">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <!-- Payment Methods -->
+                <div class="card payment-section">
+                    <h2>Payment Method</h2>
+                    <div class="payment-methods">
+                        <div class="payment-method" onclick="selectPayment('wallet')">
+                            <div class="payment-icon">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            <div>
+                                <h3>Pay with Wallet</h3>
+                                <p>Available balance: ₹2,500</p>
+                            </div>
+                        </div>
+                        <div class="payment-method" onclick="selectPayment('razorpay')">
+                            <div class="payment-icon">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div>
+                                <h3>Razorpay</h3>
+                                <p>Cards, UPI, NetBanking & more</p>
+                            </div>
+                        </div>
+                        <div class="payment-method" onclick="selectPayment('cod')">
+                            <div class="payment-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div>
+                                <h3>Cash on Delivery</h3>
+                                <p>Pay when you receive</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Right Column -->
+            <div class="order-summary card">
+                <h2>Order Summary</h2>
+                <!-- Coupon Section -->
+                <div class="coupon-section">
+                    <h3>Have a coupon?</h3>
+                    <div class="coupon-input">
+                        <input type="text" id="couponCode" placeholder="Enter coupon code">
+                        <button class="btn btn-primary" onclick="applyCoupon()">Apply</button>
+                    </div>
+                    <div id="appliedCoupon"></div>
+                </div>
+                
+                <!-- Price Details -->
+                <div class="summary-row">
+                    <span>Items Total</span>
+                    <span>₹<%= (checkoutData.totalPrice || 0).toLocaleString('en-IN') %></span>
+                </div>
+                <div class="summary-row">
+                    <span>Delivery</span>
+                    <span>₹<%= (checkoutData.shipping || 0).toLocaleString('en-IN') %></span>
+                </div>
+                <div class="summary-row total-row">
+                    <span>Total Amount</span>
+                    <span id="totalAmount">₹<%= (checkoutData.grandTotal || 0).toLocaleString('en-IN') %></span>
+                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="proceedToPayment()">
+                    Proceed to Payment
+                </button>
+            </div>
+        </div>
+    
+        <!-- Loading Spinner -->
+        <div class="loading" id="loading" style="display: none;">
+            <div class="loading-spinner"></div>
+        </div>
+    
+        <script>
+            let walletBalance = 2500;
+            let isWalletUsed = false;
+            let currentCoupon = null;
+            let selectedPaymentMethod = null
+
+            
+            let cartTotal = <%= checkoutData?.totalPrice || 0 %>;
+    let deliveryFee = <%= checkoutData?.shipping || 0 %>;
+    let grandTotal = <%= checkoutData?.grandTotal || 0 %>;
+
+
+
+            // Initialize the page
+            document.addEventListener('DOMContentLoaded', () => {
+                updateProgressBar(1);
+                updatePricing();
+            });
+    
+            // Progress Bar Management
+            function updateProgressBar(step) {
+                const steps = document.querySelectorAll('.progress-step');
+                const progressLine = document.querySelector('.progress-bar-line');
+                
+                steps.forEach((stepElement, index) => {
+                    if (index < step) {
+                        stepElement.classList.add('completed');
+                        stepElement.classList.remove('active');
+                    } else if (index === step) {
+                        stepElement.classList.add('active');
+                        stepElement.classList.remove('completed');
+                    } else {
+                        stepElement.classList.remove('completed', 'active');
+                    }
+                });
+    
+                progressLine.style.width = `${(step / (steps.length - 1)) * 100}%`;
+            }
+    
+            // Wallet Management
+            function addMoney() {
+                const amount = prompt('Enter amount to add to wallet:', '1000');
+                if (amount && !isNaN(amount)) {
+                    showLoading();
+                    setTimeout(() => {
+                        walletBalance += parseFloat(amount);
+                        updateWalletBalance();
+                        hideLoading();
+                        showNotification(`Added ₹${amount} to wallet`);
+                    }, 1000);
+                }
+            }
+    
+            function toggleWalletUse() {
+                isWalletUsed = !isWalletUsed;
+                updatePricing();
+                showNotification(isWalletUsed ? 'Wallet balance will be used' : 'Wallet balance removed');
+            }
+    
+            function updateWalletBalance() {
+                document.querySelector('.wallet-balance').textContent = `₹${walletBalance}`;
+                document.querySelector('.payment-method:first-child p').textContent = 
+                    `Available balance: ₹${walletBalance}`;
+            }
+    
+            // Payment Management
+            function selectPayment(method) {
+                selectedPaymentMethod = method;
+                document.querySelectorAll('.payment-method').forEach(pm => {
+                    pm.classList.remove('selected');
+                });
+                event.currentTarget.classList.add('selected');
+                showNotification(`Selected ${method} payment`);
+            }
+    
+            // Coupon Management
+            const coupons = {
+                'WELCOME50': { discount: 50, type: 'percentage', max: 500 },
+                'FLAT100': { discount: 100, type: 'fixed' },
+                'SPECIAL25': { discount: 25, type: 'percentage', max: 250 }
+            };
+    
+            function applyCoupon() {
+                const couponCode = document.getElementById('couponCode').value.toUpperCase();
+                
+                if (!coupons[couponCode]) {
+                    showNotification('Invalid coupon code');
+                    return;
+                }
+    
+                showLoading();
+                setTimeout(() => {
+                    const coupon = coupons[couponCode];
+                    let discountAmount = calculateDiscount(coupon);
+    
+                    currentCoupon = {
+                        code: couponCode,
+                        discount: discountAmount
+                    };
+    
+                    updatePricing();
+                    document.getElementById('appliedCoupon').innerHTML = `
+                        <div class="applied-coupon">
+                            <span>Coupon ${couponCode} applied: -₹${discountAmount}</span>
+                            <span onclick="removeCoupon()" style="cursor: pointer;">✕</span>
+                        </div>
+                    `;
+                    
+                    document.getElementById('couponCode').value = '';
+                    hideLoading();
+                    showNotification('Coupon applied successfully');
+                }, 800);
+            }
+    
+            function calculateDiscount(coupon) {
+                if (coupon.type === 'percentage') {
+                    return Math.min((cartTotal * coupon.discount / 100), coupon.max || Infinity);
+                }
+                return coupon.discount;
+            }
+    
+            function removeCoupon() {
+                showLoading();
+                setTimeout(() => {
+                    currentCoupon = null;
+                    document.getElementById('appliedCoupon').innerHTML = '';
+                    document.getElementById('couponDiscount').style.display = 'none';
+                    updatePricing();
+                    hideLoading();
+                    showNotification('Coupon removed');
+                }, 500);
+            }
+    
+            // Price Calculations
+           function updatePricing() {
+        let total = cartTotal + deliveryFee;
+        let walletDiscountAmount = 0;
+        
+        if (isWalletUsed) {
+            walletDiscountAmount = Math.min(walletBalance, total);
+            document.getElementById('walletDiscount').style.display = 'flex';
+            document.getElementById('walletDiscount').querySelector('.discount').textContent = 
+                `-₹${walletDiscountAmount.toLocaleString('en-IN')}`;
+            total -= walletDiscountAmount;
+        } else {
+            document.getElementById('walletDiscount').style.display = 'none';
+        }
+        
+        if (currentCoupon) {
+            document.getElementById('couponDiscount').style.display = 'flex';
+            document.getElementById('couponDiscount').querySelector('.discount').textContent = 
+                `-₹${currentCoupon.discount.toLocaleString('en-IN')}`;
+            total -= currentCoupon.discount;
+        }
+        
+        document.getElementById('totalAmount').textContent = 
+            `₹${Math.max(0, total).toLocaleString('en-IN')}`;
+        animatePrice(total);
+    }
+    
+            function animatePrice(newTotal) {
+                const element = document.getElementById('totalAmount');
+                element.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    element.style.transform = 'scale(1)';
+                }, 200);
+            }
+    
+            // Payment Processing
+            function proceedToPayment() {
+                if (!selectedPaymentMethod) {
+                    showNotification('Please select a payment method');
+                    return;
+                }
+    
+                showLoading();
+                setTimeout(() => {
+                    switch(selectedPaymentMethod) {
+                        case 'wallet':
+                            processWalletPayment();
+                            break;
+                        case 'razorpay':
+                            initializeRazorpay();
+                            break;
+                        case 'cod':
+                            processCOD();
+                            break;
+                    }
+                    hideLoading();
+                }, 1000);
+            }
+    
+            function processWalletPayment() {
+                if (walletBalance >= parseFloat(document.getElementById('totalAmount').textContent.replace('₹', ''))) {
+                    walletBalance -= parseFloat(document.getElementById('totalAmount').textContent.replace('₹', ''));
+                    updateWalletBalance();
+                    showNotification('Payment successful! Order confirmed.');
+                } else {
+                    showNotification('Insufficient wallet balance');
+                }
+            }
+    
+            function initializeRazorpay() {
+                const options = {
+                    key: 'YOUR_RAZORPAY_KEY',
+                    amount: parseFloat(document.getElementById('totalAmount').textContent.replace('₹', '')) * 100,
+                    currency: 'INR',
+                    name: 'ShopEase',
+                    description: 'Order Payment',
+                    handler: function(response) {
+                        showNotification('Payment successful! Order confirmed.');
+                    },
+                    theme: {
+                        color: '#FF5722'
+                    }
+                };
+    
+                const rzp = new Razorpay(options);
+                rzp.open();
+            }
+    
+            function processCOD() {
+                showNotification('Order placed successfully! Pay ₹' + 
+                    document.getElementById('totalAmount').textContent.replace('₹', '') + 
+                    ' at delivery.');
+            }
+    
+            // Helper Functions
+            function showLoading() {
+                document.getElementById('loading').style.display = 'flex';
+            }
+    
+            function hideLoading() {
+                document.getElementById('loading').style.display = 'none';
+            }
+    
+            function showNotification(message) {
+                const notification = document.createElement('div');
+                notification.className = 'notification';
+                notification.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    background: var(--primary-color);
+                    color: white;
+                    padding: 1rem 2rem;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    z-index: 1000;
+                    animation: slideIn 0.3s ease-out;
+                `;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.style.animation = 'slideOut 0.3s ease-out';
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 300);
+                }, 3000);
+            }
+    
+            // Quantity Management
+            function updateQuantity(action, itemId) {
+                const quantityElement = event.target.parentElement.querySelector('span');
+                let quantity = parseInt(quantityElement.textContent);
+                
+                if (action === 'increase') {
+                    quantity++;
+                } else if (action === 'decrease' && quantity > 1) {
+                    quantity--;
+                }
+                
+                quantityElement.textContent = quantity;
+                updateCartTotal(quantity);
+            }
+    
+            function updateCartTotal(quantity) {
+                cartTotal = 1999 * quantity;
+                document.querySelector('.summary-row:first-child span:last-child').textContent = 
+                    `₹${cartTotal}`;
+                updatePricing();
+            }
+        </script>
+    </body>
+    </html>
