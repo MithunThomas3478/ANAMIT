@@ -2,7 +2,8 @@ const express = require("express");
 const adminController = require("../controllers/admin/adminController");
 const customerController = require("../controllers/admin/customersController");
 const categoryController = require('../controllers/admin/categoryController');
-const productController = require('../controllers/admin/productController')
+const productController = require('../controllers/admin/productController');
+const orderController = require('../controllers/admin/orderController');
 const multer = require('multer')
 const upload = multer();
 const { v4: uuidv4 } = require('uuid');
@@ -78,5 +79,7 @@ router.get('/editProduct',productController.loadEditProduct);
 
 router.post('/editProduct/:id',newUploads,productController.editProduct);
 
-
+router.get('/orders',orderController.getOrderManagement);
+router.patch('/order/:orderId/update-status', orderController.updateOrderStatus);
+router.get('/order/:orderId/invoice', orderController.generateInvoice);
 module.exports = router;    

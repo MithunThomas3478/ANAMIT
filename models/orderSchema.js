@@ -7,6 +7,13 @@ const orderItemSchema = new Schema({
         ref: 'Product',
         required: true
     },
+    productImage: {
+        type: String,
+        required: false,
+        get: function(image) {
+            return image ? image : null;
+        }
+    },
     productName: {  // Store name at time of order
         type: String,
         required: true
@@ -48,6 +55,16 @@ const orderItemSchema = new Schema({
     itemTotal: {
         type: Number,
         required: true
+    },
+    status: {
+        type: String,
+        enum: ['active', 'cancelled'],
+        default: 'active'
+    },
+    cancellationDetails: {
+        cancelledAt: Date,
+        reason: String,
+        refundAmount: Number
     }
 });
 
@@ -69,10 +86,14 @@ const orderSchema = new Schema({
     },
     items: [orderItemSchema],
     shippingAddress: {
-        type: Schema.Types.ObjectId,
-        ref: 'Address',
-        required: true
+        fullName: String,
+        streetAddress: String,
+        city: String,
+        state: String,
+        pincode: String,
+        phoneNumber: String
     },
+  
     totalAmount: {
         type: Number,
         required: true,
@@ -90,7 +111,7 @@ const orderSchema = new Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['cod', 'razorpay'],
+        enum: ['cod', 'razorpay', 'wallet'],
         required: true
     },
     paymentStatus: {
@@ -98,12 +119,18 @@ const orderSchema = new Schema({
         enum: ['pending', 'completed', 'failed', 'refunded'],
         default: 'pending'
     },
+    walletDetails: {
+        transactionId: String,
+        debitedAmount: Number,
+        debitedAt: Date
+    },
     paymentDetails: {
         razorpayOrderId: String,
         razorpayPaymentId: String,
         razorpaySignature: String,
         paidAmount: Number,
-        paidAt: Date
+        paidAt: Date,
+        walletTransactionId: String  // Reference to wallet transaction if partial payment made through wallet
     },
     orderStatus: {
         type: String,
@@ -158,6 +185,7 @@ const orderSchema = new Schema({
     timestamps: true
 });
 
+
 // Virtual for calculating final payable amount
 orderSchema.virtual('finalAmount').get(function() {
     return this.totalAmount - this.totalDiscount + this.shippingFee;
@@ -189,7 +217,14 @@ orderSchema.pre('save', function(next) {
         }
     }
 
-    next();
+    if (!this.orderId) {
+        this.constructor.generateOrderId().then(orderId => {
+            this.orderId = orderId;
+            next();
+        });
+    } else {
+        next();
+    }
 });
 
 // Method to generate order number
@@ -226,6 +261,15 @@ orderSchema.statics.generateOrderId = async function() {
 orderSchema.methods.canBeCancelled = function() {
     const nonCancellableStatuses = ['shipped', 'delivered', 'cancelled', 'returned'];
     return !nonCancellableStatuses.includes(this.orderStatus);
+};
+
+// Add this to your Order schema methods
+orderSchema.methods.canBeCancelled = function() {
+    console.log('Current order status:', this.orderStatus);
+    const nonCancellableStatuses = ['shipped', 'delivered', 'cancelled', 'returned'];
+    const cancellable = !nonCancellableStatuses.includes(this.orderStatus);
+    console.log('Can be cancelled:', cancellable);
+    return cancellable;
 };
 
 // Method to check if order can be returned

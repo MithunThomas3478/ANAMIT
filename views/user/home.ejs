@@ -3,163 +3,715 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANAMIT - Fashion Store</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/user/home.css">
+    <title>Fashion Store</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        .hero-carousel {
+    position: relative;
+    height: 600px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.carousel-slides {
+    height: 100%;
+    width: 100%;
+}
+
+.carousel-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+.carousel-slide.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.slide-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    z-index: -1;
+}
+
+.slide-bg::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.slide-content {
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #fff;
+}
+
+.slide-content h2 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.6s ease 0.3s;
+}
+
+.slide-content p {
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.6s ease 0.4s;
+}
+
+.slide-btn {
+    display: inline-block;
+    padding: 1rem 2.5rem;
+    background: #fff;
+    color: #000;
+    text-decoration: none;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.6s ease 0.5s;
+}
+
+.slide-btn:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+}
+
+.carousel-slide.active .slide-content h2,
+.carousel-slide.active .slide-content p,
+.carousel-slide.active .slide-btn {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.carousel-control {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    transition: all 0.3s ease;
+}
+
+.carousel-control:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.carousel-control.prev {
+    left: 2rem;
+}
+
+.carousel-control.next {
+    right: 2rem;
+}
+
+.carousel-indicators {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.5rem;
+}
+
+.indicator {
+    width: 2.5rem;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.5);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.indicator.active {
+    background: #fff;
+    width: 3.5rem;
+}
+
+@media (max-width: 768px) {
+    .hero-carousel {
+        height: 500px;
+    }
+
+    .slide-content h2 {
+        font-size: 2.5rem;
+    }
+
+    .slide-content p {
+        font-size: 1.4rem;
+    }
+
+    .carousel-control {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .slide-content h2 {
+        font-size: 2rem;
+    }
+
+    .slide-content p {
+        font-size: 1.2rem;
+    }
+
+    .carousel-control {
+        width: 36px;
+        height: 36px;
+    }
+}
+        .category-banners {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3rem;
+    padding: 4rem 5%;
+}
+
+.category-banner {
+    position: relative;
+    height: 400px;
+    overflow: hidden;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.category-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.3s ease;
+}
+
+.category-banner:hover img {
+    transform: scale(1.05);
+}
+
+.category-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    color: white;
+    text-align: center;
+    transition: background-color 0.3s ease;
+}
+
+.category-banner:hover .category-content {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.category-content h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+.category-content p {
+    font-size: 1.2rem;
+    margin-top: 0.5rem;
+}
+
+.shop-now {
+    padding: 12px 35px;
+    background: white;
+    color: black;
+    text-decoration: none;
+    border-radius: 25px;
+    margin-top: 1.5rem;
+    font-size: 1.1rem;
+    transition: background-color 0.3s ease;
+}
+
+.shop-now:hover {
+    background: #f0f0f0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .category-banners {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding: 2rem 5%;
+    }
     
+    .category-banner {
+        height: 350px;
+    }
+    
+    .category-content h2 {
+        font-size: 2rem;
+    }
+    
+    .category-content p {
+        font-size: 1.1rem;
+    }
+}
+      /* Featured Products Section Styles */
+.featured-products {
+    padding: 4rem 5%;
+    background: #f8f9fa;
+}
+
+.section-title {
+    text-align: center;
+    margin-bottom: 3rem;
+    font-size: 2.5rem;
+    color: #333;
+    font-weight: 600;
+    position: relative;
+}
+
+.section-title:after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: #ff4d4d;
+}
+
+/* Grid Layout */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2.5rem;
+    padding: 1rem;
+}
+
+/* Product Card Styles */
+.product-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.product-image {
+    height: 300px;
+    overflow: hidden;
+    position: relative;
+    background: #f5f5f5;
+}
+
+.product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.product-card:hover .product-image img {
+    transform: scale(1.05);
+}
+
+.product-info {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex-grow: 1;
+}
+
+.product-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #333;
+    margin: 0;
+    line-height: 1.4;
+    /* For text overflow after 2 lines */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.product-price {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.price-amount {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #ff4d4d;
+}
+
+.offer-badge {
+    background: #ff4d4d;
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.out-of-stock {
+    color: #ff4d4d;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: center;
+    padding: 0.5rem;
+    border: 1px solid #ff4d4d;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .product-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+    }
+}
+
+@media (max-width: 900px) {
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+    
+    .product-image {
+        height: 250px;
+    }
+}
+
+@media (max-width: 500px) {
+    .product-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .featured-products {
+        padding: 2rem 5%;
+    }
+}
+        /* Newsletter Section */
+        .newsletter {
+            background: #f8f8f8;
+            padding: 4rem 5%;
+            text-align: center;
+        }
+
+        .newsletter-form {
+            max-width: 500px;
+            margin: 2rem auto;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .newsletter-form input {
+            flex: 1;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .newsletter-form button {
+            padding: 1rem 2rem;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .newsletter-form button:hover {
+            background: #ff4d4d;
+        }
+        @media (min-width: 1400px) {
+            .category-banners,
+            .featured-products,
+            .newsletter .container {
+                max-width: 1400px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .carousel {
+                height: 400px;
+            }
+            
+            .carousel-content h2 {
+                font-size: 2.5rem;
+            }
+            
+            .carousel-content p {
+                font-size: 1.4rem;
+            }
+            
+            .category-banner {
+                height: 300px;
+            }
+            
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+            }
+        }
+       
+    </style>
 </head>
-<%- include('../partials/user/header')%>
 <body>
-    
-    <div id="heroCarousel" class="carousel slide hero-carousel" data-bs-ride="carousel" style="padding-top: 100px;">
-        <div class="carousel-indicators">
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
+    <%- include('../partials/user/header')%>
+
+   <!-- Carousel Section -->
+   <div class="hero-carousel" style="padding-top: 100px;">
+    <div class="carousel-slides">
+        <div class="carousel-slide active">
+            <div class="slide-content">
+                <h2>Summer Collection 2025</h2>
+                <p>Discover the latest trends in summer fashion</p>
+                
+            </div>
+            <div class="slide-bg" style="background-image: url('/images/product/banner1.jpg')"></div>
         </div>
-        <div class="carousel-inner">
-            <div class="carousel-item active h-100">
-                <div class="carousel-overlay"></div>
-                <img src="/images/1.jpg" class="d-block w-100 h-100" alt="Winter Collection">
+        <div class="carousel-slide">
+            <div class="slide-content">
+                <h2>New Arrivals</h2>
+                <p>Shop the freshest styles of the season</p>
+                
+            </div>
+            <div class="slide-bg" style="background-image: url('/images/product/banner\ men\ 2.jpg')"></div>
+        </div>
+        <div class="carousel-slide">
+            <div class="slide-content">
+                <h2>Special Offers</h2>
+                <p>Up to 50% off on selected items</p>
                
             </div>
-            <div class="carousel-item h-100">
-                <div class="carousel-overlay"></div>
-                <img src="/images/2.jpg" class="d-block w-100 h-100" alt="New Arrivals">
-            </div>
-           
+            <div class="slide-bg" style="background-image: url('/images/product/banner\ 3.jpg')"></div>
         </div>
-        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon"></span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-            <span class="carousel-control-next-icon"></span>
-        </button>
     </div>
 
-    <div class="container-fluid py-5">
-        <!-- Top Wear Section -->
-        <section class="mb-5">
-            <h1 class="section-title"><span class="orange-text">TOP</span>WEAR</h1>
-            <div class="category-container">
-                <div class="category-item">
-                    <div class="category-card">
-                <a href="/topwear"><img src="/images/polo.webp" alt="Polo T-Shirts" class="rounded"></a>        
-                        <p class="mt-2">POLO T-SHIRTS</p>
-                    </div>
-                </div>
-                <div class="category-item">
-                    <div class="category-card">
-                        <a href="/topwear"><img src="/images/PLAIN T-SHIRTS.webp" alt="Plain T-Shirts" class="rounded"></a>      
-                        <p class="mt-2">PLAIN T-SHIRTS</p>
-                    </div>
-                </div>
-                <div class="category-item">
-                    <div class="category-card">
-                        <a href="/topwear"><img src="/images/FORMAL SHIRTS.webp" alt="Formal Shirts" class="rounded"></a>      
-                        <p class="mt-2">FORMAL SHIRTS</p>
-                    </div>
-                </div>
-                <div class="category-item">
-                    <div class="category-card">
-                        <a href="/topwear"><img src="/images/FULL SLEEVE T-SHIRTS.webp" alt="Full Sleeve T-Shirts" class="rounded"></a>     
-                        <p class="mt-2">FULL SLEEVE T-SHIRTS</p>
-                    </div>
-                </div>
-                <div class="category-item">
-                    <div class="category-card">
-                        <a href="/topwear"> <img src="/images/CASUAL SHIRTS.webp" alt="Casual Shirts" class="rounded"></a>     
-                        <p class="mt-2">CASUAL SHIRTS</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+    <button class="carousel-control prev">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 18l-6-6 6-6"/>
+        </svg>
+    </button>
+    <button class="carousel-control next">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18l6-6-6-6"/>
+        </svg>
+    </button>
 
-        <!-- Bottom Wear Section -->
-        <section class="mb-5">
-            <h1 class="section-title"><span class="orange-text">BOTTOM</span>WEAR</h1>
-            <div class="category-container">
-                <div class="category-item">
-                    <div class="category-card">
-                       <a href="/bottomwear"><img src="/images/CARGO JOGGERS.webp" alt="Cargo Joggers" class="rounded"></a> 
-                        <p class="mt-2">CARGO JOGGERS</p>
-                    </div>
-                </div>
-                <div class="category-item">
-                    <div class="category-card">
-                     <a href="/bottomwear"><img src="/images/CARGO PANTS.webp" alt="Cargo Pants" class="rounded"></a>   
-                        <p class="mt-2">CARGO PANTS</p>
-                    </div>
-                </div>
-                <div class="category-item">
-                    <div class="category-card">
-                        <a href="/bottomwear">  <img src="/images/JEANS.webp" alt="Jeans" class="rounded"></a>      
-                        <p class="mt-2">JEANS</p>
-                    </div>
-                </div>
-                <div class="category-item">
-                    <div class="category-card">
-                        <a href="/bottomwear"> <img src="/images/CHINO PANTS.webp" alt="Chino Pants" class="rounded"></a>      
-                        <p class="mt-2">CHINO PANTS</p>
-                    </div>
-                </div>
-                <div class="category-item">
-                    <div class="category-card">
-                        <a href="/bottomwear"> <img src="/images/BOXERS.webp" alt="Boxers" class="rounded"></a>         
-                        <p class="mt-2">BOXERS</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+    <div class="carousel-indicators"></div>
+</div>
 
-        <!-- Shop Every Day Looks -->
-        <section>
-            <h1 class="section-title">SHOP EVERY DAY <span class="orange-text">LOOKS</span></h1>
-            <div class="looks-container">
-                <div class="looks-item">
-                    <div class="look-card rounded">
-                        <img src="/images/CASUAL.jpg" alt="Casual">
-                        <div class="look-overlay">
-                            <h3 class="mb-3 fs-2">CASUAL</h3>
-                            <a href="#" class="shop-now-btn">SHOP NOW</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="looks-item">
-                    <div class="look-card rounded">
-                        <img src="/images/PARTY.jpg" alt="Party">
-                        <div class="look-overlay">
-                            <h3 class="mb-3 fs-2">PARTY</h3>
-                            <a href="#" class="shop-now-btn">SHOP NOW</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="looks-item">
-                    <div class="look-card rounded">
-                        <img src="/images/OFFICE.jpg" alt="Office">
-                        <div class="look-overlay">
-                            <h3 class="mb-3 fs-2">OFFICE</h3>
-                            <a href="#" class="shop-now-btn">SHOP NOW</a>
-                        </div>
-                    </div>
-                </div>
+   <!-- Category Banners -->
+   <section class="category-banners">
+    <% const categories = [
+        { id: 1, name: "Men's", image: "/images/product/men.jpg", offer: 30, url: "/mens" },
+        { id: 2, name: "Women's", image: "/images/product/women.jpg", offer: 40, url: "/womens" }
+    ] %>
+    
+    <% categories.forEach(category => { %>
+        <div class="category-banner">
+            <img src="<%= category.image %>" alt="<%= category.name %> Collection">
+            <div class="category-content">
+                <h2><%= category.name %> Collection</h2>
+                <% if(category.offer > 0) { %>
+                    <p class="offer">Up to <%= category.offer %>% off</p>
+                <% } %>
+                <a href="<%= category.url %>" class="shop-now">Shop Now</a>
             </div>
-        </section>
+        </div>
+    <% }); %>
+</section>
+
+
+   <!-- Featured Products -->
+<section class="featured-products">
+    <h2 class="section-title">Featured Products</h2>
+    <div class="product-grid">
+        <% products.forEach(product => { %>
+            <% if(product.isListed) { %>
+                <div class="product-card">
+                    <div class="product-image">
+                        <% if(product.variants[0] && product.variants[0].productImage[0]) { %>
+                            <img src="<%= product.variants[0].productImage[0] %>" alt="<%= product.productName %>">
+                        <% } else { %>
+                            <img src="/api/placeholder/300/300" alt="<%= product.productName %>">
+                        <% } %>
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-title"><%= product.productName %></h3>
+                        <div class="product-price">
+                            <span class="price-amount">
+                                <% if(product.minPrice !== product.maxPrice) { %>
+                                    ₹<%= product.minPrice.toFixed(2) %> - ₹<%= product.maxPrice.toFixed(2) %>
+                                <% } else { %>
+                                    ₹<%= product.minPrice.toFixed(2) %>
+                                <% } %>
+                            </span>
+                            <% if(product.productOffer > 0) { %>
+                                <span class="offer-badge"><%= product.productOffer %>% OFF</span>
+                            <% } %>
+                        </div>
+                        <% 
+                            const totalStock = product.variants.reduce((total, variant) => {
+                                return total + variant.colorVariant.reduce((variantTotal, size) => {
+                                    return variantTotal + size.stock;
+                                }, 0);
+                            }, 0);
+                        %>
+                        <% if(totalStock === 0) { %>
+                            <div class="out-of-stock">Out of Stock</div>
+                        <% } %>
+                    </div>
+                </div>
+            <% } %>
+        <% }); %>
     </div>
+</section>
+
+    <!-- <section class="newsletter">
+        <h2>Subscribe to our Newsletter</h2>
+        <p>Get the latest updates on new products and upcoming sales</p>
+        <form class="newsletter-form">
+            <input type="email" placeholder="Enter your email">
+            <button type="submit">Subscribe</button>
+        </form>
+    </section> -->
+
     <%- include('../partials/user/footer')%>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Add animation to carousel items when they become active
-        document.getElementById('heroCarousel').addEventListener('slide.bs.carousel', function (e) {
-            const caption = e.relatedTarget.querySelector('.carousel-caption');
-            const title = caption.querySelector('.hero-title');
-            const subtitle = caption.querySelector('.hero-subtitle');
-            const code = caption.querySelector('.hero-code');
 
-            title.classList.add('animate__animated', 'animate__fadeInDown');
-            subtitle.classList.add('animate__animated', 'animate__fadeInUp');
-            code.classList.add('animate__animated', 'animate__fadeIn');
-        });
+    <script>
+       document.addEventListener('DOMContentLoaded', function() {
+    const carousel = document.querySelector('.hero-carousel');
+    const slides = carousel.querySelectorAll('.carousel-slide');
+    const indicatorContainer = carousel.querySelector('.carousel-indicators');
+    let currentSlide = 0;
+    let isAnimating = false;
+
+    // Create indicators
+    slides.forEach((_, index) => {
+        const indicator = document.createElement('button');
+        indicator.classList.add('indicator');
+        if (index === 0) indicator.classList.add('active');
+        indicator.addEventListener('click', () => goToSlide(index));
+        indicatorContainer.appendChild(indicator);
+    });
+
+    const indicators = carousel.querySelectorAll('.indicator');
+
+    function goToSlide(index) {
+        if (isAnimating || currentSlide === index) return;
+        isAnimating = true;
+
+        // Remove active classes
+        slides[currentSlide].classList.remove('active');
+        indicators[currentSlide].classList.remove('active');
+
+        // Add active classes to new slide
+        currentSlide = index;
+        slides[currentSlide].classList.add('active');
+        indicators[currentSlide].classList.add('active');
+
+        // Reset animation flag
+        setTimeout(() => {
+            isAnimating = false;
+        }, 600);
+    }
+
+    function nextSlide() {
+        goToSlide((currentSlide + 1) % slides.length);
+    }
+
+    function prevSlide() {
+        goToSlide((currentSlide - 1 + slides.length) % slides.length);
+    }
+
+    // Add click handlers for controls
+    carousel.querySelector('.prev').addEventListener('click', prevSlide);
+    carousel.querySelector('.next').addEventListener('click', nextSlide);
+
+    // Auto advance slides
+    let interval = setInterval(nextSlide, 5000);
+
+    // Pause on hover
+    carousel.addEventListener('mouseenter', () => {
+        clearInterval(interval);
+    });
+
+    carousel.addEventListener('mouseleave', () => {
+        interval = setInterval(nextSlide, 5000);
+    });
+
+    // Handle keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') prevSlide();
+        if (e.key === 'ArrowRight') nextSlide();
+    });
+});
     </script>
 </body>
 </html>

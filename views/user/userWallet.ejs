@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Wallet</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.7.32/sweetalert2.min.css" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -22,6 +23,7 @@
             margin: 3rem auto;
             padding: 0 3rem;
             width: 90%;
+            position: relative;
         }
 
         .page-title {
@@ -57,6 +59,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
         }
 
         .profile-avatar i {
@@ -144,6 +147,52 @@
             font-weight: bold;
         }
 
+        /* Wallet Summary */
+        .wallet-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .summary-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #666;
+        }
+
+        .summary-info {
+            flex: 1;
+        }
+
+        .summary-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+
         .wallet-actions {
             display: flex;
             gap: 1rem;
@@ -185,6 +234,160 @@
             transform: translateY(-2px);
         }
 
+        /* Add Money Form Styles */
+        .add-money-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .amount-suggestions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .amount-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .amount-btn:hover {
+            background: #f5f5f5;
+            border-color: #ccc;
+        }
+
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .amount-hint {
+            color: #666;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: block;
+        }
+
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .payment-method {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.25rem 1rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .payment-method:hover {
+            border-color: #0066cc;
+            background: #f8f9fa;
+        }
+
+        .payment-method input:checked + .method-icon {
+            color: #0066cc;
+        }
+
+        .payment-method input:checked ~ .method-name {
+            color: #0066cc;
+            font-weight: 500;
+        }
+
+        .method-icon {
+            font-size: 24px;
+            margin-bottom: 0.75rem;
+            color: #666;
+            transition: color 0.3s;
+        }
+
+        .method-name {
+            font-size: 14px;
+            color: #333;
+            transition: all 0.3s;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        /* Transaction Filters */
+        .transaction-filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #333;
+            background: white;
+        }
+
+        .search-group {
+            position: relative;
+            flex: 2;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            pointer-events: none;
+        }
+
+        /* Transaction List */
         .transactions-section {
             margin-top: 3rem;
         }
@@ -262,71 +465,6 @@
             color: #dc3545;
         }
 
-        /* Add Money Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            z-index: 1000;
-            width: 90%;
-            max-width: 500px;
-        }
-
-        .modal-title {
-            font-size: 20px;
-            color: #333;
-            margin-bottom: 1.5rem;
-            font-weight: bold;
-        }
-
-        .modal-form {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .form-group label {
-            font-weight: 500;
-            color: #333;
-        }
-
-        .form-group input {
-            padding: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 999;
-        }
-
         @media (max-width: 1200px) {
             .container {
                 width: 95%;
@@ -351,10 +489,42 @@
             .wallet-actions {
                 flex-direction: column;
             }
+
+            .wallet-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-group {
+                min-width: 100%;
+            }
+
+            .payment-methods {
+                grid-template-columns: 1fr;
+            }
+            
+            .amount-suggestions {
+                flex-wrap: wrap;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+
+        /* Custom Toast Styles */
+        .swal2-toast {
+            background: #ffffff !important;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15) !important;
+        }
+
+        .swal2-toast .swal2-title {
+            font-size: 16px !important;
+            color: #333 !important;
         }
     </style>
 </head>
 <body>
+    <%- include('../partials/user/header')%>
     <div class="container">
         <h1 class="page-title">MY ACCOUNT</h1>
         
@@ -362,35 +532,41 @@
             <!-- Sidebar -->
             <div class="sidebar">
                 <div class="profile-avatar">
-                    <i class="fas fa-user"></i>
+                    <% if (user.profileImage) { %>
+                        <img src="<%= user.profileImage %>" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                    <% } else { %>
+                        <i class="fas fa-user"></i>
+                    <% } %>
                 </div>
                 
-                <a href="#" class="menu-item">
+                <a href="/account" class="menu-item <%= activePage === 'overview' ? 'active' : '' %>">
                     <i class="fas fa-user"></i>
                     Account Overview
                 </a>
-                <a href="#" class="menu-item">
+                <a href="/orders" class="menu-item <%= activePage === 'orders' ? 'active' : '' %>">
                     <i class="fas fa-box"></i>
                     My Orders
                 </a>
-                <a href="#" class="menu-item">
+                <a href="/address" class="menu-item <%= activePage === 'address' ? 'active' : '' %>">
                     <i class="fas fa-map-marker-alt"></i>
                     Manage Address
                 </a>
-                <a href="#" class="menu-item active">
+                <a href="/wallet" class="menu-item <%= activePage === 'wallet' ? 'active' : '' %>">
                     <i class="fas fa-wallet"></i>
                     Wallet
                 </a>
-                <a href="#" class="menu-item">
+                <a href="/password" class="menu-item <%= activePage === 'password' ? 'active' : '' %>">
                     <i class="fas fa-lock"></i>
                     Manage Password
                 </a>
-                <a href="#" class="menu-item">
+                <a href="/wishlist" class="menu-item <%= activePage === 'wishlist' ? 'active' : '' %>">
                     <i class="fas fa-heart"></i>
                     Wishlist
                 </a>
                 
-                <button class="logout-btn">LOG OUT</button>
+                <form action="/logout" method="POST">
+                    <button type="submit" class="logout-btn">LOG OUT</button>
+                </form>
             </div>
 
             <!-- Wallet Content -->
@@ -399,108 +575,428 @@
                 
                 <div class="wallet-balance">
                     <div class="balance-label">Available Balance</div>
-                    <div class="balance-amount">₹5,000.00</div>
+                    <div class="balance-amount">₹<%= wallet.balance.toFixed(2) %></div>
+                </div>
+
+                <!-- Wallet Summary -->
+                <div class="wallet-summary">
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                        <div class="summary-info">
+                            <div class="summary-label">Total Income</div>
+                            <div class="summary-value amount-credit">₹<%= wallet.transactions
+                                .filter(t => t.type === 'credit' || t.type === 'refund')
+                                .reduce((sum, t) => sum + t.amount, 0)
+                                .toFixed(2) %></div>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-arrow-up"></i>
+                        </div>
+                        <div class="summary-info">
+                            <div class="summary-label">Total Spent</div>
+                            <div class="summary-value amount-debit">₹<%= wallet.transactions
+                                .filter(t => t.type === 'debit')
+                                .reduce((sum, t) => sum + t.amount, 0)
+                                .toFixed(2) %></div>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="summary-info">
+                            <div class="summary-label">Transactions</div>
+                            <div class="summary-value"><%= wallet.transactions.length %></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="wallet-actions">
-                    <button class="action-btn btn-add-money" onclick="showAddMoneyModal()">
+                    <button class="action-btn btn-add-money" onclick="showAddMoneyForm()">
                         <i class="fas fa-plus"></i>
                         Add Money
                     </button>
-                    <button class="action-btn btn-withdraw">
-                        <i class="fas fa-arrow-right"></i>
-                        Withdraw
-                    </button>
                 </div>
+
+                <!-- Add Money Form -->
+                <form id="addMoneyForm" class="add-money-form" action="/wallet/add-money" method="POST" style="display: none;">
+                    <div class="form-group">
+                        <label for="amount">Amount (₹)</label>
+                        <div class="amount-suggestions">
+                            <button type="button" class="amount-btn" onclick="setAmount(500)">₹500</button>
+                            <button type="button" class="amount-btn" onclick="setAmount(1000)">₹1000</button>
+                            <button type="button" class="amount-btn" onclick="setAmount(2000)">₹2000</button>
+                        </div>
+                        <input type="number" id="amount" name="amount" min="100" step="100" required>
+                        <small class="amount-hint">Minimum amount: ₹100</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Payment Method</label>
+                        <div class="payment-methods">
+                            <label class="payment-method">
+                                <input type="radio" name="paymentMethod" value="upi" checked>
+                                <span class="method-icon"><i class="fas fa-mobile-alt"></i></span>
+                                <span class="method-name">UPI</span>
+                            </label>
+                            <label class="payment-method">
+                                <input type="radio" name="paymentMethod" value="card">
+                                <span class="method-icon"><i class="fas fa-credit-card"></i></span>
+                                <span class="method-name">Card</span>
+                            </label>
+                            <label class="payment-method">
+                                <input type="radio" name="paymentMethod" value="netbanking">
+                                <span class="method-icon"><i class="fas fa-university"></i></span>
+                                <span class="method-name">Netbanking</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="action-btn btn-withdraw" onclick="hideAddMoneyForm()">Cancel</button>
+                        <button type="submit" class="action-btn btn-add-money">Proceed to Pay</button>
+                    </div>
+                </form>
 
                 <div class="transactions-section">
                     <h3 class="section-title">Recent Transactions</h3>
+                    
+                    <!-- Transaction Filters -->
+                    <div class="transaction-filters">
+                        <div class="filter-group">
+                            <label for="transactionType">Type</label>
+                            <select id="transactionType" onchange="filterTransactions()">
+                                <option value="all">All</option>
+                                <option value="credit">Credit</option>
+                                <option value="debit">Debit</option>
+                                <option value="refund">Refund</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="dateRange">Period</label>
+                            <select id="dateRange" onchange="filterTransactions()">
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="year">This Year</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group search-group">
+                            <input type="text" id="searchTransaction" 
+                                   placeholder="Search transactions..." 
+                                   onkeyup="filterTransactions()">
+                            <i class="fas fa-search search-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- Transaction List -->
                     <div class="transaction-list">
-                        <div class="transaction-item">
-                            <div class="transaction-info">
-                                <div class="transaction-icon">
-                                    <i class="fas fa-arrow-down"></i>
+                        <% if (wallet.transactions && wallet.transactions.length > 0) { %>
+                            <% wallet.transactions.slice(0, 10).forEach(transaction => { %>
+                                <div class="transaction-item">
+                                    <div class="transaction-info">
+                                        <div class="transaction-icon">
+                                            <% if (transaction.type === 'credit' || transaction.type === 'refund') { %>
+                                                <i class="fas fa-arrow-down"></i>
+                                            <% } else if (transaction.type === 'debit') { %>
+                                                <i class="fas fa-shopping-bag"></i>
+                                            <% } %>
+                                        </div>
+                                        <div class="transaction-details">
+                                            <div class="transaction-title"><%= transaction.description %></div>
+                                            <div class="transaction-date">
+                                                <%= new Date(transaction.createdAt).toLocaleDateString('en-US', {
+                                                    year: 'numeric',
+                                                    month: 'short',
+                                                    day: 'numeric'
+                                                }) %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="transaction-amount <%= transaction.type === 'credit' || transaction.type === 'refund' ? 'amount-credit' : 'amount-debit' %>">
+                                        <%= transaction.type === 'credit' || transaction.type === 'refund' ? '+' : '-' %>₹<%= transaction.amount.toFixed(2) %>
+                                    </div>
                                 </div>
-                                <div class="transaction-details">
-                                    <div class="transaction-title">Money Added</div>
-                                    <div class="transaction-date">Jan 15, 2025</div>
-                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="no-transactions">
+                                No transactions yet
                             </div>
-                            <div class="transaction-amount amount-credit">+₹2,000.00</div>
-                        </div>
-
-                        <div class="transaction-item">
-                            <div class="transaction-info">
-                                <div class="transaction-icon">
-                                    <i class="fas fa-shopping-bag"></i>
-                                </div>
-                                <div class="transaction-details">
-                                    <div class="transaction-title">Order Payment</div>
-                                    <div class="transaction-date">Jan 14, 2025</div>
-                                </div>
-                            </div>
-                            <div class="transaction-amount amount-debit">-₹1,500.00</div>
-                        </div>
-
-                        <div class="transaction-item">
-                            <div class="transaction-info">
-                                <div class="transaction-icon">
-                                    <i class="fas fa-arrow-down"></i>
-                                </div>
-                                <div class="transaction-details">
-                                    <div class="transaction-title">Money Added</div>
-                                    <div class="transaction-date">Jan 10, 2025</div>
-                                </div>
-                            </div>
-                            <div class="transaction-amount amount-credit">+₹5,000.00</div>
-                        </div>
+                        <% } %>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Add Money Modal -->
-    <div class="modal-overlay" id="modalOverlay"></div>
-    <div class="modal" id="addMoneyModal">
-        <h3 class="modal-title">Add Money to Wallet</h3>
-        <form class="modal-form" onsubmit="handleAddMoney(event)">
-            <div class="form-group">
-                <label for="amount">Amount (₹)</label>
-                <input type="number" id="amount" name="amount" min="100" step="100" required>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="action-btn btn-withdraw" onclick="hideAddMoneyModal()">Cancel</button>
-                <button type="submit" class="action-btn btn-add-money">Add Money</button>
-            </div>
-        </form>
-    </div>
+    <%- include('../partials/user/footer')%>
 
+    <!-- Add SweetAlert2 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.7.32/sweetalert2.min.js"></script>
+    
     <script>
-        function showAddMoneyModal() {
-            document.getElementById('modalOverlay').style.display = 'block';
-            document.getElementById('addMoneyModal').style.display = 'block';
-        }
-
-        function hideAddMoneyModal() {
-            document.getElementById('modalOverlay').style.display = 'none';
-            document.getElementById('addMoneyModal').style.display = 'none';
-        }
-
-        function handleAddMoney(event) {
-            event.preventDefault();
-            const amount = document.getElementById('amount').value;
-            alert(`Adding ₹${amount} to your wallet`);
-            hideAddMoneyModal();
-        }
-
-        // Menu item click handler
-        document.querySelectorAll('.menu-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
+        function showToast(type, message) {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
             });
+
+            Toast.fire({
+                icon: type,
+                title: message
+            });
+        }
+
+        function showAddMoneyForm() {
+            const form = document.getElementById('addMoneyForm');
+            form.style.display = 'block';
+            document.querySelector('.action-btn.btn-add-money').style.display = 'none';
+        }
+
+        function hideAddMoneyForm() {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You will lose all entered information!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ff8800',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, cancel it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.getElementById('addMoneyForm');
+                    form.style.display = 'none';
+                    document.querySelector('.action-btn.btn-add-money').style.display = 'flex';
+                    form.reset();
+                }
+            });
+        }
+
+        function setAmount(value) {
+            document.getElementById('amount').value = value;
+        }
+
+        function validateForm() {
+    const amountInput = document.getElementById('amount');
+    const amount = parseFloat(amountInput.value);
+
+    if (!amount || isNaN(amount)) {
+        showToast('error', 'Please enter a valid amount');
+        amountInput.focus();
+        return false;
+    }
+
+    if (amount < 100) {
+        showToast('error', 'Minimum amount should be ₹100');
+        amountInput.focus();
+        return false;
+    }
+
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+    if (!paymentMethod) {
+        showToast('error', 'Please select a payment method');
+        return false;
+    }
+
+    return true;
+}
+
+        function filterTransactions() {
+            const type = document.getElementById('transactionType').value;
+            const dateRange = document.getElementById('dateRange').value;
+            const search = document.getElementById('searchTransaction').value.toLowerCase();
+
+            document.querySelectorAll('.transaction-item').forEach(item => {
+                const transactionType = item.querySelector('.transaction-amount').classList.contains('amount-credit') ? 'credit' : 'debit';
+                const description = item.querySelector('.transaction-title').textContent.toLowerCase();
+                const date = new Date(item.querySelector('.transaction-date').textContent);
+
+                let showByType = type === 'all' || transactionType === type;
+                let showByDate = dateRange === 'all';
+                
+                if (dateRange === 'today') {
+                    showByDate = isToday(date);
+                } else if (dateRange === 'week') {
+                    showByDate = isThisWeek(date);
+                } else if (dateRange === 'month') {
+                    showByDate = isThisMonth(date);
+                } else if (dateRange === 'year') {
+                    showByDate = isThisYear(date);
+                }
+
+                const showBySearch = search === '' || description.includes(search);
+
+                item.style.display = showByType && showByDate && showBySearch ? 'flex' : 'none';
+            });
+        }
+
+        function addTransactionToList(transaction) {
+    const transactionList = document.querySelector('.transaction-list');
+    if (!transactionList) return;
+
+    const transactionItem = document.createElement('div');
+    transactionItem.className = 'transaction-item';
+    transactionItem.style.opacity = '0';
+    transactionItem.style.transform = 'translateY(-20px)';
+
+    transactionItem.innerHTML = `
+        <div class="transaction-info">
+            <div class="transaction-icon">
+                <i class="fas fa-arrow-down"></i>
+            </div>
+            <div class="transaction-details">
+                <div class="transaction-title">${transaction.description}</div>
+                <div class="transaction-date">
+                    ${new Date(transaction.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    })}
+                </div>
+            </div>
+        </div>
+        <div class="transaction-amount amount-credit">
+            +₹${parseFloat(transaction.amount).toFixed(2)}
+        </div>
+    `;
+
+    // Insert at the beginning of the list
+    if (transactionList.firstChild) {
+        transactionList.insertBefore(transactionItem, transactionList.firstChild);
+    } else {
+        transactionList.appendChild(transactionItem);
+    }
+
+    // Animate the new transaction
+    setTimeout(() => {
+        transactionItem.style.transition = 'all 0.3s ease-out';
+        transactionItem.style.opacity = '1';
+        transactionItem.style.transform = 'translateY(0)';
+    }, 50);
+}
+
+function updateSummaryCards(transaction) {
+    if (transaction.type === 'credit') {
+        const incomeElement = document.querySelector('.amount-credit');
+        if (incomeElement) {
+            const currentIncome = parseFloat(incomeElement.textContent.replace(/[^0-9.-]+/g, ""));
+            const newIncome = currentIncome + transaction.amount;
+            incomeElement.textContent = `₹${newIncome.toFixed(2)}`;
+        }
+
+        const transactionCountElement = document.querySelector('.summary-value:not(.amount-credit):not(.amount-debit)');
+        if (transactionCountElement) {
+            const currentCount = parseInt(transactionCountElement.textContent);
+            transactionCountElement.textContent = (currentCount + 1).toString();
+        }
+    }
+}
+        function isToday(date) {
+            const today = new Date();
+            return date.toDateString() === today.toDateString();
+        }
+
+        function isThisWeek(date) {
+            const today = new Date();
+            const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+            const weekEnd = new Date(today.setDate(today.getDate() + 6));
+            return date >= weekStart && date <= weekEnd;
+        }
+
+        function isThisMonth(date) {
+            const today = new Date();
+            return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+        }
+
+        function isThisYear(date) {
+            const today = new Date();
+            return date.getFullYear() === today.getFullYear();
+        }
+
+        // Handle form submission
+        document.getElementById('addMoneyForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (!validateForm()) return;
+
+    const submitButton = this.querySelector('button[type="submit"]');
+    const originalText = submitButton.innerHTML;
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+    // Get selected payment method
+    const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+    const amount = document.getElementById('amount').value;
+
+    try {
+        const response = await fetch('/wallet/add-money', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                amount: amount,
+                paymentMethod: selectedPaymentMethod
+            })
         });
 
-        // Close modal when clicking overlay
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('success', data.message || 'Money added successfully');
+            
+            // Hide add money form
+            hideAddMoneyForm();
+            
+            // Update balance
+            const balanceElement = document.querySelector('.balance-amount');
+            if (balanceElement) {
+                balanceElement.textContent = `₹${parseFloat(data.newBalance).toFixed(2)}`;
+            }
+
+            // Add new transaction to list
+            if (data.transaction) {
+                addTransactionToList(data.transaction);
+            }
+
+            // Update summary cards
+            updateSummaryCards(data.transaction);
+
+        } else {
+            // Handle error
+            showToast('error', data.error || 'Failed to add money');
+        }
+    } catch (error) {
+        console.error('Add money error:', error);
+        showToast('error', 'An unexpected error occurred');
+    } finally {
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalText;
+    }
+});
+
+        // Handle messages
+        <% if (locals.error) { %>
+            showToast('error', '<%= error %>');
+        <% } %>
+
+        <% if (locals.success) { %>
+            showToast('success', '<%= success %>');
+        <% } %>
+    </script>
+</body>
+</html>

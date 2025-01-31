@@ -297,11 +297,14 @@ body {
             <h1 class="cart-title">Shopping Cart</h1>
             <span class="cart-count"><%= cart.items.length %> items</span>
         </div>
-
+    
         <% if (cart.items.length > 0) { %>
             <div class="cart-items">
                 <% cart.items.forEach(item => { %>
-                    <div class="cart-item" data-item-id="<%= item.productId %>">
+                    <div class="cart-item" 
+                         data-item-id="<%= item.productId %>"
+                         data-color="<%= item.colorName %>"
+                         data-size="<%= item.size %>">
                         <img src="<%= item.product.variants.find(v => v.colorName === item.colorName).productImage[0] %>" 
                              alt="<%= item.product.productName %>" 
                              class="item-image">
@@ -312,24 +315,27 @@ body {
                                 Color: <%= item.colorName %> | Size: <%= item.size %>
                             </div>
                         </div>
-
+    
                         <div class="quantity-controls">
-                            <button class="quantity-btn decrease" onclick="updateQuantity('<%= item.productId %>', -1)">-</button>
-                            <input type="number" class="quantity-input" value="<%= item.quantity %>" min="1" 
-                                   onchange="updateQuantity('<%= item.productId %>', 0, this.value)">
-                            <button class="quantity-btn increase" onclick="updateQuantity('<%= item.productId %>', 1)">+</button>
+                            <button class="quantity-btn decrease" 
+                                    onclick="updateQuantity('<%= item.productId %>', '<%= item.colorName %>', '<%= item.size %>', -1)">-</button>
+                            <input type="number" class="quantity-input" 
+                                   value="<%= item.quantity %>" min="1" 
+                                   onchange="updateQuantity('<%= item.productId %>', '<%= item.colorName %>', '<%= item.size %>', 0, this.value)">
+                            <button class="quantity-btn increase" 
+                                    onclick="updateQuantity('<%= item.productId %>', '<%= item.colorName %>', '<%= item.size %>', 1)">+</button>
                         </div>
-
+    
                         <div class="price">₹<%= item.price.toLocaleString('en-IN') %></div>
                         <div class="price">₹<%= item.total.toLocaleString('en-IN') %></div>
-
-                        <button class="remove-btn" onclick="removeItem('<%= item.productId %>')">
+    
+                        <button class="remove-btn" 
+                                onclick="removeItem('<%= item.productId %>', '<%= item.colorName %>', '<%= item.size %>')">
                             Remove
                         </button>
                     </div>
                 <% }); %>
             </div>
-
             <div class="cart-summary">
                 <div class="summary-row">
                     <span>Subtotal</span>
@@ -360,10 +366,12 @@ body {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
 
-async function updateQuantity(productId, change, newValue = null) {
+    async function updateQuantity(productId, colorName, size, change, newValue = null) {
     try {
         let finalQuantity;
-        const quantityInput = document.querySelector(`[data-item-id="${productId}"] .quantity-input`);
+        const quantityInput = document.querySelector(
+            `[data-item-id="${productId}"][data-color="${colorName}"][data-size="${size}"] .quantity-input`
+        );
         const currentQuantity = parseInt(quantityInput.value);
 
         if (newValue !== null) {
@@ -372,7 +380,6 @@ async function updateQuantity(productId, change, newValue = null) {
             finalQuantity = currentQuantity + change;
         }
 
-        // Ensure quantity is between 1 and 5
         if (finalQuantity < 1) {
             finalQuantity = 1;
             quantityInput.value = 1;
@@ -391,19 +398,18 @@ async function updateQuantity(productId, change, newValue = null) {
             },
             body: JSON.stringify({
                 productId,
+                colorName,
+                size,
                 quantity: finalQuantity
             })
         });
 
         const result = await response.json();
-
         if (!response.ok) {
-            quantityInput.value = currentQuantity;
             throw new Error(result.message || 'Failed to update quantity');
         }
         
         if (result.success) {
-            // Immediately update the UI with the new cart data
             updateCartUI(result.cart);
         } else {
             quantityInput.value = currentQuantity;
@@ -420,47 +426,40 @@ async function updateQuantity(productId, change, newValue = null) {
     }
 }
 
-// Function to update cart UI
 function updateCartUI(cartData) {
-    // Update item quantities and totals
     let subtotal = 0;
     cartData.items.forEach(item => {
-        const itemElement = document.querySelector(`[data-item-id="${item.productId}"]`);
+        const itemElement = document.querySelector(
+            `[data-item-id="${item.productId}"][data-color="${item.colorName}"][data-size="${item.size}"]`
+        );
         if (itemElement) {
-            // Update quantity input
             const quantityInput = itemElement.querySelector('.quantity-input');
             if (quantityInput) {
                 quantityInput.value = item.quantity;
             }
 
-            // Update individual item price
             const prices = itemElement.querySelectorAll('.price');
             if (prices.length >= 2) {
-                // Update unit price (first .price element)
                 prices[0].textContent = `₹${item.price.toLocaleString('en-IN')}`;
-                // Update total price for this item (second .price element)
-                prices[1].textContent = `₹${item.total.toLocaleString('en-IN')}`;
+                prices[1].textContent = `₹${(item.price * item.quantity).toLocaleString('en-IN')}`;
             }
-            subtotal += item.total;
+            subtotal += (item.price * item.quantity);
         }
     });
 
-    // Update cart count
     const cartCount = document.querySelector('.cart-count');
     if (cartCount) {
         cartCount.textContent = `${cartData.items.length} items`;
     }
 
-    // Update cart summary with calculated values
     const subtotalElement = document.querySelector('.summary-row:first-child span:last-child');
     if (subtotalElement) {
-        subtotalElement.textContent = `₹${subtotal.toLocaleString('en-IN')}`;
+        subtotalElement.textContent = `₹${cartData.totalPrice.toLocaleString('en-IN')}`;
     }
 
-    // Update total (including shipping)
     const totalElement = document.querySelector('.total-row span:last-child');
     if (totalElement) {
-        const total = subtotal + 128; // Adding shipping cost
+        const total = cartData.totalPrice + 128;
         totalElement.textContent = `₹${total.toLocaleString('en-IN')}`;
     }
 }
@@ -480,73 +479,76 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         input.addEventListener('blur', function() {
-            const itemId = this.closest('.cart-item').dataset.itemId;
-            updateQuantity(itemId, 0, this.value);
-        });
+    const cartItem = this.closest('.cart-item');
+    const itemId = cartItem.dataset.itemId;
+    const colorName = cartItem.dataset.color;
+    const size = cartItem.dataset.size;
+    updateQuantity(itemId, colorName, size, 0, this.value);
+});
     });
 });
 
-        async function removeItem(productId) {
-            try {
-                const result = await Swal.fire({
-                    title: 'Are you sure?',
-                    text: "You won't be able to revert this!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes, remove it!'
-                });
+async function removeItem(productId, colorName, size) {
+    try {
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, remove it!'
+        });
 
-                if (!result.isConfirmed) return;
+        if (!result.isConfirmed) return;
 
-                const response = await fetch('/removeProduct', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ productId })
-                });
+        const response = await fetch('/removeProduct', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ productId, colorName, size })
+        });
 
-                const data = await response.json();
+        const data = await response.json();
 
-                if (!response.ok || !data.success) {
-                    throw new Error(data.message || 'Failed to remove item');
-                }
-
-                // Remove the item from DOM
-                const itemElement = document.querySelector(`[data-item-id="${productId}"]`);
-                if (itemElement) {
-                    itemElement.remove();
-                }
-
-                // Update cart UI with the new data
-                updateCartUI(data.cart);
-
-                // Show success message
-                await Swal.fire({
-                    title: 'Removed!',
-                    text: 'Product has been removed from cart.',
-                    icon: 'success',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-
-                // If cart is empty, reload the page to show empty cart message
-                if (data.cart.items.length === 0) {
-                    window.location.reload();
-                }
-
-            } catch (error) {
-                console.error('Error removing item:', error);
-                await Swal.fire({
-                    title: 'Error!',
-                    text: error.message || 'Failed to remove item. Please try again.',
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                });
-            }
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Failed to remove item');
         }
+
+        // Remove specific variant from DOM
+        const itemElement = document.querySelector(
+            `[data-item-id="${productId}"][data-color="${colorName}"][data-size="${size}"]`
+        );
+        if (itemElement) {
+            itemElement.remove();
+        }
+
+        // Update cart UI
+        updateCartUI(data.cart);
+
+        await Swal.fire({
+            title: 'Removed!',
+            text: 'Product variant has been removed from cart.',
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false
+        });
+
+        if (data.cart.items.length === 0) {
+            window.location.reload();
+        }
+
+    } catch (error) {
+        console.error('Error removing item:', error);
+        await Swal.fire({
+            title: 'Error!',
+            text: error.message || 'Failed to remove item. Please try again.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    }
+}
 
         async function proceedToCheckout() {
             try {

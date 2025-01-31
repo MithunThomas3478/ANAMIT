@@ -15,37 +15,93 @@ const pageNotFound = async (req, res) => {
 
 const loadHomepage = async (req, res) => {
   try {
-    const user = req.session.user;
+      // Get user from session
+      const user = req.session.user;
+      let userData = null;
+      if (user) {
+          userData = await User.findOne({ _id: user }).lean();
+      }
 
-    // Fetch all available products
-    const products = await Product.find({ isBlocked: false })
+      // Fetch categories for banners
+      const categories = await Category.find({ 
+          isListed: true 
+      })
+      .sort({ 
+          categoryOffer: -1 
+      })
+      .limit(2)
+      .lean();
+
+      // Fetch all available products with category info
+      const products = await Product.find({ 
+          isListed: true // Changed from isBlocked: false to match your schema
+      })
       .populate("category")
-      .lean(); // Using lean() for better performance
-      console.log(products);
-      
+      .lean();
 
-    // Group products by category type (TOPWEAR, BOTTOMWEAR)
-    const topwear = products.filter((product) =>
-      product.category?.name.toUpperCase().includes("MEN")
-    );
-    const bottomwear = products.filter((product) =>
-      product.category?.name.toUpperCase().includes("WOMEN")
-    );
+      // Process products to include offer prices
+      const processedProducts = products.map(product => {
+          // Calculate min and max prices including offers
+          let minPrice = Infinity;
+          let maxPrice = 0;
 
-    let userData = null;
-    if (user) {
-      userData = await User.findOne({ _id: user });
-    }
+          product.variants.forEach(variant => {
+              variant.colorVariant.forEach(cv => {
+                  if (cv.status === 'available' && cv.stock > 0) {
+                      let finalPrice = cv.price;
+                      
+                      // Apply product offer
+                      if (product.productOffer > 0) {
+                          finalPrice -= (finalPrice * product.productOffer / 100);
+                      }
+                      
+                      // Apply category offer if higher
+                      if (product.category?.categoryOffer > product.productOffer) {
+                          finalPrice -= (cv.price * product.category.categoryOffer / 100);
+                      }
 
-    res.render("home", {
-      user: userData,
-      topwear,
-      bottomwear,
-      products,
-    });
+                      minPrice = Math.min(minPrice, finalPrice);
+                      maxPrice = Math.max(maxPrice, finalPrice);
+                  }
+              });
+          });
+
+          return {
+              ...product,
+              minPrice: Math.round(minPrice * 100) / 100,
+              maxPrice: Math.round(maxPrice * 100) / 100
+          };
+      });
+
+      // Filter products by category (keeping your existing logic)
+      const menswear = processedProducts.filter(product => 
+          product.category?.name.toUpperCase().includes("MEN")
+      );
+      const womenswear = processedProducts.filter(product => 
+          product.category?.name.toUpperCase().includes("WOMEN")
+      );
+
+      // Render the home page with all required data
+      res.render("home", {
+          user: userData,
+          categories,
+          products: processedProducts,
+          menswear,
+          womenswear,
+          pageTitle: 'Fashion Store - Home',
+          offers: [
+              { title: 'Summer Collection 2025', desc: 'Discover the latest trends' },
+              { title: 'New Arrivals', desc: 'Shop the latest styles' },
+              { title: 'Special Offers', desc: 'Up to 50% off' }
+          ]
+      });
+
   } catch (error) {
-    console.log("Home page error:", error);
-    res.status(500).send("Server error");
+      console.error("Home page error:", error);
+      res.status(500).render('error', {
+          message: 'Something went wrong while loading the home page',
+          error: process.env.NODE_ENV === 'development' ? error : {}
+      });
   }
 };
 
@@ -63,35 +119,54 @@ function generateOtp() {
 }
 
 async function sendVerificationEmail(email, otp) {
+
+
   const transporter = nodemailer.createTransport({
-    service: "gmail",
-    port: 587,
-    secure: false, // Use true for port 465
+    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
       user: process.env.NODEMAILER_EMAIL,
-      pass: process.env.NODEMAILER_PASSWORD,
+      pass: process.env.NODEMAILER_PASSWORD
     },
-    logger: true,
-    debug: true,
+    tls: {
+      rejectUnauthorized: false
+    }
   });
 
   const mailOptions = {
-    from: `"Anamit" <${process.env.NODEMAILER_EMAIL}>`, // Correct syntax
+    from: `"ANAMIT" <${process.env.NODEMAILER_EMAIL}>`,
     to: email,
     subject: "Your Verification Code",
     html: `
-        <p>Your OTP is <strong>${otp}</strong>.</p>
-        <p>This code is valid for 1 minutes.</p>
-      `,
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Email Verification</h2>
+        <p>Your OTP is: <strong style="font-size: 24px; color: #007bff;">${otp}</strong></p>
+        <p style="color: #666;">This code is valid for 1 minute.</p>
+        <p style="color: #999; font-size: 12px;">If you didn't request this code, please ignore this email.</p>
+      </div>
+    `
   };
 
   try {
+    // Verify connection configuration
+    await transporter.verify();
+    
     const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", info.response);
-    return true; // Return true if email sent successfully
+    console.log("Email sent successfully:", info.messageId);
+    return true;
   } catch (error) {
-    console.error("Error sending email:", error.message);
-    return false; // Return false if email sending fails
+    console.error("SMTP Error:", {
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      message: error.message
+    });
+    return false;
+  } finally {
+    // Clean up
+    transporter.close();
   }
 }
 
@@ -315,203 +390,7 @@ const logout = async (req, res) => {
 };
 
 
-const getMensFashion = async (req, res) => {
-  try {
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = 12; // Products per page
-    const skip = (page - 1) * limit;
-      // Get the men's category
-      const menCategory = await Category.findOne({
-          isListed: true,
-          name: 'MEN'
-      });
-
-      if (!menCategory) {
-          return res.status(404).render('error', {
-              message: 'Category not found'
-          });
-      }
-
-      // Get men's products
-      const query = {
-          isListed: true,
-          category: menCategory._id  // Filter by men's category ID
-      };
-
-      // Apply price filter if exists
-      if (req.query.maxPrice) {
-          query['variants.colorVariant.price'] = { 
-              $lte: parseFloat(req.query.maxPrice) 
-          };
-      }
-
-      // Apply size filter if exists
-      if (req.query.sizes) {
-          const sizes = Array.isArray(req.query.sizes) 
-              ? req.query.sizes 
-              : [req.query.sizes];
-          query['variants.colorVariant.size'] = { $in: sizes };
-      }
-
-      // Apply color filter if exists
-      if (req.query.colors) {
-          const colors = Array.isArray(req.query.colors) 
-              ? req.query.colors 
-              : [req.query.colors];
-          query['variants.colorName'] = { $in: colors };
-      }
-
-      // Apply sorting
-      let sort = {};
-      switch (req.query.sort) {
-          case 'price_asc':
-              sort = { 'variants.colorVariant.price': 1 };
-              break;
-          case 'price_desc':
-              sort = { 'variants.colorVariant.price': -1 };
-              break;
-          case 'newest':
-              sort = { createdAt: -1 };
-              break;
-          default:
-              sort = { createdAt: -1 }; // Default sort
-      }
-      const totalProducts = await Product.countDocuments(query);
-      const totalPages = Math.ceil(totalProducts / limit);
-      // Get filtered and sorted products
-      const products = await Product.find(query)
-          .sort(sort)
-          .skip(skip)
-          .limit(limit)
-          .populate('category')  // Populate category information
-          .lean();
-
-      // Get unique colors from all products
-      const colors = [...new Set(products.flatMap(product => 
-          product.variants.map(variant => ({
-              colorName: variant.colorName,
-              colorValue: variant.colorValue
-          }))
-      ))];
-
-      // Remove duplicate colors
-      const uniqueColors = Array.from(new Map(colors.map(item => 
-          [item.colorName, item])).values());
-
-      res.render('categoryMenwear', {
-          title: "MEN",
-          category: menCategory,  // Pass single category instead of categories array
-          products,
-          colors: uniqueColors,
-          currentFilters: req.query,
-          pagination: {
-            currentPage: page,
-            totalPages,
-            hasNextPage: page < totalPages,
-            hasPreviousPage: page > 1,
-            nextPage: page + 1,
-            previousPage: page - 1
-          }
-      });
-
-  } catch (error) {
-      console.error('Error in getMensFashion:', error);
-      res.status(500).render('error', {
-          message: 'Internal server error'
-      });
-  }
-};
-
-const getWomensFashion = async (req, res) => {
-  try {
-      // First find the women's category
-      const womenCategory = await Category.findOne({ 
-          name: 'WOMEN',
-          isListed: true 
-      });
-
-      if (!womenCategory) {
-          return res.status(404).render('error', {
-              message: 'Category not found'
-          });
-      }
-
-      // Get all products for women
-      const query = {
-          isListed: true,
-          category: womenCategory._id  // Filter products by women's category
-      };
-
-      // Apply price filter if exists
-      if (req.query.maxPrice) {
-          query['variants.colorVariant.price'] = { 
-              $lte: parseFloat(req.query.maxPrice) 
-          };
-      }
-
-      // Apply size filter if exists
-      if (req.query.sizes) {
-          const sizes = Array.isArray(req.query.sizes) 
-              ? req.query.sizes 
-              : [req.query.sizes];
-          query['variants.colorVariant.size'] = { $in: sizes };
-      }
-
-      // Apply color filter if exists
-      if (req.query.colors) {
-          const colors = Array.isArray(req.query.colors) 
-              ? req.query.colors 
-              : [req.query.colors];
-          query['variants.colorName'] = { $in: colors };
-      }
-
-      // Apply sorting
-      let sort = {};
-      switch (req.query.sort) {
-          case 'price_asc':
-              sort = { 'variants.colorVariant.price': 1 };
-              break;
-          case 'price_desc':
-              sort = { 'variants.colorVariant.price': -1 };
-              break;
-          case 'newest':
-              sort = { createdAt: -1 };
-              break;
-          default:
-              sort = { createdAt: -1 }; // Default sort
-      }
-
-      const products = await Product.find(query)
-          .sort(sort)
-          .lean();
-
-      // Get unique colors from all products
-      const colors = [...new Set(products.flatMap(product => 
-          product.variants.map(variant => ({
-              colorName: variant.colorName,
-              colorValue: variant.colorValue
-          }))
-      ))];
-
-      // Remove duplicate colors
-      const uniqueColors = Array.from(new Map(colors.map(item => 
-          [item.colorName, item])).values());
-
-      res.render('categoryWomenwear', {
-          title: "WOMEN",
-          products,
-          colors: uniqueColors,
-          currentFilters: req.query
-      });
-
-  } catch (error) {
-      console.error('Error in getWomensFashion:', error);
-      res.status(500).render('error', {
-          message: 'Internal server error'
-      });
-  }
-};
 
 
 const loadUserProfile = async (req,res) => {
@@ -652,7 +531,6 @@ const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
-    // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ 
@@ -661,18 +539,17 @@ const forgotPassword = async (req, res) => {
       });
     }
 
-    // Generate OTP using your existing function
     const otp = generateOtp();
+    console.log("Forgot Password OTP generated:", otp); // Added logging
 
-    // Save OTP and its expiry in session
     req.session.resetPasswordOtp = {
       email,
       otp,
       createdAt: new Date()
     };
 
-    // Send email using your existing function
     const emailSent = await sendVerificationEmail(email, otp);
+    console.log("Forgot Password OTP sent:", otp); // Added logging
 
     if (!emailSent) {
       return res.status(500).json({
@@ -789,6 +666,7 @@ const resetPassword = async (req, res) => {
 const resendForgotPasswordOtp = async (req, res) => {
   try {
     const sessionData = req.session.resetPasswordOtp;
+    console.log('Session data:', sessionData);
     
     if (!sessionData || !sessionData.email) {
       return res.status(400).json({
@@ -797,20 +675,18 @@ const resendForgotPasswordOtp = async (req, res) => {
       });
     }
 
-    // Generate new OTP
     const newOtp = generateOtp();
+    console.log('Forgot Password OTP resent:', newOtp); // Added logging
 
-    // Send new OTP
     const emailSent = await sendVerificationEmail(sessionData.email, newOtp);
 
     if (!emailSent) {
       return res.status(500).json({
-        success: false,
+        success: false, 
         message: 'Failed to resend OTP'
       });
     }
 
-    // Update session with new OTP
     req.session.resetPasswordOtp = {
       email: sessionData.email,
       otp: newOtp,
@@ -826,10 +702,102 @@ const resendForgotPasswordOtp = async (req, res) => {
     console.error('Resend OTP error:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Internal server error' 
     });
   }
 };
+
+
+const searchProducts = async (req, res) => {
+  try {
+      const query = req.query.q;
+      
+      // Basic validation
+      if (!query || query.length < 2) {
+          return res.json({ 
+              success: true, 
+              products: [], 
+              categories: [] 
+          });
+      }
+
+      console.log('Search query:', query); // Debug log
+
+      // Basic product search
+      const products = await Product.find({
+          $or: [
+              { productName: { $regex: query, $options: 'i' } },
+              { brand: { $regex: query, $options: 'i' } },
+              { 'variants.colorName': { $regex: query, $options: 'i' } }
+          ],
+          isListed: true
+      })
+      .populate('category')
+      .limit(8)
+      .lean();
+
+      console.log('Found products:', products.length); // Debug log
+
+      // Basic category search
+      const categories = await Category.find({
+          name: { $regex: query, $options: 'i' },
+          isListed: true
+      })
+      .limit(4)
+      .lean();
+
+      console.log('Found categories:', categories.length); // Debug log
+
+      // Process products for response
+      const processedProducts = products.map(product => {
+          // Get minimum price from variants
+          let minPrice = Infinity;
+          
+          product.variants.forEach(variant => {
+              variant.colorVariant.forEach(cv => {
+                  if (cv.price < minPrice) {
+                      minPrice = cv.price;
+                  }
+              });
+          });
+
+          // Calculate final price with offer
+          const basePrice = minPrice === Infinity ? 0 : minPrice;
+          const finalPrice = product.productOffer > 0 
+              ? basePrice * (1 - product.productOffer / 100)
+              : basePrice;
+
+          return {
+              _id: product._id,
+              productName: product.productName,
+              category: product.category,
+              price: finalPrice,
+              originalPrice: basePrice,
+              productOffer: product.productOffer,
+              imageUrl: product.variants[0]?.productImage[0] || '/placeholder.jpg'
+          };
+      });
+
+      console.log('Processed products:', processedProducts.length); // Debug log
+
+      res.json({
+          success: true,
+          products: processedProducts,
+          categories
+      });
+
+  } catch (error) {
+      console.error('Search error:', error);
+      res.status(500).json({
+          success: false,
+          error: 'Internal server error',
+          details: error.message
+      });
+  }
+};
+
+
+
 
 module.exports = {
   loadHomepage,
@@ -842,8 +810,6 @@ module.exports = {
   loadLoginPage,
   login,
   logout,
-  getMensFashion,
-  getWomensFashion,
   loadUserProfile,
   loadUserProfile,
   handleGoogleCallback,
@@ -854,5 +820,6 @@ module.exports = {
   loadForgotPassword,
   verifyForgotPasswordOtp,
   resetPassword,
-  resendForgotPasswordOtp
+  resendForgotPasswordOtp,
+  searchProducts
 };

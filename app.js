@@ -2,13 +2,33 @@ const express = require('express');
 const app = express();
 const path = require('path');
 const session = require('express-session');
-const MongoStore = require('connect-mongo'); // Add this import
+const MongoStore = require('connect-mongo'); 
 const flash = require('connect-flash');
 const passport = require('./config/passport');
 const env = require('dotenv').config();
 const db = require('./config/db');
+const http = require('http');
+const socketIO = require('socket.io');
 const userRouter = require('./routes/userRouter');
 const adminRouter = require('./routes/adminRouter');
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Initialize Socket.IO
+const io = socketIO(server);
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+    console.log('A user connected');
+
+    socket.on('disconnect', () => {
+        console.log('User disconnected');
+    });
+});
+
+// Make io accessible to our router
+app.set('socketio', io);
 
 // Initialize database connection
 db();
@@ -62,6 +82,7 @@ app.use((req, res, next) => {
 // View engine setup
 app.set('view engine', 'ejs');
 app.set('views', [
+    path.join(__dirname, 'views'),
     path.join(__dirname, 'views/user'),
     path.join(__dirname, 'views/admin')
 ]);
@@ -84,8 +105,8 @@ app.use((err, req, res, next) => {
 
 // Port configuration
 const PORT = process.env.PORT || 3478;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`ANAMIT Server is Running on ${PORT}`);
 });
 
-module.exports = app;
+module.exports = { app, io };

@@ -3,13 +3,14 @@ const Cart = require('../../models/cartSchema');
 const Address = require('../../models/addressSchema');
 const Order = require('../../models/orderSchema');
 const Product = require('../../models/productSchema');
-// controllers/checkoutController.js
+const Wallet = require('../../models/walletSchema');
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
 
-// Update the getCheckoutPage function
 const getCheckout = async (req, res) => {
     try {
-        // Fetch both cart and addresses concurrently
-        const [cart, addresses] = await Promise.all([
+        // Fetch cart, addresses, and wallet balance concurrently
+        const [cart, addresses, wallet] = await Promise.all([
             Cart.findOne({ 
                 user: req.user._id, 
                 active: true 
@@ -17,203 +18,264 @@ const getCheckout = async (req, res) => {
                 path: 'items.product',
                 select: 'productName variants price'
             }),
-            Address.find({ userId: req.user._id }) // Add this line to fetch addresses
+            Address.find({ userId: req.user._id }),
+            Wallet.findOne({ user: req.user._id })
         ]);
 
         if (!cart || cart.items.length === 0) {
             return res.redirect('/cart');
         }
 
-        // Calculate totals
-        const itemsTotal = cart.items.reduce((total, item) => 
-            total + (item.price * item.quantity), 0);
-        const shipping = 128;
+        // Process cart items and calculate totals
+        const processedItems = cart.items.map(item => {
+            const variant = item.product.variants.find(v => 
+                v.colorName === item.selectedColor.colorName
+            );
 
-        const checkoutData = {
-            items: cart.items.map(item => ({
+            const productImage = variant?.productImage[0] || '';
+            const basePrice = item.price;
+            const quantity = item.quantity;
+            const itemTotal = basePrice * quantity;
+
+            return {
                 productId: item.product._id,
                 product: item.product,
-                colorName: item.selectedColor.colorName,
-                size: item.selectedSize,
-                quantity: item.quantity,
-                price: item.price,
-                total: item.price * item.quantity
-            })),
-            totalPrice: itemsTotal,
-            shipping: shipping,
-            grandTotal: itemsTotal + shipping
-        };
-
-        console.log('Checkout Data:', {
-            totalPrice: checkoutData.totalPrice,
-            shipping: checkoutData.shipping,
-            grandTotal: checkoutData.grandTotal
+                productName: item.product.productName,
+                productImage: productImage,
+                selectedColor: item.selectedColor,
+                selectedSize: item.selectedSize,
+                quantity: quantity,
+                price: basePrice,
+                itemTotal: itemTotal
+            };
         });
 
-        // Pass both checkoutData and addresses to the template
-        res.render('checkout', { checkoutData, addresses });
+        // Calculate order totals
+        const totalAmount = processedItems.reduce((sum, item) => sum + item.itemTotal, 0);
+        const shippingFee = 128;
+        const totalDiscount = 0; // Add discount calculation if needed
+        const finalAmount = totalAmount - totalDiscount + shippingFee;
+
+        const checkoutData = {
+            items: processedItems,
+            totalAmount,
+            totalDiscount,
+            shippingFee,
+            finalAmount
+        };
+
+        // Prepare data for template
+        const templateData = {
+            checkoutData,
+            addresses,
+            user: {
+                name: req.user.name,
+                email: req.user.email,
+                phone: req.user.phone
+            },
+            walletBalance: wallet?.balance || 0,
+            razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+            storeName: 'Your Store Name', // Replace with your store name
+            pageTitle: 'Checkout'
+        };
+
+        // Log checkout data for debugging
+        console.log('Checkout Data:', {
+            itemCount: processedItems.length,
+            totalAmount,
+            shippingFee,
+            finalAmount,
+            addressCount: addresses.length
+        });
+
+        res.render('checkout', templateData);
+
     } catch (error) {
-        console.error('Error loading checkout page:', error);
+        console.error('Error in getCheckout:', error);
         res.status(500).render('error', { 
-            message: 'Failed to load checkout page. Please try again.' 
+            message: 'Failed to load checkout page. Please try again.',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 };
 
+// Initialize Razorpay
+// In your checkout controller, update the Razorpay initialization:
+const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,       // Make consistent
+    key_secret: process.env.RAZORPAY_KEY_SECRET // Make consistent
+});
 
-   const placeOrder = async (req, res) => {
-        try {
-            const { addressId, items, totalAmount } = req.body;
-            const userId = req.user._id;
-
-            console.log('Order Request Data:', {
-                addressId,
-                userId,
-                totalAmount,
-                items: items.length
-            });
-
-            // 1. Validate address
-            const address = await Address.findOne({
-                _id: addressId,
-                userId: userId
-            });
-
-            console.log('Found Address:', address);
-
-            if (!address) {
-                throw new Error('Invalid delivery address');
-            }
-
-            // 2. Get cart and validate items
-            const cart = await Cart.findOne({ 
-                user: userId,
-                active: true 
-            }).populate('items.product');
-
-            if (!cart || cart.items.length === 0) {
-                throw new Error('Cart is empty');
-            }
-
-            // 3. Validate stock and prepare order items
-            const orderItems = [];
-            let calculatedTotal = 0;
-
-            console.log('Starting item calculations...');
-            for (const cartItem of cart.items) {
-                const product = await Product.findById(cartItem.product._id);
-                console.log('Processing item:', {
-                    productId: cartItem.product._id,
-                    price: cartItem.price,
-                    quantity: cartItem.quantity,
-                    itemTotal: cartItem.price * cartItem.quantity
-                });
-                
-                // Find the specific variant
-                const variant = product.variants.find(v => 
-                    v.colorName === cartItem.selectedColor.colorName
-                );
-                
-                if (!variant) {
-                    throw new Error(`Variant not found for product: ${product.productName}`);
-                }
-
-                // Find size variant
-                const sizeVariant = variant.colorVariant.find(sv => 
-                    sv.size === cartItem.selectedSize
-                );
-
-                if (!sizeVariant) {
-                    throw new Error(`Size variant not found for product: ${product.productName}`);
-                }
-
-                // Check stock
-                if (sizeVariant.stock < cartItem.quantity) {
-                    throw new Error(`Insufficient stock for ${product.productName}`);
-                }
-
-                // Calculate item total
-                const itemTotal = cartItem.price * cartItem.quantity;
-                calculatedTotal += itemTotal;
-
-                // Prepare order item
-                orderItems.push({
-                    product: product._id,
-                    productName: product.productName,
-                    selectedColor: cartItem.selectedColor,
-                    selectedSize: cartItem.selectedSize,
-                    quantity: cartItem.quantity,
-                    price: cartItem.price,
-                    itemTotal: itemTotal
-                });
-            }
-
-            console.log('Final calculations:', {
-                calculatedTotal,
-                shippingFee: 128,
-                totalWithShipping: calculatedTotal + 128,
-                receivedTotal: totalAmount,
-                difference: Math.abs((calculatedTotal + 128) - totalAmount)
-            });
-
-            // 4. Validate total amount (including shipping fee)
-            const expectedTotal = calculatedTotal + 128; // Add shipping fee
-            if (Math.abs(expectedTotal - totalAmount) > 1) {
-                throw new Error(`Order total mismatch. Expected: ${expectedTotal} (items: ${calculatedTotal} + shipping: 128), Received: ${totalAmount}`);
-            }
-
-            // 5. Create order
-            const [orderNumber, orderId] = await Promise.all([
-                Order.generateOrderNumber(),
-                Order.generateOrderId()
-            ]);
-
-            const order = new Order({
-                orderId,
-                orderNumber,
-                user: userId,
-                items: orderItems,
-                shippingAddress: addressId,
-                totalAmount: totalAmount,
-                shippingFee: 128,
-                paymentMethod: 'cod',
-                paymentStatus: 'pending',
-                orderStatus: 'pending',
-                statusHistory: [{
-                    status: 'pending',
-                    timestamp: new Date(),
-                    comment: 'Order placed successfully'
-                }]
-            });
-
-            await order.save();
-
-            // 6. Clear cart
-            await Cart.findByIdAndUpdate(
-                cart._id,
-                { 
-                    active: false,
-                    lastActive: new Date()
-                }
-            );
-
-            // Send success response
-            res.status(200).json({
-                success: true,
-                message: 'Order placed successfully',
-                orderId: order._id,
-                orderNumber: order.orderNumber
-            });
-
-        } catch (error) {
-            console.error('Order placement error:', error);
-            res.status(400).json({
-                success: false,
-                message: error.message || 'Failed to place order'
-            });
+// Update the createRazorpayOrder function
+const createRazorpayOrder = async (req, res) => {
+    try {
+        const { amount } = req.body;
+        
+        if (!amount || amount <= 0) {
+            throw new Error('Invalid amount');
         }
-    }
 
+        console.log('Creating Razorpay order with amount:', amount);
+
+        const options = {
+            amount: Math.round(amount * 100), // Convert to paise and ensure it's an integer
+            currency: 'INR',
+            receipt: 'order_' + Date.now(),
+            notes: {
+                userId: req.user._id.toString()
+            }
+        };
+
+        const order = await razorpay.orders.create(options);
+        
+        res.status(200).json({
+            success: true,
+            orderId: order.id,
+            amount: order.amount,
+            key: process.env.RAZORPAY_ID // Send key to frontend
+        });
+
+    } catch (error) {
+        console.error('Razorpay order creation error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create payment order',
+            error: error.message
+        });
+    }
+};
+// Verify Razorpay payment
+const verifyRazorpayPayment = async (req, res) => {
+    try {
+        const {
+            razorpay_payment_id,
+            razorpay_order_id,
+            razorpay_signature
+        } = req.body;
+
+        // Verify signature
+        const body = razorpay_order_id + '|' + razorpay_payment_id;
+        const expectedSignature = crypto
+            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)  // Changed from RAZORPAY_SECRET
+            .update(body)
+            .digest('hex');
+
+        if (expectedSignature !== razorpay_signature) {
+            throw new Error('Invalid payment signature');
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Payment verified successfully'
+        });
+
+    } catch (error) {
+        console.error('Payment verification error:', error);
+        res.status(400).json({
+            success: false,
+            message: 'Payment verification failed'
+        });
+    }
+};
+
+// Modified placeOrder controller to handle Razorpay
+const placeOrder = async (req, res) => {
+    try {
+        const { addressId, items, totalAmount, paymentMethod, paymentDetails } = req.body;
+        const userId = req.user._id;
+
+        // Validate address
+        const address = await Address.findById(addressId);
+        if (!address || address.userId.toString() !== userId.toString()) {
+            throw new Error('Invalid delivery address');
+        }
+
+        // Find active cart
+        const cart = await Cart.findOne({ user: userId, active: true });
+        if (!cart) {
+            throw new Error('No active cart found');
+        }
+
+        // Generate order ID and number
+        const orderId = await generateOrderId();
+        const orderNumber = await generateOrderNumber();
+
+        // Process order items
+        const orderItems = items.map(item => ({
+            product: item.productId,
+            productName: item.productName,
+            productImage: item.productImage,
+            selectedColor: item.selectedColor,
+            selectedSize: item.selectedSize,
+            quantity: item.quantity,
+            price: item.price,
+            itemTotal: item.itemTotal,
+            status: 'active'
+        }));
+
+        // Calculate totals
+        const calculatedTotal = orderItems.reduce((sum, item) => sum + item.itemTotal, 0);
+        
+        // Create new order
+        const order = new Order({
+            orderId,
+            orderNumber,
+            user: userId,
+            items: orderItems,
+            shippingAddress: {
+                fullName: address.fullName,
+                streetAddress: address.streetAddress,
+                city: address.city,
+                state: address.state,
+                pincode: address.pincode,
+                phoneNumber: address.phoneNumber
+            },
+            totalAmount: calculatedTotal,
+            shippingFee: 128, // Your fixed shipping fee
+            paymentMethod,
+            paymentStatus: paymentMethod === 'razorpay' ? 'completed' : 'pending',
+            orderStatus: paymentMethod === 'razorpay' ? 'confirmed' : 'pending',
+            paymentDetails: paymentMethod === 'razorpay' ? {
+                razorpayPaymentId: paymentDetails?.razorpay_payment_id,
+                razorpayOrderId: paymentDetails?.razorpay_order_id,
+                razorpaySignature: paymentDetails?.razorpay_signature,
+                paidAmount: calculatedTotal + 128, // Including shipping fee
+                paidAt: new Date()
+            } : undefined,
+            estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            statusHistory: [{
+                status: paymentMethod === 'razorpay' ? 'confirmed' : 'pending',
+                timestamp: new Date(),
+                comment: paymentMethod === 'razorpay' ? 
+                    'Order confirmed with online payment' : 
+                    'Order placed with COD payment'
+            }]
+        });
+
+        // Save order and update cart status
+        await Promise.all([
+            order.save(),
+            Cart.findByIdAndUpdate(cart._id, { 
+                active: false,
+                lastActive: new Date()
+            })
+        ]);
+
+        res.status(200).json({
+            success: true,
+            message: 'Order placed successfully',
+            orderId: order._id,
+            orderNumber: order.orderNumber
+        });
+
+    } catch (error) {
+        console.error('Order placement error:', error);
+        res.status(400).json({
+            success: false,
+            message: error.message || 'Failed to place order'
+        });
+    }
+};
 
 // Helper function to generate unique order number
 async function generateOrderNumber() {
@@ -239,7 +301,7 @@ async function generateOrderNumber() {
 
 // Helper function to generate unique order id
 async function generateOrderId() {
-    return mongoose.Types.ObjectId();
+    return new mongoose.Types.ObjectId().toString();
 }
 
 const orderSuccess = async (req, res) => {
@@ -258,5 +320,7 @@ module.exports ={
     getCheckout,
     placeOrder,
     orderSuccess,
-    generateOrderId
+    generateOrderId,
+    createRazorpayOrder,
+    verifyRazorpayPayment
 }

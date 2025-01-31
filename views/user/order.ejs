@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Account - Orders</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --secondary-color: #5f6368;
+            --success-color: #28a745;
+            --warning-color: #ff8800;
+            --danger-color: #dc3545;
+            --background-color: #f5f5f5;
+            --card-color: #ffffff;
+            --border-color: #eee;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 3rem auto;
+            padding: 0 3rem;
+            width: 90%;
+        }
+
+        .profile-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 3rem;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            height: fit-content;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: #f0f0f0;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-avatar i {
+            font-size: 48px;
+            color: #999;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            cursor: pointer;
+            border-radius: 8px;
+            color: #333;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .menu-item.active {
+            background: #e0e0e0;
+        }
+
+        .menu-item i {
+            margin-right: 1rem;
+            width: 20px;
+        }
+
+        .logout-btn {
+            background: #ff8800;
+            color: white;
+            border: none;
+            padding: 1rem;
+            width: 100%;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 2rem;
+            font-weight: bold;
+        }
+
+        /* Enhanced Main Content Styles */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-title {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .content-title i {
+            color: var(--primary-color);
+        }
+
+        .order-card {
+            background: var(--card-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+            border: 1px solid var(--border-color);
+        }
+
+        .order-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .order-id {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .order-id i {
+            color: var(--primary-color);
+        }
+
+        .order-date {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .order-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: var(--background-color);
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        .detail-section:hover {
+            background: #f0f4f8;
+        }
+
+        .detail-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .detail-value {
+            font-size: 1rem;
+            color: var(--text-primary);
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        /* Enhanced Button Styles */
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            padding: 0.75rem 1.25rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status-confirmed {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-delivered {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .status-cancelled {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+
+        /* Empty State Styling */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            background: var(--card-color);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .container {
+                width: 95%;
+                padding: 0 2rem;
+            }
+            
+            .profile-container {
+                gap: 2rem;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .profile-container {
+                grid-template-columns: 250px 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+                margin: 2rem auto;
+            }
+
+            .profile-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+                margin-bottom: 2rem;
+            }
+
+            .order-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .sidebar,
+            .button-group {
+                display: none;
+            }
+
+            .container {
+                width: 100%;
+                padding: 0;
+                margin: 0;
+            }
+
+            .order-card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/user/header')%>
+    
+    <div class="container">
+        <h1 class="page-title">MY ACCOUNT</h1>
+        
+        <div class="profile-container">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="profile-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                
+                <a href="/account" class="menu-item">
+                    <i class="fas fa-user"></i>
+                    Account Overview
+                </a>
+                <a href="/account/orders" class="menu-item active">
+                    <i class="fas fa-box"></i>
+                    My Orders
+                </a>
+                <a href="/account/addresses" class="menu-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Manage Address
+                </a>
+                <a href="/account/wallet" class="menu-item">
+                    <i class="fas fa-wallet"></i>
+                    Wallet
+                </a>
+                <a href="/account/password" class="menu-item">
+                    <i class="fas fa-lock"></i>
+                    Manage Password
+                </a>
+                <a href="/account/wishlist" class="menu-item">
+                    <i class="fas fa-heart"></i>
+                    Wishlist
+                </a>
+                
+                <form action="/auth/logout" method="POST">
+                    <button type="submit" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        LOG OUT
+                    </button>
+                </form>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <h2 class="content-title">
+                    <i class="fas fa-box"></i>
+                    My Orders
+                </h2>
+                
+                <% if (orders && orders.length > 0) { %>
+                    <% orders.forEach(order => { %>
+                        <div class="order-card">
+                            <div class="order-header">
+                                <div class="order-id">
+                                    <i class="fas fa-shopping-bag"></i>
+                                    Order #<%= order.orderNumber %>
+                                </div>
+                                <div class="order-date">
+                                    <i class="far fa-calendar-alt"></i>
+                                    <%= new Date(order.createdAt).toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                    }) %>
+                                </div>
+                            </div>
+                            
+                            <div class="order-details">
+                                <div class="detail-section">
+                                    <div class="detail-label">
+                                        <i class="fas fa-info-circle"></i>
+                                        Order Status
+                                    </div>
+                                    <div class="detail-value">
+                                        <span class="status-badge status-<%= order.orderStatus.toLowerCase() %>">
+                                            <i class="fas fa-circle" style="font-size: 0.8em;"></i>
+                                            <%= order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1) %></span>
+                                        </div>
+                                    </div>
+    
+                                    <div class="detail-section">
+                                        <div class="detail-label">
+                                            <i class="fas fa-credit-card"></i>
+                                            Payment Status
+                                        </div>
+                                        <div class="detail-value">
+                                            <span class="status-badge status-<%= order.paymentStatus.toLowerCase() %>">
+                                                <i class="fas fa-<%= order.paymentStatus === 'completed' ? 'check-circle' : 'clock' %>"></i>
+                                                <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="detail-section">
+                                        <div class="detail-label">
+                                            <i class="fas fa-money-bill-wave"></i>
+                                            Total Amount
+                                        </div>
+                                        <div class="detail-value">
+                                            ₹<%= order.finalAmount.toFixed(2) %>
+                                            <% if (order.totalDiscount > 0) { %>
+                                                <small style="color: var(--success-color); display: block; font-size: 0.85em;">
+                                                    <i class="fas fa-tag"></i>
+                                                    Saved ₹<%= order.totalDiscount.toFixed(2) %>
+                                                </small>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="detail-section">
+                                        <div class="detail-label">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                            Shipping Address
+                                        </div>
+                                        <div class="detail-value">
+                                            <strong><%= order.shippingAddress.fullName %></strong><br>
+                                            <%= order.shippingAddress.streetAddress %><br>
+                                            <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %><br>
+                                            <%= order.shippingAddress.pincode %>
+                                        </div>
+                                    </div>
+    
+                                    <% if (order.trackingDetails && order.trackingDetails.trackingNumber) { %>
+                                        <div class="detail-section">
+                                            <div class="detail-label">
+                                                <i class="fas fa-truck"></i>
+                                                Tracking Details
+                                            </div>
+                                            <div class="detail-value">
+                                                <strong><%= order.trackingDetails.courier %></strong><br>
+                                                Tracking #: <span style="color: var(--primary-color);">
+                                                    <%= order.trackingDetails.trackingNumber %>
+                                                </span>
+                                                <% if (order.trackingDetails.trackingUrl) { %>
+                                                    <a href="<%= order.trackingDetails.trackingUrl %>" 
+                                                       target="_blank"
+                                                       class="btn btn-primary"
+                                                       style="margin-top: 0.5rem; font-size: 0.85rem; padding: 0.5rem 1rem;">
+                                                        <i class="fas fa-external-link-alt"></i>
+                                                        Track Shipment
+                                                    </a>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    <% } %>
+    
+                                    <% if (order.estimatedDelivery) { %>
+                                        <div class="detail-section">
+                                            <div class="detail-label">
+                                                <i class="fas fa-calendar-check"></i>
+                                                Estimated Delivery
+                                            </div>
+                                            <div class="detail-value">
+                                                <%= new Date(order.estimatedDelivery).toLocaleDateString('en-US', {
+                                                    weekday: 'long',
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric'
+                                                }) %>
+                                            </div>
+                                        </div>
+                                    <% } %>
+                                </div>
+                                
+                                <div class="button-group">
+                                    <a href="/orders/<%= order.orderId %>" class="btn btn-primary">
+                                        <i class="fas fa-eye"></i>
+                                        View Details
+                                    </a>
+    
+                                    <% if (order.paymentStatus === 'completed') { %>
+                                        <a href="/orders/<%= order.orderId %>/invoice" 
+                                           class="btn btn-secondary"
+                                           target="_blank">
+                                            <i class="fas fa-file-invoice"></i>
+                                            Download Invoice
+                                        </a>
+                                    <% } %>
+    
+                    
+    
+                                    <% if (order.canBeReturned()) { %>
+                                        <a href="/account/orders/<%= order.orderId %>/return" 
+                                           class="btn btn-warning">
+                                            <i class="fas fa-undo"></i>
+                                            Return Order
+                                        </a>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="empty-state">
+                            <i class="fas fa-box-open"></i>
+                            <p>You haven't placed any orders yet</p>
+                            <a href="/" class="btn btn-primary">
+                                <i class="fas fa-shopping-bag"></i>
+                                Start Shopping
+                            </a>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    
+        <%- include('../partials/user/footer')%>
+    
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Add active class to current menu item
+                const currentPath = window.location.pathname;
+                document.querySelectorAll('.menu-item').forEach(item => {
+                    if (item.getAttribute('href') === currentPath) {
+                        item.classList.add('active');
+                    }
+                });
+    
+                // Animate order cards on scroll
+                const observeCards = () => {
+                    const observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                entry.target.style.opacity = '1';
+                                entry.target.style.transform = 'translateY(0)';
+                            }
+                        });
+                    }, { threshold: 0.1 });
+    
+                    document.querySelectorAll('.order-card').forEach(card => {
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateY(20px)';
+                        card.style.transition = 'all 0.5s ease';
+                        observer.observe(card);
+                    });
+                };
+    
+                observeCards();
+            });
+        </script>
+    </body>
+    </html>

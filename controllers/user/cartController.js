@@ -50,14 +50,12 @@ const getCart = async (req, res) => {
 }
 
 
-
 const updateQuantity = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { productId, quantity } = req.body;
+        const { productId, colorName, size, quantity } = req.body;
         const newQuantity = parseInt(quantity);
 
-        // Check maximum quantity limit
         if (newQuantity > 5) {
             return res.status(400).json({
                 success: false,
@@ -65,15 +63,24 @@ const updateQuantity = async (req, res) => {
             });
         }
 
-        // First, get the current cart item to get color and size
+        // Get cart first
         const cart = await Cart.findOne({
             user: userId,
-            active: true,
-            'items.product': productId
+            active: true
         }).populate('items.product');
 
+        if (!cart) {
+            return res.status(404).json({
+                success: false,
+                message: 'Cart not found'
+            });
+        }
+
+        // Find specific item
         const cartItem = cart.items.find(item => 
-            item.product._id.toString() === productId
+            item.product._id.toString() === productId &&
+            item.selectedColor.colorName === colorName &&
+            item.selectedSize === size
         );
 
         if (!cartItem) {
@@ -83,58 +90,55 @@ const updateQuantity = async (req, res) => {
             });
         }
 
-        // Find the specific variant and check stock
-        const variant = cartItem.product.variants.find(
-            v => v.colorName === cartItem.selectedColor.colorName
-        );
-        
-        const sizeVariant = variant?.colorVariant.find(
-            sv => sv.size === cartItem.selectedSize
-        );
+        // Check stock
+        const variant = cartItem.product.variants.find(v => v.colorName === colorName);
+        const sizeVariant = variant?.colorVariant.find(sv => sv.size === size);
 
-        if (!sizeVariant) {
+        if (!sizeVariant || newQuantity > sizeVariant.stock) {
             return res.status(400).json({
                 success: false,
-                message: 'Product variant not found'
+                message: `Only ${sizeVariant?.stock || 0} items available`
             });
         }
 
-        // Check if requested quantity is available
-        if (newQuantity > sizeVariant.stock) {
-            return res.status(400).json({
-                success: false,
-                message: `Only ${sizeVariant.stock} items available in stock`
-            });
-        }
-
-        // Update cart quantity if stock is available
-        const result = await Cart.updateOne(
+        // Update quantity
+        await Cart.updateOne(
             {
                 user: userId,
                 active: true,
-                'items.product': productId
+                "items": {
+                    $elemMatch: {
+                        product: productId,
+                        "selectedColor.colorName": colorName,
+                        selectedSize: size
+                    }
+                }
             },
             {
-                $set: {
-                    'items.$.quantity': newQuantity
-                }
+                $set: { "items.$.quantity": newQuantity }
             }
         );
 
-        if (result.modifiedCount === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'Failed to update cart'
-            });
-        }
-
-        // Fetch updated cart
+        // Get updated cart
         const updatedCart = await Cart.findOne({
             user: userId,
             active: true
         }).populate('items.product');
 
-        // Format and return response
+        // Calculate new totals
+        let totalAmount = 0;
+        let totalDiscount = 0;
+
+        updatedCart.items.forEach(item => {
+            const itemTotal = item.price * item.quantity;
+            totalAmount += itemTotal;
+            totalDiscount += (itemTotal * (item.appliedProductOffer + item.appliedCategoryOffer)) / 100;
+        });
+
+        updatedCart.totalAmount = totalAmount;
+        updatedCart.totalDiscount = totalDiscount;
+        await updatedCart.save();
+
         const formattedCart = {
             items: updatedCart.items.map(item => ({
                 productId: item.product._id.toString(),
@@ -148,7 +152,7 @@ const updateQuantity = async (req, res) => {
                 colorName: item.selectedColor.colorName,
                 size: item.selectedSize
             })),
-            totalPrice: updatedCart.totalAmount - updatedCart.totalDiscount
+            totalPrice: totalAmount - totalDiscount
         };
 
         res.json({
@@ -160,21 +164,19 @@ const updateQuantity = async (req, res) => {
     } catch (error) {
         console.error('Error updating cart quantity:', error);
         res.status(500).json({
-            success: false,
-            message: 'Failed to update quantity',
-            error: error.message
+            success: false, 
+            message: 'Failed to update quantity'
         });
     }
 };
 
 
-
 const removeProduct = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { productId } = req.body;
+        const { productId, colorName, size } = req.body;
 
-        // Find and update cart by removing the specific item
+        // Find and update cart by removing the specific variant
         const result = await Cart.updateOne(
             { 
                 user: userId,
@@ -183,7 +185,9 @@ const removeProduct = async (req, res) => {
             {
                 $pull: {
                     items: {
-                        product: productId  
+                        product: productId,
+                        'selectedColor.colorName': colorName,
+                        selectedSize: size
                     }
                 }
             }
@@ -192,11 +196,11 @@ const removeProduct = async (req, res) => {
         if (result.modifiedCount === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'Product not found in cart'
+                message: 'Product variant not found in cart'
             });
         }
 
-        // Fetch updated cart to return latest data
+        // Fetch and update cart as before
         const updatedCart = await Cart.findOne({
             user: userId,
             active: true
@@ -205,18 +209,18 @@ const removeProduct = async (req, res) => {
             select: 'productName variants'
         });
 
-        // Recalculate totals after removing item
-        updatedCart.totalAmount = updatedCart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+        // Recalculate totals
+        updatedCart.totalAmount = updatedCart.items.reduce((total, item) => 
+            total + (item.price * item.quantity), 0);
         updatedCart.totalDiscount = updatedCart.items.reduce((total, item) => {
             const itemTotal = item.price * item.quantity;
-            const productDiscount = (itemTotal * item.appliedProductOffer) / 100;
-            const categoryDiscount = (itemTotal * item.appliedCategoryOffer) / 100;
-            return total + productDiscount + categoryDiscount;
+            return total + 
+                (itemTotal * item.appliedProductOffer / 100) + 
+                (itemTotal * item.appliedCategoryOffer / 100);
         }, 0);
 
-        await updatedCart.save(); // Save the recalculated totals
+        await updatedCart.save();
 
-        // Format cart data consistent with your existing pattern
         const formattedCart = {
             items: updatedCart.items.map(item => ({
                 productId: item.product._id,
@@ -236,7 +240,7 @@ const removeProduct = async (req, res) => {
         res.json({
             success: true,
             cart: formattedCart,
-            message: 'Product removed from cart successfully'
+            message: 'Product variant removed from cart successfully'
         });
 
     } catch (error) {
@@ -248,7 +252,6 @@ const removeProduct = async (req, res) => {
         });
     }
 };
-
 
 module.exports ={
 getCart,

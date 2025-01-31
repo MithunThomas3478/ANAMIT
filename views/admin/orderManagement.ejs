@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANAMIT - Orders</title>
+    <link rel="stylesheet" href="/admin/orderManagement.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <%- include('../partials/admin/adminHeader') %>
+
+    <main class="main-content" style="margin-left: var(--sidebar-width); padding: 2rem; transition: margin-left 0.3s ease, width 0.3s ease; background-color: #f3f4f6; width: calc(100% - var(--sidebar-width)); min-height: 100vh; box-sizing: border-box;">
+        <h1 class="dashboard-title" style="font-size: 2rem; font-weight: 700; color: #6d28d9; margin-bottom: 1.5rem;">Orders</h1>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="h3 mb-0" style="font-size: 1.5rem; font-weight: 600; color: #4f46e5;"></h2>
+            <!-- Add any order-specific actions here -->
+            <div class="d-flex gap-2">
+                <select class="form-select" id="statusFilter" style="width: auto;">
+                    <option value="all">All Orders</option>
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <input type="date" class="form-control" id="dateFilter" style="width: auto;">
+            </div>
+        </div>
+    
+        <div class="card" style="background-color: white; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <div class="card-body">
+                <% if (error) { %>
+                    <div class="alert alert-danger" role="alert">
+                        <%= error %>
+                    </div>
+                <% } %>
+
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                        <thead style="background-color: #4f46e5; color: white;">
+                            <tr>
+                                <th style="width: 8%; padding: 1rem; border-top-left-radius: 0.5rem;">Order ID</th>
+                                <th style="width: 15%; padding: 1rem;">Customer</th>
+                                <th style="width: 12%; padding: 1rem;">Date</th>
+                                <th style="width: 12%; padding: 1rem;">Total</th>
+                                <th style="width: 15%; padding: 1rem;">Status</th>
+                                <th style="width: 15%; padding: 1rem;">Payment</th>
+                                <th style="width: 15%; padding: 1rem; border-top-right-radius: 0.5rem;" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="order-data">
+                            <% if (orders && orders.length > 0) { %>
+                                <% orders.forEach((order, index) => { %>
+                                    <tr data-order-id="<%= order._id %>" style="transition: background-color 0.3s ease;">
+                                        <td style="padding: 1rem;">#<%= order.orderNumber %></td>
+                                        <td style="padding: 1rem;" class="text-capitalize">
+                                            <% if (order.user && order.user.name) { %>
+                                                <%= order.user.name %>
+                                            <% } else { %>
+                                                Unknown User
+                                            <% } %>
+                                        </td>
+                                        <td style="padding: 1rem;"><%= new Date(order.createdAt).toLocaleDateString() %></td>
+                                        <td style="padding: 1rem;">₹<%= order.totalAmount.toFixed(2) %></td>
+                                        <td style="padding: 1rem;">
+                                            <div class="form-check form-switch">
+                                                <select 
+                                                    class="form-select form-select-sm status-select" 
+                                                    onchange="updateOrderStatus('<%= order._id %>', this.value)"
+                                                    style="width: fit-content; background-color: <%= 
+                                                        order.orderStatus === 'delivered' ? '#10b981' :
+                                                        order.orderStatus === 'processing' ? '#f59e0b' :
+                                                        order.orderStatus === 'shipped' ? '#3b82f6' :
+                                                        order.orderStatus === 'cancelled' ? '#ef4444' : '#6b7280'
+                                                    %>; color: white; border: none;"
+                                                >
+                                                    <option value="pending" <%= order.orderStatus === 'pending' ? 'selected' : '' %>>Pending</option>
+                                                    <option value="confirmed" <%= order.orderStatus === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
+                                                    <option value="processing" <%= order.orderStatus === 'processing' ? 'selected' : '' %>>Processing</option>
+                                                    <option value="shipped" <%= order.orderStatus === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                                                    <option value="delivered" <%= order.orderStatus === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                                                    <option value="cancelled" <%= order.orderStatus === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                                                    <option value="returned" <%= order.orderStatus === 'returned' ? 'selected' : '' %>>Returned</option>
+                                                </select>
+                                            </div>
+                                        </td>
+                                        <td style="padding: 1rem;">
+                                            <span class="badge payment-status-badge <%= order.paymentStatus === 'completed' ? 'bg-success' : 'bg-warning' %>">
+                                                <%= order.paymentStatus %>
+                                            </span>
+                                        </td>
+                                        <td class="text-end" style="padding: 1rem;">
+                                            <div class="btn-group">
+                                                <a href="/admin/order/view/<%= order._id %>" 
+                                                   class="btn btn-sm btn-info me-2"
+                                                   style="background-color: #3b82f6; border: none;">
+                                                    <i class="bi bi-eye"></i> View
+                                                </a>
+                                                <button onclick="printInvoice('<%= order._id %>')"
+                                                        class="btn btn-sm btn-secondary"
+                                                        style="background-color: #6b7280; border: none;">
+                                                    <i class="bi bi-printer"></i> Invoice
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <div class="alert alert-info mb-0">
+                                            No orders found.
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <% if (!error && orders && orders.length > 0) { %>
+                    <nav aria-label="Page navigation" style="margin-top: 1.5rem;">
+                        <ul class="pagination justify-content-center mb-0">
+                            <% if (currentPage > 1) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=<%= currentPage - 1 %>&status=<%= status %>&date=<%= date %>"
+                                       style="color: #6d28d9; border: 1px solid #6d28d9;">Previous</a>
+                                </li>
+                            <% } %>
+                            
+                            <% for (let i = 1; i <= totalPages; i++) { %>
+                                <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                    <a class="page-link" href="?page=<%= i %>&status=<%= status %>&date=<%= date %>"
+                                       style="color: <%= i === currentPage ? 'white' : '#6d28d9' %>; 
+                                              background-color: <%= i === currentPage ? '#6d28d9' : 'transparent' %>; 
+                                              border: 1px solid #6d28d9;">
+                                        <%= i %>
+                                    </a>
+                                </li>
+                            <% } %>
+                            
+                            <% if (currentPage < totalPages) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=<%= currentPage + 1 %>&status=<%= status %>&date=<%= date %>"
+                                       style="color: #6d28d9; border: 1px solid #6d28d9;">Next</a>
+                                </li>
+                            <% } %>
+                        </ul>
+                    </nav>
+                <% } %>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <%- include('../partials/admin/adminFooter') %>
+
+    <script>
+    // Initialize Socket.IO
+    const socket = io();
+
+    // Listen for order updates
+    socket.on('orderStatusUpdate', function(data) {
+        const orderRow = document.querySelector(`tr[data-order-id="${data.orderId}"]`);
+        if (orderRow) {
+            // Update order status select
+            const statusSelect = orderRow.querySelector('.status-select');
+            if (statusSelect) {
+                statusSelect.value = data.status;
+                updateSelectStyle(statusSelect);
+            }
+
+            // Update payment status badge
+            if (data.paymentStatus) {
+                const paymentBadge = orderRow.querySelector('.payment-status-badge');
+                if (paymentBadge) {
+                    paymentBadge.textContent = data.paymentStatus;
+                    paymentBadge.className = `badge payment-status-badge ${data.paymentStatus === 'completed' ? 'bg-success' : 'bg-warning'}`;
+                }
+            }
+        }
+    });
+
+    document.getElementById('statusFilter').addEventListener('change', function() {
+        const status = this.value;
+        const date = document.getElementById('dateFilter').value;
+        window.location.href = `/admin/orders?status=${status}&date=${date}`;
+    });
+
+    document.getElementById('dateFilter').addEventListener('change', function() {
+        const status = document.getElementById('statusFilter').value;
+        const date = this.value;
+        window.location.href = `/admin/orders?status=${status}&date=${date}`;
+    });
+
+    function updateSelectStyle(select) {
+        const status = select.value;
+        const backgroundColor = 
+            status === 'delivered' ? '#10b981' :
+            status === 'processing' ? '#f59e0b' :
+            status === 'shipped' ? '#3b82f6' :
+            status === 'cancelled' ? '#ef4444' : '#6b7280';
+        
+        select.style.backgroundColor = backgroundColor;
+    }
+
+    async function updateOrderStatus(orderId, newStatus) {
+        try {
+            const response = await fetch(`/admin/order/${orderId}/update-status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                Swal.fire({
+                    title: 'Success!',
+                    text: result.message,
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+
+                // Update the select style after successful status change
+                const statusSelect = document.querySelector(`tr[data-order-id="${orderId}"] .status-select`);
+                if (statusSelect) {
+                    updateSelectStyle(statusSelect);
+                }
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            Swal.fire({
+                title: 'Error!',
+                text: error.message || 'Failed to update order status',
+                icon: 'error'
+            });
+        }
+    }
+
+    function printInvoice(orderId) {
+        window.open(`/admin/order/${orderId}/invoice`, '_blank');
+    }
+
+    // Update select styles on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.status-select').forEach(updateSelectStyle);
+    });
+    </script>
+</body>
+</html>

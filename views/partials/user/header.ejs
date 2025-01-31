@@ -10,54 +10,51 @@
     
 </head>
 <body>
-    <nav class="navbar fixed-top" style="height: 100px; background-color: #000; color: white;">
+    <nav class="navbar">
         <a class="navbar-brand" href="/">ANAMIT</a>
 
-      
-        <div class="nav-item d-flex align-items-center gap-4">
+        <div class="nav-item">
             <a class="nav-link" href="/mens">MEN</a>
             <a class="nav-link" href="/womens">WOMEN</a>
         </div>
 
-        <div class="d-flex align-items-center">
-            <input type="text" class="form-control search-bar" placeholder="Search">
+        <div class="search-container">
+            <input type="text" class="search-bar" id="searchInput" placeholder="Search for products...">
+            <button type="button" class="search-button">
+                <i class="bi bi-search"></i>
+            </button>
+            <div class="search-results" id="searchResults"></div>
         </div>
+        
         <div class="icons">
             <% if (locals.user) { %>
                 <!-- Profile Icon -->
-                <span class="icon bi bi-person-circle" title="Profile" onclick="toggleDropdown()" style="cursor: pointer; position: relative;"></span>
+                <span class="icon bi bi-person-circle" title="Profile" onclick="toggleDropdown()"></span>
         
                 <!-- Dropdown Menu -->
-                <div class="dropdown-menu" id="dropdown" style="
-                    position: absolute;
-                    display: none;
-                    top: 70px; /* Adjust this value to place it right below the icon */
-                    right: 0;
-                    z-index: 100;
-                    background: rgba(26, 26, 26, 0.95);
-                    border-radius: 8px;
-                    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-                    width: 200px; /* Optional: Adjust dropdown width */">
-                    <a href="#" class="username" style="display: block; padding: 10px 15px; color: #ff9900; font-weight: bold;">
-                        <%= user.authProvider === 'google' ? '' : '' %><%= user.name %>
+                <div class="dropdown-menu" id="dropdown">
+                    <a href="#" class="username">
+                        <%= user.name %>
                     </a>
-                    <a href="/userProfile" style="display: block; padding: 10px 15px; color: white; text-decoration: none;">Profile</a>
-                    <a href="/logout" style="display: block; padding: 10px 15px; color: white; text-decoration: none;">Logout</a>
+                    <a href="/userProfile">Profile</a>
+                    <a href="/logout">Logout</a>
                 </div>
         
                 <!-- Additional Icons -->
-                <span class="icon bi bi-heart" title="Wishlist"></span>
-                <a href="/cart"><span class="icon bi bi-cart-fill" title="Cart">
-                    <% if (locals.cartCount && cartCount > 0) { %>
-                        <span class="cart-count"><%= cartCount %></span>
-                    <% } %>
-                </span></a>
+                <a href="/wishlist">
+                    <span class="icon bi bi-heart-fill" title="Wishlist"></span>
+                  </a>
+                  
+                <a href="/cart">
+                    <span class="icon bi bi-cart-fill" title="Cart">
+                        <% if (locals.cartCount && cartCount > 0) { %>
+                            <span class="cart-count"><%= cartCount %></span>
+                        <% } %>
+                    </span>
+                </a>
             <% } else { %>
                 <a href="/login" class="auth-links">LOG IN</a>
                 <a href="/signup" class="auth-links">SIGN UP</a>
             <% } %>
         </div>
-        
-        
-        
     </nav>
