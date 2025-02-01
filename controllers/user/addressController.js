@@ -42,7 +42,7 @@ const addAddress = async (req, res) => {
 
         // For regular form submissions, redirect
         req.flash('success', 'Address added successfully');
-        res.redirect('/account/addresses');
+        res.redirect('/addresses');
 
     } catch (error) {
         console.error('Error adding address:', error);
@@ -57,7 +57,7 @@ const addAddress = async (req, res) => {
 
         // For regular form submissions
         req.flash('error', 'Failed to add address');
-        res.redirect('/account/addresses');
+        res.redirect('/addresses');
     }
   }
 

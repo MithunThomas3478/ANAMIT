@@ -305,6 +305,25 @@
             color: var(--text-secondary);
             margin-bottom: 1.5rem;
         }
+        .pagination .btn {
+    padding: 0.5rem 1rem;
+    min-width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .pagination .btn {
+        min-width: 35px;
+        padding: 0.4rem 0.8rem;
+    }
+}
 
         /* Responsive Design */
         @media (max-width: 1200px) {
@@ -582,8 +601,30 @@
                     <% } %>
                 </div>
             </div>
+            <% if (totalPages > 1) { %>
+                <div class="pagination" style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem;">
+                    <% if (currentPage > 1) { %>
+                        <a href="?page=<%= currentPage - 1 %>" class="btn btn-secondary">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                    <% } %>
+            
+                    <% for(let i = 1; i <= totalPages; i++) { %>
+                        <a href="?page=<%= i %>" 
+                           class="btn <%= i === currentPage ? 'btn-primary' : 'btn-secondary' %>">
+                            <%= i %>
+                        </a>
+                    <% } %>
+            
+                    <% if (currentPage < totalPages) { %>
+                        <a href="?page=<%= currentPage + 1 %>" class="btn btn-secondary">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    <% } %>
+                </div>
+            <% } %>
         </div>
-    
+       
         <%- include('../partials/user/footer')%>
     
         <script>

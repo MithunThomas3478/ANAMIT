@@ -41,7 +41,6 @@
             min-height: 600px;
         }
 
-        /* Sidebar Styles */
         .sidebar {
             background: white;
             border-radius: 12px;
@@ -114,7 +113,6 @@
             background: #ff7700;
         }
 
-        /* Wallet Content Styles */
         .wallet-container {
             background: white;
             padding: 3rem;
@@ -147,7 +145,6 @@
             font-weight: bold;
         }
 
-        /* Wallet Summary */
         .wallet-summary {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -234,7 +231,6 @@
             transform: translateY(-2px);
         }
 
-        /* Add Money Form Styles */
         .add-money-form {
             background: white;
             padding: 2rem;
@@ -274,7 +270,9 @@
             background: #f5f5f5;
             border-color: #ccc;
         }
-
+        .form-actions{
+            display: flex;
+        }
         .form-group input[type="number"] {
             width: 100%;
             padding: 0.75rem;
@@ -290,59 +288,6 @@
             display: block;
         }
 
-        .payment-methods {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin: 1rem 0;
-        }
-
-        .payment-method {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 1.25rem 1rem;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .payment-method:hover {
-            border-color: #0066cc;
-            background: #f8f9fa;
-        }
-
-        .payment-method input:checked + .method-icon {
-            color: #0066cc;
-        }
-
-        .payment-method input:checked ~ .method-name {
-            color: #0066cc;
-            font-weight: 500;
-        }
-
-        .method-icon {
-            font-size: 24px;
-            margin-bottom: 0.75rem;
-            color: #666;
-            transition: color 0.3s;
-        }
-
-        .method-name {
-            font-size: 14px;
-            color: #333;
-            transition: all 0.3s;
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        /* Transaction Filters */
         .transaction-filters {
             display: flex;
             gap: 1rem;
@@ -387,7 +332,6 @@
             pointer-events: none;
         }
 
-        /* Transaction List */
         .transactions-section {
             margin-top: 3rem;
         }
@@ -465,6 +409,45 @@
             color: #dc3545;
         }
 
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 2rem;
+            gap: 1rem;
+        }
+
+        .pagination-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .pagination-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .pagination-btn.active {
+            background: #ff8800;
+            color: white;
+            border-color: #ff8800;
+        }
+
+        .pagination-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            color: #666;
+            font-size: 14px;
+        }
+
         @media (max-width: 1200px) {
             .container {
                 width: 95%;
@@ -506,25 +489,15 @@
                 flex-wrap: wrap;
             }
             
-            .form-actions {
-                flex-direction: column;
+            .pagination {
+                flex-wrap: wrap;
             }
-        }
-
-        /* Custom Toast Styles */
-        .swal2-toast {
-            background: #ffffff !important;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.15) !important;
-        }
-
-        .swal2-toast .swal2-title {
-            font-size: 16px !important;
-            color: #333 !important;
         }
     </style>
 </head>
 <body>
     <%- include('../partials/user/header')%>
+
     <div class="container">
         <h1 class="page-title">MY ACCOUNT</h1>
         
@@ -532,41 +505,35 @@
             <!-- Sidebar -->
             <div class="sidebar">
                 <div class="profile-avatar">
-                    <% if (user.profileImage) { %>
-                        <img src="<%= user.profileImage %>" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
-                    <% } else { %>
-                        <i class="fas fa-user"></i>
-                    <% } %>
+                    <i class="fas fa-user"></i>
                 </div>
                 
-                <a href="/account" class="menu-item <%= activePage === 'overview' ? 'active' : '' %>">
+                <a href="/account" class="menu-item">
                     <i class="fas fa-user"></i>
                     Account Overview
                 </a>
-                <a href="/orders" class="menu-item <%= activePage === 'orders' ? 'active' : '' %>">
+                <a href="/orders" class="menu-item">
                     <i class="fas fa-box"></i>
                     My Orders
                 </a>
-                <a href="/address" class="menu-item <%= activePage === 'address' ? 'active' : '' %>">
+                <a href="/address" class="menu-item">
                     <i class="fas fa-map-marker-alt"></i>
                     Manage Address
                 </a>
-                <a href="/wallet" class="menu-item <%= activePage === 'wallet' ? 'active' : '' %>">
+                <a href="/wallet" class="menu-item active">
                     <i class="fas fa-wallet"></i>
                     Wallet
                 </a>
-                <a href="/password" class="menu-item <%= activePage === 'password' ? 'active' : '' %>">
+                <a href="/password" class="menu-item">
                     <i class="fas fa-lock"></i>
                     Manage Password
                 </a>
-                <a href="/wishlist" class="menu-item <%= activePage === 'wishlist' ? 'active' : '' %>">
+                <a href="/wishlist" class="menu-item">
                     <i class="fas fa-heart"></i>
                     Wishlist
                 </a>
                 
-                <form action="/logout" method="POST">
-                    <button type="submit" class="logout-btn">LOG OUT</button>
-                </form>
+                <button class="logout-btn">LOG OUT</button>
             </div>
 
             <!-- Wallet Content -->
@@ -578,7 +545,6 @@
                     <div class="balance-amount">₹<%= wallet.balance.toFixed(2) %></div>
                 </div>
 
-                <!-- Wallet Summary -->
                 <div class="wallet-summary">
                     <div class="summary-card">
                         <div class="summary-icon">
@@ -586,10 +552,7 @@
                         </div>
                         <div class="summary-info">
                             <div class="summary-label">Total Income</div>
-                            <div class="summary-value amount-credit">₹<%= wallet.transactions
-                                .filter(t => t.type === 'credit' || t.type === 'refund')
-                                .reduce((sum, t) => sum + t.amount, 0)
-                                .toFixed(2) %></div>
+                            <div class="summary-value amount-credit">₹<%= wallet.totalCredits.toFixed(2) %></div>
                         </div>
                     </div>
                     <div class="summary-card">
@@ -598,10 +561,7 @@
                         </div>
                         <div class="summary-info">
                             <div class="summary-label">Total Spent</div>
-                            <div class="summary-value amount-debit">₹<%= wallet.transactions
-                                .filter(t => t.type === 'debit')
-                                .reduce((sum, t) => sum + t.amount, 0)
-                                .toFixed(2) %></div>
+                            <div class="summary-value amount-debit">₹<%= wallet.totalDebits.toFixed(2) %></div>
                         </div>
                     </div>
                     <div class="summary-card">
@@ -622,7 +582,6 @@
                     </button>
                 </div>
 
-                <!-- Add Money Form -->
                 <form id="addMoneyForm" class="add-money-form" action="/wallet/add-money" method="POST" style="display: none;">
                     <div class="form-group">
                         <label for="amount">Amount (₹)</label>
@@ -635,27 +594,6 @@
                         <small class="amount-hint">Minimum amount: ₹100</small>
                     </div>
 
-                    <div class="form-group">
-                        <label>Payment Method</label>
-                        <div class="payment-methods">
-                            <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="upi" checked>
-                                <span class="method-icon"><i class="fas fa-mobile-alt"></i></span>
-                                <span class="method-name">UPI</span>
-                            </label>
-                            <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="card">
-                                <span class="method-icon"><i class="fas fa-credit-card"></i></span>
-                                <span class="method-name">Card</span>
-                            </label>
-                            <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="netbanking">
-                                <span class="method-icon"><i class="fas fa-university"></i></span>
-                                <span class="method-name">Netbanking</span>
-                            </label>
-                        </div>
-                    </div>
-
                     <div class="form-actions">
                         <button type="button" class="action-btn btn-withdraw" onclick="hideAddMoneyForm()">Cancel</button>
                         <button type="submit" class="action-btn btn-add-money">Proceed to Pay</button>
@@ -665,7 +603,6 @@
                 <div class="transactions-section">
                     <h3 class="section-title">Recent Transactions</h3>
                     
-                    <!-- Transaction Filters -->
                     <div class="transaction-filters">
                         <div class="filter-group">
                             <label for="transactionType">Type</label>
@@ -673,7 +610,6 @@
                                 <option value="all">All</option>
                                 <option value="credit">Credit</option>
                                 <option value="debit">Debit</option>
-                                <option value="refund">Refund</option>
                             </select>
                         </div>
 
@@ -696,18 +632,13 @@
                         </div>
                     </div>
 
-                    <!-- Transaction List -->
                     <div class="transaction-list">
                         <% if (wallet.transactions && wallet.transactions.length > 0) { %>
-                            <% wallet.transactions.slice(0, 10).forEach(transaction => { %>
-                                <div class="transaction-item">
+                            <% wallet.transactions.sort((a, b) => b.createdAt - a.createdAt).slice(startIndex, endIndex).forEach(function(transaction) { %>
+                                <div class="transaction-item" data-type="<%= transaction.type %>" data-date="<%= transaction.createdAt %>">
                                     <div class="transaction-info">
                                         <div class="transaction-icon">
-                                            <% if (transaction.type === 'credit' || transaction.type === 'refund') { %>
-                                                <i class="fas fa-arrow-down"></i>
-                                            <% } else if (transaction.type === 'debit') { %>
-                                                <i class="fas fa-shopping-bag"></i>
-                                            <% } %>
+                                            <i class="fas fa-<%= transaction.type === 'credit' ? 'arrow-down' : 'arrow-up' %>"></i>
                                         </div>
                                         <div class="transaction-details">
                                             <div class="transaction-title"><%= transaction.description %></div>
@@ -720,11 +651,39 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="transaction-amount <%= transaction.type === 'credit' || transaction.type === 'refund' ? 'amount-credit' : 'amount-debit' %>">
-                                        <%= transaction.type === 'credit' || transaction.type === 'refund' ? '+' : '-' %>₹<%= transaction.amount.toFixed(2) %>
+                                    <div class="transaction-amount amount-<%= transaction.type %>">
+                                        <%= transaction.type === 'credit' ? '+' : '-' %>₹<%= transaction.amount.toFixed(2) %>
                                     </div>
                                 </div>
                             <% }); %>
+
+                            <!-- Pagination -->
+                            <% if (totalPages > 1) { %>
+                                <div class="pagination">
+                                    <% if (currentPage > 1) { %>
+                                        <a href="?page=<%= currentPage - 1 %>" class="pagination-btn">
+                                            <i class="fas fa-chevron-left"></i> Previous
+                                        </a>
+                                    <% } %>
+
+                                    <% for(let i = 1; i <= totalPages; i++) { %>
+                                        <a href="?page=<%= i %>" 
+                                           class="pagination-btn <%= i === currentPage ? 'active' : '' %>">
+                                            <%= i %>
+                                        </a>
+                                    <% } %>
+
+                                    <% if (currentPage < totalPages) { %>
+                                        <a href="?page=<%= currentPage + 1 %>" class="pagination-btn">
+                                            Next <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    <% } %>
+
+                                    <span class="pagination-info">
+                                        Page <%= currentPage %> of <%= totalPages %>
+                                    </span>
+                                </div>
+                            <% } %>
                         <% } else { %>
                             <div class="no-transactions">
                                 No transactions yet
@@ -735,10 +694,9 @@
             </div>
         </div>
     </div>
-
+    
     <%- include('../partials/user/footer')%>
 
-    <!-- Add SweetAlert2 JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.7.32/sweetalert2.min.js"></script>
     
     <script>
@@ -790,213 +748,106 @@
             document.getElementById('amount').value = value;
         }
 
-        function validateForm() {
-    const amountInput = document.getElementById('amount');
-    const amount = parseFloat(amountInput.value);
-
-    if (!amount || isNaN(amount)) {
-        showToast('error', 'Please enter a valid amount');
-        amountInput.focus();
-        return false;
-    }
-
-    if (amount < 100) {
-        showToast('error', 'Minimum amount should be ₹100');
-        amountInput.focus();
-        return false;
-    }
-
-    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
-    if (!paymentMethod) {
-        showToast('error', 'Please select a payment method');
-        return false;
-    }
-
-    return true;
-}
-
         function filterTransactions() {
             const type = document.getElementById('transactionType').value;
             const dateRange = document.getElementById('dateRange').value;
             const search = document.getElementById('searchTransaction').value.toLowerCase();
+            const items = document.querySelectorAll('.transaction-item');
 
-            document.querySelectorAll('.transaction-item').forEach(item => {
-                const transactionType = item.querySelector('.transaction-amount').classList.contains('amount-credit') ? 'credit' : 'debit';
-                const description = item.querySelector('.transaction-title').textContent.toLowerCase();
-                const date = new Date(item.querySelector('.transaction-date').textContent);
+            items.forEach(item => {
+                let showItem = true;
 
-                let showByType = type === 'all' || transactionType === type;
-                let showByDate = dateRange === 'all';
-                
-                if (dateRange === 'today') {
-                    showByDate = isToday(date);
-                } else if (dateRange === 'week') {
-                    showByDate = isThisWeek(date);
-                } else if (dateRange === 'month') {
-                    showByDate = isThisMonth(date);
-                } else if (dateRange === 'year') {
-                    showByDate = isThisYear(date);
+                if (type !== 'all') {
+                    const itemType = item.querySelector('.transaction-amount').classList.contains('amount-credit') ? 'credit' : 'debit';
+                    showItem = itemType === type;
                 }
 
-                const showBySearch = search === '' || description.includes(search);
+                if (showItem && dateRange !== 'all') {
+                    const itemDate = new Date(item.getAttribute('data-date'));
+                    const now = new Date();
 
-                item.style.display = showByType && showByDate && showBySearch ? 'flex' : 'none';
+                    switch(dateRange) {
+                        case 'today':
+                            showItem = itemDate.toDateString() === now.toDateString();
+                            break;
+                        case 'week':
+                            const weekAgo = new Date(now.setDate(now.getDate() - 7));
+                            showItem = itemDate >= weekAgo;
+                            break;
+                        case 'month':
+                            showItem = itemDate.getMonth() === now.getMonth() && 
+                                     itemDate.getFullYear() === now.getFullYear();
+                            break;
+                        case 'year':
+                            showItem = itemDate.getFullYear() === now.getFullYear();
+                            break;
+                    }
+                }
+
+                if (showItem && search) {
+                    const title = item.querySelector('.transaction-title').textContent.toLowerCase();
+                    showItem = title.includes(search);
+                }
+
+                item.style.display = showItem ? 'flex' : 'none';
             });
         }
 
-        function addTransactionToList(transaction) {
-    const transactionList = document.querySelector('.transaction-list');
-    if (!transactionList) return;
-
-    const transactionItem = document.createElement('div');
-    transactionItem.className = 'transaction-item';
-    transactionItem.style.opacity = '0';
-    transactionItem.style.transform = 'translateY(-20px)';
-
-    transactionItem.innerHTML = `
-        <div class="transaction-info">
-            <div class="transaction-icon">
-                <i class="fas fa-arrow-down"></i>
-            </div>
-            <div class="transaction-details">
-                <div class="transaction-title">${transaction.description}</div>
-                <div class="transaction-date">
-                    ${new Date(transaction.createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                    })}
-                </div>
-            </div>
-        </div>
-        <div class="transaction-amount amount-credit">
-            +₹${parseFloat(transaction.amount).toFixed(2)}
-        </div>
-    `;
-
-    // Insert at the beginning of the list
-    if (transactionList.firstChild) {
-        transactionList.insertBefore(transactionItem, transactionList.firstChild);
-    } else {
-        transactionList.appendChild(transactionItem);
-    }
-
-    // Animate the new transaction
-    setTimeout(() => {
-        transactionItem.style.transition = 'all 0.3s ease-out';
-        transactionItem.style.opacity = '1';
-        transactionItem.style.transform = 'translateY(0)';
-    }, 50);
-}
-
-function updateSummaryCards(transaction) {
-    if (transaction.type === 'credit') {
-        const incomeElement = document.querySelector('.amount-credit');
-        if (incomeElement) {
-            const currentIncome = parseFloat(incomeElement.textContent.replace(/[^0-9.-]+/g, ""));
-            const newIncome = currentIncome + transaction.amount;
-            incomeElement.textContent = `₹${newIncome.toFixed(2)}`;
-        }
-
-        const transactionCountElement = document.querySelector('.summary-value:not(.amount-credit):not(.amount-debit)');
-        if (transactionCountElement) {
-            const currentCount = parseInt(transactionCountElement.textContent);
-            transactionCountElement.textContent = (currentCount + 1).toString();
-        }
-    }
-}
-        function isToday(date) {
-            const today = new Date();
-            return date.toDateString() === today.toDateString();
-        }
-
-        function isThisWeek(date) {
-            const today = new Date();
-            const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
-            const weekEnd = new Date(today.setDate(today.getDate() + 6));
-            return date >= weekStart && date <= weekEnd;
-        }
-
-        function isThisMonth(date) {
-            const today = new Date();
-            return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
-        }
-
-        function isThisYear(date) {
-            const today = new Date();
-            return date.getFullYear() === today.getFullYear();
-        }
-
-        // Handle form submission
         document.getElementById('addMoneyForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
+            e.preventDefault();
+            
+            const amount = document.getElementById('amount').value;
+            if (!amount || amount < 100) {
+                showToast('error', 'Minimum amount should be ₹100');
+                return;
+            }
 
-    const submitButton = this.querySelector('button[type="submit"]');
-    const originalText = submitButton.innerHTML;
-    submitButton.disabled = true;
-    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
-    // Get selected payment method
-    const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-    const amount = document.getElementById('amount').value;
+            try {
+                const response = await fetch('/wallet/add-money', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ amount })
+                });
 
-    try {
-        const response = await fetch('/wallet/add-money', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                amount: amount,
-                paymentMethod: selectedPaymentMethod
-            })
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('success', 'Money added successfully');
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showToast('error', result.message || 'Failed to add money');
+                }
+            } catch (error) {
+                console.error('Add money error:', error);
+                showToast('error', 'An unexpected error occurred');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+            }
         });
 
-        const data = await response.json();
-        
-        if (data.success) {
-            showToast('success', data.message || 'Money added successfully');
-            
-            // Hide add money form
-            hideAddMoneyForm();
-            
-            // Update balance
-            const balanceElement = document.querySelector('.balance-amount');
-            if (balanceElement) {
-                balanceElement.textContent = `₹${parseFloat(data.newBalance).toFixed(2)}`;
-            }
-
-            // Add new transaction to list
-            if (data.transaction) {
-                addTransactionToList(data.transaction);
-            }
-
-            // Update summary cards
-            updateSummaryCards(data.transaction);
-
-        } else {
-            // Handle error
-            showToast('error', data.error || 'Failed to add money');
-        }
-    } catch (error) {
-        console.error('Add money error:', error);
-        showToast('error', 'An unexpected error occurred');
-    } finally {
-        submitButton.disabled = false;
-        submitButton.innerHTML = originalText;
-    }
-});
-
-        // Handle messages
-        <% if (locals.error) { %>
-            showToast('error', '<%= error %>');
-        <% } %>
-
-        <% if (locals.success) { %>
-            showToast('success', '<%= success %>');
-        <% } %>
+        document.querySelector('.logout-btn').addEventListener('click', function() {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You will be logged out of your account",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ff8800',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, logout!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/logout';
+                }
+            });
+        });
     </script>
 </body>
 </html>

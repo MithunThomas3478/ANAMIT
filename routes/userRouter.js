@@ -65,6 +65,7 @@ router.post('/placeOrder',checkoutController.placeOrder);
 router.post('/create-razorpay-order', checkoutController.createRazorpayOrder);
 router.post('/verify-razorpay-payment', checkoutController.verifyRazorpayPayment);
 router.get('/orderSuccess/:orderId',checkoutController.orderSuccess);
+router.post('/checkout/address',checkoutController.addCheckoutAddress);
 
 router.get('/orders',orderController.getUserOrders);
 router.get('/orders/:orderId', orderController.getOrderDetails);
@@ -83,7 +84,9 @@ router.get('/passwordMangement',passwordController.loadPasswordManager);
 router.post('/changePassword',passwordController.changePassword);
 
 router.get('/wallet',walletController.getWalletPage);
-router.post('/wallet/add-money',walletController.addMoney);
+
+
+
 
 
 module.exports = router;
