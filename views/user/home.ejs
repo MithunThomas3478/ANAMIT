@@ -383,12 +383,45 @@
 }
 
 .product-price {
-    margin-top: auto;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .price-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .original-price {
+            text-decoration: line-through;
+            color: #999;
+            font-size: 1rem;
+        }
+
+        .discounted-price {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #ff4d4d;
+        }
+
+        .offer-badge {
+            background: #ff4d4d;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .single-price {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+        }
 
 .price-amount {
     font-size: 1.25rem;
@@ -589,7 +622,7 @@
 
 
    <!-- Featured Products -->
-<section class="featured-products">
+   <section class="featured-products">
     <h2 class="section-title">Featured Products</h2>
     <div class="product-grid">
         <% products.forEach(product => { %>
@@ -605,15 +638,30 @@
                     <div class="product-info">
                         <h3 class="product-title"><%= product.productName %></h3>
                         <div class="product-price">
-                            <span class="price-amount">
-                                <% if(product.minPrice !== product.maxPrice) { %>
-                                    ₹<%= product.minPrice.toFixed(2) %> - ₹<%= product.maxPrice.toFixed(2) %>
-                                <% } else { %>
-                                    ₹<%= product.minPrice.toFixed(2) %>
-                                <% } %>
-                            </span>
                             <% if(product.productOffer > 0) { %>
-                                <span class="offer-badge"><%= product.productOffer %>% OFF</span>
+                                <div class="price-row">
+                                    <% if(product.minPrice !== product.maxPrice) { %>
+                                        <span class="original-price">₹<%= product.minPrice.toFixed(2) %> - ₹<%= product.maxPrice.toFixed(2) %></span>
+                                        <% const minDiscounted = product.minPrice * (1 - product.productOffer/100) %>
+                                        <% const maxDiscounted = product.maxPrice * (1 - product.productOffer/100) %>
+                                        <span class="discounted-price">₹<%= minDiscounted.toFixed(2) %> - ₹<%= maxDiscounted.toFixed(2) %></span>
+                                    <% } else { %>
+                                        <span class="original-price">₹<%= product.minPrice.toFixed(2) %></span>
+                                        <% const discounted = product.minPrice * (1 - product.productOffer/100) %>
+                                        <span class="discounted-price">₹<%= discounted.toFixed(2) %></span>
+                                    <% } %>
+                                </div>
+                                <div class="price-row">
+                                    <span class="offer-badge"><%= product.productOffer %>% OFF</span>
+                                </div>
+                            <% } else { %>
+                                <div class="price-row">
+                                    <% if(product.minPrice !== product.maxPrice) { %>
+                                        <span class="single-price">₹<%= product.minPrice.toFixed(2) %> - ₹<%= product.maxPrice.toFixed(2) %></span>
+                                    <% } else { %>
+                                        <span class="single-price">₹<%= product.minPrice.toFixed(2) %></span>
+                                    <% } %>
+                                </div>
                             <% } %>
                         </div>
                         <% 

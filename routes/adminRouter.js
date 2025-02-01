@@ -4,6 +4,7 @@ const customerController = require("../controllers/admin/customersController");
 const categoryController = require('../controllers/admin/categoryController');
 const productController = require('../controllers/admin/productController');
 const orderController = require('../controllers/admin/orderController');
+const offerController = require('../controllers/admin/offerController');
 const multer = require('multer')
 const upload = multer();
 const { v4: uuidv4 } = require('uuid');
@@ -82,4 +83,15 @@ router.post('/editProduct/:id',newUploads,productController.editProduct);
 router.get('/orders',orderController.getOrderManagement);
 router.patch('/order/:orderId/update-status', orderController.updateOrderStatus);
 router.get('/order/:orderId/invoice', orderController.generateInvoice);
+
+router.get('/offers',offerController.getOfferManagement);
+router.get('/offers/add', offerController.getAddOffer);
+router.get('/offers/:id', offerController.getOfferById);
+router.post('/offers/add', offerController.addOffer);
+router.get('/offers/edit/:id', offerController.getEditOffer);
+router.post('/offers/edit/:id', offerController.updateOffer);
+router.patch('/offers/:id/toggle-status', offerController.toggleOfferStatus);
+
+
+
 module.exports = router;    

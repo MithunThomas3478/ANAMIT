@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Offer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .main-content {
+            padding: 2rem;
+        }
+
+        .form-card {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 0.25rem rgba(139, 92, 246, 0.25);
+        }
+
+        .submit-btn {
+            background-color: #6d28d9;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background-color: #5b21b6;
+        }
+
+        .cancel-btn {
+            background-color: #9ca3af;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        .cancel-btn:hover {
+            background-color: #6b7280;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            color: #4f46e5;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #4f46e5;
+        }
+
+        /* Custom validation styles */
+        .form-control.is-invalid, .form-select.is-invalid {
+            border-color: #dc2626;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc2626'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc2626' stroke='none'/%3e%3c/svg%3e");
+        }
+
+        .invalid-feedback {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/admin/adminHeader') %>
+    <main class="main-content">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h1 class="mb-0">Add New Offer</h1>
+                        <button onclick="window.history.back()" class="cancel-btn">
+                            Back to Offers
+                        </button>
+                    </div>
+    
+                    <% if (errorMessage && errorMessage.length > 0) { %>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <%= errorMessage %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    <% } %>
+    
+                    <% if (successMessage && successMessage.length > 0) { %>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <%= successMessage %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    <% } %>
+    
+                    <form id="addOfferForm" class="form-card" action="/admin/offers/add" method="POST">
+                        <!-- Basic Information Section -->
+                        <div class="form-section">
+                            <h2 class="section-title">Basic Information</h2>
+                            
+                            <div class="mb-3">
+                                <label for="offerName" class="form-label">Offer Name</label>
+                                <input type="text" class="form-control" id="offerName" name="name" required
+                                    placeholder="Enter offer name" value="<%= offer.name %>">
+                                <div class="invalid-feedback">
+                                    Please provide an offer name.
+                                </div>
+                            </div>
+    
+                            <div class="mb-3">
+                                <label for="offerType" class="form-label">Offer Type</label>
+                                <select class="form-select" id="offerType" name="offerType" required>
+                                    <option value="">Select offer type</option>
+                                    <option value="category" <%= offer.offerType === 'category' ? 'selected' : '' %>>Category Offer</option>
+                                    <option value="product" <%= offer.offerType === 'product' ? 'selected' : '' %>>Product Offer</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select an offer type.
+                                </div>
+                            </div>
+    
+                            <div class="mb-3" id="categorySelect" style="display: <%= offer.offerType === 'category' ? 'block' : 'none' %>;">
+                                <label for="category" class="form-label">Select Category</label>
+                                <select class="form-select" id="category" name="category">
+                                    <option value="">Select category</option>
+                                    <% categories.forEach(function(category) { %>
+                                        <option value="<%= category._id %>" <%= offer.category === category._id.toString() ? 'selected' : '' %>>
+                                            <%= category.name %>
+                                        </option>
+                                    <% }); %>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a category.
+                                </div>
+                            </div>
+    
+                            <div class="mb-3" id="productSelect" style="display: <%= offer.offerType === 'product' ? 'block' : 'none' %>;">
+                                <label for="product" class="form-label">Select Product</label>
+                                <select class="form-select" id="product" name="product">
+                                    <option value="">Select product</option>
+                                    <% products.forEach(function(product) { %>
+                                        <option value="<%= product._id %>" <%= offer.product === product._id.toString() ? 'selected' : '' %>>
+                                            <%= product.productName %>
+                                        </option>
+                                    <% }); %>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a product.
+                                </div>
+                            </div>
+                        </div>
+    
+                        <!-- Discount Details Section -->
+                        <div class="form-section">
+                            <h2 class="section-title">Discount Details</h2>
+                            
+                            <div class="mb-3">
+                                <label for="discountPercentage" class="form-label">Discount Percentage</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="discountPercentage" 
+                                        name="discountPercentage" min="0" max="100" required
+                                        placeholder="Enter discount percentage" value="<%= offer.discountPercentage %>">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="invalid-feedback">
+                                    Please enter a valid discount percentage (0-100).
+                                </div>
+                            </div>
+    
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="startDate" class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" id="startDate" name="startDate" required
+                                        value="<%= offer.startDate ? (typeof offer.startDate === 'string' ? offer.startDate : offer.startDate.toISOString().split('T')[0]) : '' %>">
+                                    <div class="invalid-feedback">
+                                        Please select a start date.
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="endDate" class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="endDate" name="endDate" required
+                                        value="<%= offer.endDate ? (typeof offer.endDate === 'string' ? offer.endDate : offer.endDate.toISOString().split('T')[0]) : '' %>">
+                                    <div class="invalid-feedback">
+                                        Please select an end date after the start date.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <div class="d-flex justify-content-end gap-3">
+                            <button type="button" class="cancel-btn" onclick="window.history.back()">Cancel</button>
+                            <button type="submit" class="submit-btn">Create Offer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <%- include('../partials/admin/adminFooter') %>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+       document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('addOfferForm');
+    const offerType = document.getElementById('offerType');
+    const categorySelect = document.getElementById('categorySelect');
+    const productSelect = document.getElementById('productSelect');
+    const startDate = document.getElementById('startDate');
+    const endDate = document.getElementById('endDate');
+
+    // Set minimum dates for date inputs
+    const today = new Date().toISOString().split('T')[0];
+    startDate.min = today;
+    endDate.min = today;
+
+    // Handle offer type change
+    offerType.addEventListener('change', function() {
+        categorySelect.style.display = 'none';
+        productSelect.style.display = 'none';
+        
+        if (this.value === 'category') {
+            categorySelect.style.display = 'block';
+            document.getElementById('category').required = true;
+            document.getElementById('product').required = false;
+        } else if (this.value === 'product') {
+            productSelect.style.display = 'block';
+            document.getElementById('product').required = true;
+            document.getElementById('category').required = false;
+        }
+    });
+        const discountPercentage = document.getElementById('discountPercentage');
+        discountPercentage.addEventListener('input', function() {
+            if (this.value < 0) this.value = 0;
+            if (this.value > 100) this.value = 100;
+        });
+            // Validate end date is after start date
+            startDate.addEventListener('change', function() {
+                endDate.min = this.value;
+                if (endDate.value && endDate.value < this.value) {
+                    endDate.value = this.value;
+                }
+            });
+
+            // Form submission
+            form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    if (!form.checkValidity()) {
+        e.stopPropagation();
+        form.classList.add('was-validated');
+        return;
+    }
+
+    try {
+        const formData = new FormData(form);
+        const data = {};
+        
+        // Only include non-empty values
+        for (let [key, value] of formData.entries()) {
+            if (value !== '') {
+                data[key] = value;
+            }
+        }
+
+        // Validate offer type specific fields
+        const offerType = data.offerType;
+        if (offerType === 'category' && !data.category) {
+            throw new Error('Please select a category');
+        }
+        if (offerType === 'product' && !data.product) {
+            throw new Error('Please select a product');
+        }
+
+        const response = await fetch('/admin/offers/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to create offer');
+        }
+
+        // Show success message
+        Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: result.message,
+            showConfirmButton: true
+        }).then(() => {
+            // Reset form
+            form.reset();
+            form.classList.remove('was-validated');
+            
+            // Reset select elements to default
+            document.getElementById('offerType').value = '';
+            document.getElementById('category').value = '';
+            document.getElementById('product').value = '';
+            
+            // Hide category and product selects
+            document.getElementById('categorySelect').style.display = 'none';
+            document.getElementById('productSelect').style.display = 'none';
+        });
+
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: error.message
+        });
+    }
+});
+        });
+    </script>
+</body>
+</html>

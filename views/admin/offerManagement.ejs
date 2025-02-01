@@ -1,0 +1,264 @@
+]<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offer Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .main-content {
+            padding: 2rem;
+        }
+        .add-offer-btn:hover { 
+            background-color: #5b21b6 !important; 
+        }
+        .edit-btn:hover { 
+            background-color: #7c3aed !important; 
+        }
+        .form-check-input:checked {
+            background-color: #ef4444 !important;
+            border-color: #ef4444 !important;
+        }
+
+        .add-offer-btn:hover {
+            background-color: #5b21b6 !important;
+        }
+
+        .edit-btn:hover {
+            background-color: #7c3aed !important;
+        }
+
+        .form-check-input:checked {
+            background-color: #ef4444 !important;
+            border-color: #ef4444 !important;
+        }
+        
+        .form-check-input {
+            background-color: #10b981 !important;
+            border-color: #10b981 !important;
+        }
+        
+        .form-check-input:focus {
+            box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.25) !important;
+        }
+
+        .delete-btn:hover {
+            background-color: #dc2626 !important;
+        }
+
+        .table tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .page-link:focus {
+            box-shadow: 0 0 0 0.25rem rgba(109, 40, 217, 0.25);
+        }
+
+        .badge {
+            font-weight: 500;
+            padding: 0.35em 0.65em;
+        }
+
+        /* Custom SweetAlert Styles */
+        .swal2-popup {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .swal2-title {
+            color: #1F2937 !important;
+            font-size: 1.5rem !important;
+            font-weight: 600 !important;
+        }
+
+        .swal2-html-container {
+            color: #4B5563 !important;
+            font-size: 1rem !important;
+        }
+
+        .swal2-confirm {
+            background-color: #ef4444 !important;
+            padding: 0.75rem 1.5rem !important;
+        }
+
+        .swal2-cancel {
+            background-color: #6B7280 !important;
+            padding: 0.75rem 1.5rem !important;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/admin/adminHeader') %>
+
+    <main class="main-content">
+        <div class="container">
+            <h1 class="mb-4">Offer Management</h1>
+            
+            <div class="d-flex justify-content-end mb-4">
+                <a href="/admin/offers/add" class="add-offer-btn" style="background-color: #6d28d9; color: white; padding: 0.5rem 1rem; border: none; border-radius: 0.5rem; text-decoration: none;">
+                    ➕ ADD NEW OFFER
+                </a>
+            </div>
+
+            <div class="table-responsive bg-white rounded shadow">
+                <table class="table mb-0">
+                    <thead style="background-color: #4f46e5; color: white;">
+                        <tr>
+                            <th>Offer Name</th>
+                            <th>Type</th>
+                            <th>Applied To</th>
+                            <th>Discount</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% offers.forEach(offer => { %>
+                            <tr>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-medium"><%= offer.name %></span>
+                                        <small class="text-muted">ID: <%= offer._id %></small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge" style="background-color: #8b5cf6;">
+                                        <%= offer.offerType %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <%= offer.offerType === 'category' ? offer.category.name : offer.product.productName %>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">
+                                        <%= offer.discountPercentage %>% OFF
+                                    </span>
+                                </td>
+                                <td><%= new Date(offer.startDate).toLocaleDateString() %></td>
+                                <td><%= new Date(offer.endDate).toLocaleDateString() %></td>
+                                <td>
+                                    <span class="badge <%= offer.isActive ? 'bg-success' : 'bg-warning' %>">
+                                        <%= offer.isActive ? 'Active' : 'Inactive' %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <button class="edit-btn" 
+                                                onclick="editOffer('<%= offer._id %>')"
+                                                style="background-color: #8b5cf6; color: white; border: none; padding: 0.5rem; border-radius: 0.25rem;">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                                            </svg>
+                                        </button>
+                                        
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input status-toggle" 
+                                                   type="checkbox" 
+                                                   <%= offer.isActive ? 'checked' : '' %>
+                                                   data-offer-id="<%= offer._id %>"
+                                                   style="cursor: pointer;">
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+
+                <!-- Pagination -->
+                
+            </div>
+        </div>
+    </main>
+    <%- include('../partials/admin/adminFooter') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Status toggle handler
+            document.querySelectorAll('.status-toggle').forEach(toggle => {
+    toggle.addEventListener('change', async function() {
+        const offerId = this.dataset.offerId;
+        const isActive = this.checked;
+        
+        try {
+            const result = await Swal.fire({
+                title: `Confirm ${isActive ? 'Activate' : 'Deactivate'}?`,
+                text: `Are you sure you want to ${isActive ? 'activate' : 'deactivate'} this offer?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: isActive ? '#10b981' : '#f59e0b',
+                confirmButtonText: `Yes, ${isActive ? 'activate' : 'deactivate'} it!`
+            });
+
+            if (result.isConfirmed) {
+                // Update the API endpoint to match your controller route
+                const response = await fetch(`/admin/offers/${offerId}/toggle-status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ isActive })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to update status');
+                }
+
+                const data = await response.json();
+
+                Swal.fire({
+                    title: 'Success!',
+                    text: data.message,
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+
+                // Reload the page to reflect the changes
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                this.checked = !isActive;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            this.checked = !isActive;
+            Swal.fire({
+                icon: 'error',
+                title: 'Operation Failed',
+                text: error.message
+            });
+        }
+    });
+});
+        });
+
+
+        async function editOffer(offerId) {
+            try {
+                window.location.href = `/admin/offers/edit/${offerId}`;
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to load offer details'
+                });
+            }
+        }
+    </script>
+</body>
+</html>
