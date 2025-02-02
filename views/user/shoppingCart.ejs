@@ -431,42 +431,34 @@
 
                 <div class="cart-summary">
                     <h2 class="summary-header">Order Summary</h2>
-                    
-                    <div class="summary-row">
-                        <span>Subtotal</span>
-                        <span>₹<%= cart.totalAmount.toLocaleString('en-IN') %></span>
-                    </div>
-
-                    <% if (cart.totalDiscount > 0) { %>
+                    <div class="summary-section">
                         <div class="summary-row">
-                            <span>Discount</span>
-                            <span style="color: var(--success-color)">
-                                -₹<%= cart.totalDiscount.toLocaleString('en-IN') %>
-                            </span>
+                            <span>Subtotal</span>
+                            <span>₹<%= cart.totalAmount.toLocaleString('en-IN') %></span>
                         </div>
-                    <% } %>
-
-                    <div class="summary-row">
-                        <span>Shipping</span>
-                        <span>₹128</span>
+                        
+                        <% if (cart.totalDiscount > 0) { %>
+                            <div class="summary-row">
+                                <span class="discount-text">Total Discount</span>
+                                <span class="discount-text">-₹<%= cart.totalDiscount.toLocaleString('en-IN') %></span>
+                            </div>
+                        <% } %>
+                        
+                        <div class="summary-row">
+                            <span>Shipping</span>
+                            <span>₹128</span>
+                        </div>
                     </div>
-
-                    <div class="summary-divider"></div>
-
-                    <div class="summary-row summary-total">
+                    
+                    <div class="summary-row total">
                         <span>Total</span>
                         <span>₹<%= ((cart.totalAmount - cart.totalDiscount) + 128).toLocaleString('en-IN') %></span>
                     </div>
-
-                    <% if (cart.totalDiscount > 0) { %>
-                        <div style="font-size: 0.9rem; color: var(--success-color); text-align: center; margin-top: 0.5rem;">
-                            You saved ₹<%= cart.totalDiscount.toLocaleString('en-IN') %> on this order!
-                        </div>
-                    <% } %>
-
+                
                     <button class="checkout-btn" onclick="proceedToCheckout()">
-                        <i class="fas fa-lock"></i> Proceed to Checkout
+                        Proceed to Checkout
                     </button>
+                </div>
                 </div>
             </div>
         <% } else { %>

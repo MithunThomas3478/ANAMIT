@@ -144,13 +144,12 @@ const getProductDetails = async (req, res) => {
     }
 }; 
 
-
 const addToCart = async (req, res) => {
     try {
         const userId = req.user._id;
         const { productId, colorName, size, quantity } = req.body;
 
-        // Input validation with specific error messages
+        // Input validation
         const requiredFields = {
             productId: 'Product ID',
             colorName: 'Color',
@@ -167,23 +166,55 @@ const addToCart = async (req, res) => {
             }
         }
 
-        // Validate quantity is positive integer
-        if (!Number.isInteger(quantity) || quantity < 1) {
+        const parsedQuantity = parseInt(quantity);
+        if (!Number.isInteger(parsedQuantity) || parsedQuantity < 1) {
             return res.status(400).json({
                 success: false,
                 message: 'Quantity must be a positive integer'
             });
         }
 
+        // Fetch product and validate
+        const product = await Product.findById(productId)
+            .select('isListed variants productName category')
+            .populate('category', 'name')
+            .lean();
+
+        if (!product || !product.isListed) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found or unavailable'
+            });
+        }
+
+        // Validate color and size
+        const variant = product.variants.find(v => 
+            v.colorName.toLowerCase() === colorName.toLowerCase()
+        );
+
+        if (!variant) {
+            return res.status(404).json({
+                success: false,
+                message: `Color ${colorName} not found`
+            });
+        }
+
+        const sizeVariant = variant.colorVariant.find(cv => 
+            cv.size.toLowerCase() === size.toLowerCase()
+        );
+
+        if (!sizeVariant || sizeVariant.status !== 'available' || sizeVariant.stock < parsedQuantity) {
+            return res.status(400).json({
+                success: false,
+                message: `Size ${size} is unavailable or insufficient stock`
+            });
+        }
+
         // Get current date for offer validation
         const currentDate = new Date();
 
-        // Find product and active offers in parallel
-        const [product, cart, productOffer, categoryOffer] = await Promise.all([
-            Product.findById(productId)
-                .select('isListed variants productName category')
-                .populate('category', 'name')
-                .lean(),
+        // Fetch cart and offers
+        const [cart, productOffer, categoryOffer] = await Promise.all([
             Cart.findOne({ user: userId, active: true }),
             Offer.findOne({
                 offerType: 'product',
@@ -194,169 +225,76 @@ const addToCart = async (req, res) => {
             }).lean(),
             Offer.findOne({
                 offerType: 'category',
-                category: product?.category,
+                category: product.category,
                 isActive: true,
                 startDate: { $lte: currentDate },
                 endDate: { $gte: currentDate }
             }).lean()
         ]);
 
-        if (!product) {
-            return res.status(404).json({
-                success: false,
-                message: 'Product not found'
-            });
-        }
+        // Calculate best offer once
+        const productOfferPercentage = productOffer?.discountPercentage || 0;
+        const categoryOfferPercentage = categoryOffer?.discountPercentage || 0;
 
-        if (!product.isListed) {
-            return res.status(404).json({
-                success: false,
-                message: 'Product is currently unavailable'
-            });
-        }
+        // Initialize or get existing cart
+        let userCart = cart || new Cart({
+            user: userId,
+            items: [],
+            active: true
+        });
 
-        // Find color variant
-        const variant = product.variants.find(v => 
-            v.colorName.toLowerCase() === colorName.toLowerCase()
-        );
-
-        if (!variant) {
-            return res.status(404).json({
-                success: false,
-                message: `Color ${colorName} not found for this product`
-            });
-        }
-
-        // Find size variant
-        const sizeVariant = variant.colorVariant.find(cv => 
-            cv.size.toLowerCase() === size.toLowerCase()
-        );
-
-        if (!sizeVariant) {
-            return res.status(404).json({
-                success: false,
-                message: `Size ${size} not available in ${colorName}`
-            });
-        }
-
-        if (sizeVariant.status !== 'available') {
-            return res.status(400).json({
-                success: false,
-                message: `Size ${size} is currently ${sizeVariant.status}`
-            });
-        }
-
-        if (sizeVariant.stock < quantity) {
-            return res.status(400).json({
-                success: false,
-                message: `Only ${sizeVariant.stock} items available in size ${size}`
-            });
-        }
-
-        // Determine best offer
-        let bestOffer = null;
-        let offerType = null;
-
-        if (productOffer && categoryOffer) {
-            bestOffer = productOffer.discountPercentage > categoryOffer.discountPercentage ?
-                productOffer : categoryOffer;
-            offerType = productOffer.discountPercentage > categoryOffer.discountPercentage ?
-                'product' : 'category';
-        } else {
-            bestOffer = productOffer || categoryOffer;
-            offerType = productOffer ? 'product' : 'category';
-        }
-
-        // Calculate prices
-        const basePrice = sizeVariant.price;
-        const discountPercentage = bestOffer?.discountPercentage || 0;
-        const discountAmount = basePrice * (discountPercentage / 100);
-        const finalPrice = basePrice - discountAmount;
-
-        // Create cart if doesn't exist
-        if (!cart) {
-            cart = new Cart({
-                user: userId,
-                items: [],
-                active: true
-            });
-        }
-
-        // Check if item already exists in cart
-        const existingItemIndex = cart.items.findIndex(item => 
+        // Check if item already exists
+        const existingItemIndex = userCart.items.findIndex(item => 
             item.product.toString() === productId &&
             item.selectedColor.colorName.toLowerCase() === colorName.toLowerCase() &&
             item.selectedSize.toLowerCase() === size.toLowerCase()
         );
 
+        const basePrice = sizeVariant.price;
+
         if (existingItemIndex > -1) {
             // Update existing item
-            const newQuantity = cart.items[existingItemIndex].quantity + quantity;
+            const newQuantity = userCart.items[existingItemIndex].quantity + parsedQuantity;
             
             if (sizeVariant.stock < newQuantity) {
                 return res.status(400).json({
                     success: false,
-                    message: `Cannot add ${quantity} more items. Stock limit reached.`
+                    message: `Cannot add ${parsedQuantity} more items. Stock limit reached.`
                 });
             }
 
-            cart.items[existingItemIndex].quantity = newQuantity;
-            cart.items[existingItemIndex].price = finalPrice;
-            cart.items[existingItemIndex].originalPrice = basePrice;
-            cart.items[existingItemIndex].appliedOffer = bestOffer ? {
-                type: offerType,
-                name: bestOffer.name,
-                discountPercentage: discountPercentage,
-                offerId: bestOffer._id
-            } : null;
+            // Update quantity only, keep existing offers
+            userCart.items[existingItemIndex].quantity = newQuantity;
         } else {
-            // Add new item
-            cart.items.push({
+            // Add new item with offers
+            userCart.items.push({
                 product: productId,
                 selectedColor: {
                     colorName: variant.colorName,
                     colorValue: variant.colorValue
                 },
                 selectedSize: size,
-                quantity: quantity,
-                price: finalPrice,
-                originalPrice: basePrice,
-                appliedOffer: bestOffer ? {
-                    type: offerType,
-                    name: bestOffer.name,
-                    discountPercentage: discountPercentage,
-                    offerId: bestOffer._id
-                } : null
+                quantity: parsedQuantity,
+                price: basePrice,
+                appliedProductOffer: productOfferPercentage,
+                appliedCategoryOffer: categoryOfferPercentage
             });
         }
 
-        // Save cart
-        try {
-            await cart.save();
-        } catch (saveError) {
-            console.error('Cart save error:', saveError);
-            return res.status(500).json({
-                success: false,
-                message: 'Failed to save cart',
-                error: saveError.message
-            });
-        }
+        // Save cart and recalculate totals
+        await userCart.save();
 
-        // Calculate cart totals
-        const cartCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
-        const cartTotals = cart.items.reduce((totals, item) => ({
-            totalAmount: totals.totalAmount + (item.originalPrice * item.quantity),
-            totalDiscount: totals.totalDiscount + ((item.originalPrice - item.price) * item.quantity)
-        }), { totalAmount: 0, totalDiscount: 0 });
+        // Calculate response data
+        const cartCount = userCart.items.reduce((sum, item) => sum + item.quantity, 0);
 
         return res.status(200).json({
             success: true,
             message: 'Item added to cart successfully',
             cartCount,
             cart: {
-                totalAmount: cartTotals.totalAmount,
-                totalDiscount: cartTotals.totalDiscount,
-                finalAmount: cartTotals.totalAmount - cartTotals.totalDiscount
+                totalAmount: userCart.totalAmount,
+                totalDiscount: userCart.totalDiscount,
+                finalAmount: userCart.totalAmount - userCart.totalDiscount
             }
         });
 
@@ -364,8 +302,7 @@ const addToCart = async (req, res) => {
         console.error('Add to cart error:', error);
         return res.status(500).json({
             success: false,
-            message: 'Failed to add item to cart',
-            error: error.message
+            message: 'Failed to add item to cart'
         });
     }
 };
