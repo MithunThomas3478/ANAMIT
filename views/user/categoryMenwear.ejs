@@ -235,22 +235,50 @@
         }
 
         .price-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
 
-        .current-price {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: var(--primary-orange);
-        }
+    .original-price {
+        font-size: 1rem;
+        text-decoration: line-through;
+        color: #95a5a6;
+    }
 
-        .original-price {
-            font-size: 1rem;
-            text-decoration: line-through;
-            color: #95a5a6;
-        }
+    .current-price {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: var(--primary-orange);
+    }
+
+    .offer-badge {
+        padding: 2px 8px;
+        border-radius: 4px;
+        background-color: #e8f5e9;
+        font-size: 0.75rem;
+    }
+
+    /* Update product badges section */
+    .product-badges {
+        position: absolute;
+        top: 10px;
+        left: 10px; /* Changed from right to left */
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        z-index: 1;
+    }
+
+    .discount-badge {
+        background-color: var(--primary-orange) !important;
+        color: white;
+        padding: 5px 10px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border-radius: 4px;
+    }
 
         /* Pagination */
         .pagination {
@@ -596,13 +624,28 @@
                                                 <h3 class="product-title"><%= product.productName %></h3>
                                             </a>
                                             <div class="price-container">
-                                                <% const originalPrice = product.variants[0].colorVariant[0].price; %>
-                                                <% const discountedPrice = originalPrice * (1 - product.productOffer/100); %>
-                                                
-                                                <% if (product.productOffer > 0) { %>
+                                                <% 
+                                                    const originalPrice = product.variants[0].colorVariant[0].price;
+                                                    const finalPrice = product.finalPrice;
+                                                %>
+                                                <% if (product.hasOffer) { %>
                                                     <span class="original-price">₹<%= originalPrice.toFixed(2) %></span>
+                                                    <span class="current-price">₹<%= finalPrice.toFixed(2) %></span>
+                                                    <% if (product.discountPercentage > 0) { %>
+                                                        <span class="discount-badge">
+                                                            <%= product.discountPercentage %>% OFF
+                                                        </span>
+                                                    <% } %>
+                                                    <span class="offer-badge ms-2">
+                                                        <% if (product.appliedOfferType === 'category' && categoryOffer) { %>
+                                                            <small class="text-success">Category Offer</small>
+                                                        <% } else if (product.appliedOfferType === 'product') { %>
+                                                            <small class="text-success">Special Offer</small>
+                                                        <% } %>
+                                                    </span>
+                                                <% } else { %>
+                                                    <span class="current-price">₹<%= originalPrice.toFixed(2) %></span>
                                                 <% } %>
-                                                <span class="current-price">₹<%= discountedPrice.toFixed(2) %></span>
                                             </div>
                                         </div>
                                     </div>

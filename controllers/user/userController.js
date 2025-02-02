@@ -1,4 +1,6 @@
 const User = require("../../models/userSchema");
+const Offer = require("../../models/offerSchema");
+const wishlist = require("../../models/wishlistSchema");
 const nodemailer = require("nodemailer");
 const env = require("dotenv").config();
 const bcrypt = require("bcrypt");
@@ -15,6 +17,7 @@ const pageNotFound = async (req, res) => {
 
 const loadHomepage = async (req, res) => {
   try {
+      const currentDate = new Date();
       // Get user from session
       const user = req.session.user;
       let userData = null;
@@ -22,26 +25,62 @@ const loadHomepage = async (req, res) => {
           userData = await User.findOne({ _id: user }).lean();
       }
 
-      // Fetch categories for banners
-      const categories = await Category.find({ 
-          isListed: true 
-      })
-      .sort({ 
-          categoryOffer: -1 
-      })
-      .limit(2)
-      .lean();
+      // Fetch all active offers
+      const activeOffers = await Offer.find({
+          isActive: true,
+          startDate: { $lte: currentDate },
+          endDate: { $gte: currentDate }
+      }).lean();
 
-      // Fetch all available products with category info
-      const products = await Product.find({ 
-          isListed: true // Changed from isBlocked: false to match your schema
-      })
-      .populate("category")
-      .lean();
+      // Organize offers by type and ID
+      const offerMap = {
+          category: {},
+          product: {}
+      };
+      activeOffers.forEach(offer => {
+          if (offer.offerType === 'category') {
+              offerMap.category[offer.category.toString()] = offer;
+          } else {
+              offerMap.product[offer.product.toString()] = offer;
+          }
+      });
+
+      // Fetch categories for banners
+      const categories = await Category.find({ isListed: true })
+          .lean()
+          .then(cats => cats.map(cat => ({
+              ...cat,
+              offer: offerMap.category[cat._id.toString()]?.discountPercentage || 0
+          })));
+
+      // Fetch featured products with category info
+      const products = await Product.find({ isListed: true })
+          .populate("category")
+          .lean();
 
       // Process products to include offer prices
       const processedProducts = products.map(product => {
-          // Calculate min and max prices including offers
+          const productId = product._id.toString();
+          const categoryId = product.category?._id.toString();
+          
+          // Get applicable offers
+          const productOffer = offerMap.product[productId];
+          const categoryOffer = offerMap.category[categoryId];
+
+          // Determine best offer
+          let bestOffer = null;
+          let offerType = null;
+          if (productOffer && categoryOffer) {
+              bestOffer = productOffer.discountPercentage > categoryOffer.discountPercentage ? 
+                  productOffer : categoryOffer;
+              offerType = productOffer.discountPercentage > categoryOffer.discountPercentage ? 
+                  'product' : 'category';
+          } else {
+              bestOffer = productOffer || categoryOffer;
+              offerType = productOffer ? 'product' : 'category';
+          }
+
+          // Calculate price range with offers
           let minPrice = Infinity;
           let maxPrice = 0;
 
@@ -49,17 +88,9 @@ const loadHomepage = async (req, res) => {
               variant.colorVariant.forEach(cv => {
                   if (cv.status === 'available' && cv.stock > 0) {
                       let finalPrice = cv.price;
-                      
-                      // Apply product offer
-                      if (product.productOffer > 0) {
-                          finalPrice -= (finalPrice * product.productOffer / 100);
+                      if (bestOffer) {
+                          finalPrice *= (1 - bestOffer.discountPercentage/100);
                       }
-                      
-                      // Apply category offer if higher
-                      if (product.category?.categoryOffer > product.productOffer) {
-                          finalPrice -= (cv.price * product.category.categoryOffer / 100);
-                      }
-
                       minPrice = Math.min(minPrice, finalPrice);
                       maxPrice = Math.max(maxPrice, finalPrice);
                   }
@@ -68,31 +99,42 @@ const loadHomepage = async (req, res) => {
 
           return {
               ...product,
-              minPrice: Math.round(minPrice * 100) / 100,
-              maxPrice: Math.round(maxPrice * 100) / 100
+              minPrice: minPrice === Infinity ? 0 : Math.round(minPrice * 100) / 100,
+              maxPrice: maxPrice === 0 ? 0 : Math.round(maxPrice * 100) / 100,
+              originalMinPrice: product.variants[0]?.colorVariant[0]?.price || 0,
+              originalMaxPrice: product.variants[0]?.colorVariant[0]?.price || 0,
+              hasOffer: !!bestOffer,
+              offerType,
+              offerPercentage: bestOffer?.discountPercentage || 0,
+              offerName: bestOffer?.name || null
           };
       });
 
-      // Filter products by category (keeping your existing logic)
-      const menswear = processedProducts.filter(product => 
-          product.category?.name.toUpperCase().includes("MEN")
-      );
-      const womenswear = processedProducts.filter(product => 
-          product.category?.name.toUpperCase().includes("WOMEN")
-      );
+      // Sort products by offer percentage for featured section
+      const featuredProducts = processedProducts
+          .sort((a, b) => b.offerPercentage - a.offerPercentage)
+          .slice(0, 8); // Get top 8 products with best offers
 
-      // Render the home page with all required data
       res.render("home", {
           user: userData,
           categories,
-          products: processedProducts,
-          menswear,
-          womenswear,
-          pageTitle: 'Fashion Store - Home',
+          featuredProducts,
           offers: [
-              { title: 'Summer Collection 2025', desc: 'Discover the latest trends' },
-              { title: 'New Arrivals', desc: 'Shop the latest styles' },
-              { title: 'Special Offers', desc: 'Up to 50% off' }
+              { 
+                  title: 'Summer Collection 2025',
+                  desc: 'Discover the latest trends',
+                  image: '/images/product/banner1.jpg'
+              },
+              { 
+                  title: 'New Arrivals',
+                  desc: 'Shop the latest styles',
+                  image: '/images/product/banner men 2.jpg'
+              },
+              { 
+                  title: 'Special Offers',
+                  desc: 'Up to 50% off',
+                  image: '/images/product/banner 3.jpg'
+              }
           ]
       });
 

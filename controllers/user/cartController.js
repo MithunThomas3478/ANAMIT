@@ -1,43 +1,90 @@
 const Product = require('../../models/productSchema');
 const Category = require('../../models/categorySchema');
 const Cart = require('../../models/cartSchema');
+const Offer = require('../../models/offerSchema');
 
 const getCart = async (req, res) => {
     try {
-        // Find cart for current user and populate product details
+        const currentDate = new Date();
+        
+        // Find cart and populate product details
         const cart = await Cart.findOne({ 
             user: req.user._id, 
             active: true 
-        }).populate({
+        }).populate([{
             path: 'items.product',
-            select: 'productName variants'
-        });
+            select: 'productName variants category',
+            populate: {
+                path: 'category',
+                select: 'name'
+            }
+        }]);
 
         if (!cart) {
             return res.render('shoppingCart', {
                 cart: {
                     items: [],
-                    totalPrice: 0
+                    totalAmount: 0,
+                    totalDiscount: 0
                 }
             });
         }
 
-        // Format cart data for the template
+        // Get all active offers that might apply to cart items
+        const activeOffers = await Offer.find({
+            isActive: true,
+            startDate: { $lte: currentDate },
+            endDate: { $gte: currentDate }
+        }).lean();
+
+        // Format cart data and apply current offers
         const formattedCart = {
-            items: cart.items.map(item => ({
-                productId: item.product._id,
-                product: {
-                    productName: item.product.productName,
-                    variants: item.product.variants
-                },
-                colorName: item.selectedColor.colorName,
-                size: item.selectedSize,
-                quantity: item.quantity,
-                price: item.price,
-                total: item.price * item.quantity
+            items: await Promise.all(cart.items.map(async (item) => {
+                // Find applicable offers
+                const productOffer = activeOffers.find(
+                    offer => offer.offerType === 'product' && 
+                    offer.product?.toString() === item.product._id.toString()
+                );
+
+                const categoryOffer = activeOffers.find(
+                    offer => offer.offerType === 'category' && 
+                    offer.category?.toString() === item.product.category._id.toString()
+                );
+
+                // Calculate best discount
+                const productDiscount = productOffer?.discountPercentage || 0;
+                const categoryDiscount = categoryOffer?.discountPercentage || 0;
+
+                // Update item with current offer information
+                item.appliedProductOffer = productDiscount;
+                item.appliedCategoryOffer = categoryDiscount;
+
+                // Calculate final price with current offers
+                const discountPercentage = productDiscount + categoryDiscount;
+                const finalPrice = item.price * (1 - discountPercentage/100);
+
+                return {
+                    productId: item.product._id,
+                    product: {
+                        productName: item.product.productName,
+                        variants: item.product.variants,
+                        category: item.product.category.name
+                    },
+                    colorName: item.selectedColor.colorName,
+                    size: item.selectedSize,
+                    quantity: item.quantity,
+                    price: item.price,
+                    appliedProductOffer: productDiscount,
+                    appliedCategoryOffer: categoryDiscount,
+                    total: finalPrice * item.quantity
+                };
             })),
-            totalPrice: cart.totalAmount - cart.totalDiscount
+            totalAmount: cart.totalAmount,
+            totalDiscount: cart.totalDiscount
         };
+
+        // Save updated offers
+        await cart.save();
 
         res.render('shoppingCart', { cart: formattedCart });
 
@@ -47,7 +94,7 @@ const getCart = async (req, res) => {
             message: 'Failed to load cart. Please try again.' 
         });
     }
-}
+};
 
 
 const updateQuantity = async (req, res) => {

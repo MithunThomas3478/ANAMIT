@@ -74,22 +74,70 @@
             height: 3px;
             background: var(--primary-color);
         }
+        .price-details {
+            margin-bottom: 1.5rem;
+        }
+
+        .price-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
         .price-tag {
             font-size: 2.5rem;
             color: var(--primary-color);
-            font-weight: 600;
+            font-weight: 700;
         }
+
         .original-price {
             font-size: 1.5rem;
             text-decoration: line-through;
-            color: #a0a0a0;
+            color: #999;
         }
-        .discount {
+
+        .discount-badge {
             background: #28a745;
             color: white;
-            padding: 5px 10px;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .offer-info {
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .offer-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
             border-radius: 20px;
             font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .category-offer {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .product-offer {
+            background-color: #fbe9e7;
+            color: #d84315;
+        }
+
+        .offer-name {
+            color: #666;
+            font-size: 0.9rem;
+            font-style: italic;
         }
         .color-option {
             width: 35px;
@@ -164,19 +212,43 @@
             font-weight: 500;
             z-index: 1;
         }
-        .similar-product-card {
-            transition: transform 0.3s;
-            border-radius: 15px;
-            overflow: hidden;
-            height: 100%;
-        }
-        .similar-product-card:hover {
-            transform: translateY(-5px);
-        }
-        .similar-product-img {
-            height: 200px;
-            object-fit: cover;
-        }
+        .similar-product-card .price-section {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        margin-top: 0.5rem;
+    }
+
+    .similar-product-card .current-price {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+    .similar-product-card .original-price {
+        font-size: 1rem;
+        text-decoration: line-through;
+        color: #999;
+    }
+
+    .similar-product-card .product-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: var(--primary-color);
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        z-index: 1;
+    }
+
+    .similar-product-card .product-badge small {
+        display: block;
+        font-size: 0.75rem;
+        opacity: 0.9;
+    }
         .wishlist-btn {
             display: flex;
             align-items: center;
@@ -276,14 +348,41 @@
                 
                 <!-- Price Section -->
                 <div class="mb-4" id="priceSection">
-                    <% const basePrice = product.variants[0].colorVariant[0].price; %>
-                    <% const discountedPrice = product.productOffer ? basePrice * (1 - product.productOffer/100) : basePrice; %>
-                    <span class="price-tag" id="currentPrice">₹<%= discountedPrice.toFixed(2) %></span>
-                    <% if (product.productOffer > 0) { %>
-                        <span class="original-price" id="originalPrice">₹<%= basePrice %></span>
-                        <span class="discount">(<%= product.productOffer %>% OFF)</span>
-                    <% } %>
-                </div>
+                    <% 
+                        const variant = product.variants[0];
+                        const colorVariant = variant.colorVariant[0];
+                        const originalPrice = colorVariant.originalPrice;
+                        const finalPrice = product.hasOffer ? 
+                            colorVariant.discountedPrice : originalPrice;
+                    %>
+                    
+                    <div class="price-details">
+                        <% if (product.hasOffer) { %>
+                            <div class="price-wrapper">
+                                <span class="price-tag">₹<%= finalPrice.toFixed(2) %></span>
+                                <span class="original-price">₹<%= originalPrice.toFixed(2) %></span>
+                                <span class="discount-badge">
+                                    <%= product.offerPercentage %>% OFF
+                                </span>
+                            </div>
+                            <div class="offer-info">
+                                <% if (product.offerType === 'category') { %>
+                                    <span class="offer-badge category-offer">
+                                        <i class="fas fa-tag"></i> Category Offer
+                                    </span>
+                                <% } else { %>
+                                    <span class="offer-badge product-offer">
+                                        <i class="fas fa-fire"></i> Special Offer
+                                    </span>
+                                <% } %>
+                                <% if (product.offerName) { %>
+                                    <span class="offer-name"><%= product.offerName %></span>
+                                <% } %>
+                            </div>
+                        <% } else { %>
+                            <span class="price-tag">₹<%= originalPrice.toFixed(2) %></span>
+                        <% } %>
+                    </div>
 
                 <!-- Stock Status -->
                 <div class="stock-status in-stock" id="stockStatus">
@@ -367,24 +466,28 @@
                 <% similarProducts.forEach(similarProduct => { %>
                     <div class="col-md-3 mb-4">
                         <div class="card similar-product-card">
-                            <% if (similarProduct.productOffer > 0) { %>
-                                <span class="product-badge"><%= similarProduct.productOffer %>% OFF!</span>
+                            <% if (similarProduct.hasOffer) { %>
+                                <span class="product-badge">
+                                    <%= similarProduct.offerPercentage %>% OFF
+                                    <% if (similarProduct.offerType === 'category') { %>
+                                       
+                                    <% } %>
+                                </span>
                             <% } %>
                             <img src="<%= similarProduct.variants[0].productImage[0] %>" 
                                  class="card-img-top similar-product-img" 
                                  alt="<%= similarProduct.productName %>">
                             <div class="card-body">
                                 <h5 class="card-title"><%= similarProduct.productName %></h5>
-                                <div class="d-flex align-items-center gap-2">
-                                    <% const similarBasePrice = similarProduct.variants[0].colorVariant[0].price; %>
-                                    <% const similarDiscountedPrice = similarProduct.productOffer ? 
-                                        similarBasePrice * (1 - similarProduct.productOffer/100) : similarBasePrice; %>
-                                    <span class="price-tag h5 mb-0">₹<%= similarDiscountedPrice.toFixed(2) %></span>
-                                    <% if (similarProduct.productOffer > 0) { %>
-                                        <span class="original-price h6 mb-0">₹<%= similarBasePrice %></span>
+                                <div class="price-section">
+                                    <% if (similarProduct.hasOffer) { %>
+                                        <span class="current-price">₹<%= similarProduct.discountedPrice.toFixed(2) %></span>
+                                        <span class="original-price">₹<%= similarProduct.originalPrice.toFixed(2) %></span>
+                                    <% } else { %>
+                                        <span class="current-price">₹<%= similarProduct.originalPrice.toFixed(2) %></span>
                                     <% } %>
                                 </div>
-                                <a href="/productDetails/<%= similarProduct._id %>" class="btn btn-custom btn-warning mt-3 w-100">
+                                <a href="/productDetails/<%= similarProduct._id %>" class="btn btn-warning mt-3 w-100">
                                     View Details
                                 </a>
                             </div>
