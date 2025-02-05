@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Admin Dashboard</title>
+
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .main-content {
+            padding: 2rem;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+        }
+        .card-header {
+            background-color: #4f46e5;
+            color: white;
+            font-weight: 600;
+            padding: 1rem;
+        }
+        .form-label {
+            font-weight: 500;
+            color: #374151;
+        }
+        .required-field::after {
+            content: "*";
+            color: #ef4444;
+            margin-left: 4px;
+        }
+        .select2-container .select2-selection--multiple {
+            min-height: 100px;
+        }
+        .product-option {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .offer-badge {
+            background-color: #10b981;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 4px;
+        }
+        .variant-info {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-left: 8px;
+        }
+        .price-range {
+            font-weight: 500;
+            color: #374151;
+        }
+        .category-group {
+            font-weight: 600;
+            color: #4f46e5;
+            padding: 8px;
+            background-color: #f8fafc;
+        }
+        .submit-btn {
+            background-color: #4f46e5;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+        }
+        .submit-btn:hover {
+            background-color: #4338ca;
+        }
+        .cancel-btn {
+            background-color: #9ca3af;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+        }
+        .cancel-btn:hover {
+            background-color: #6b7280;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 0.25rem rgba(79, 70, 229, 0.25);
+        }
+        .select2-container--bootstrap-5 .select2-selection {
+            border-color: #dee2e6;
+        }
+        .select2-container--bootstrap-5 .select2-selection:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 0.25rem rgba(79, 70, 229, 0.25);
+        }
+        .form-check-input:checked {
+            background-color: #4f46e5;
+            border-color: #4f46e5;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/admin/adminHeader') %>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Add New Coupon</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="addCouponForm" action="/admin/coupons/add" method="POST" novalidate>
+                                <!-- Basic Information -->
+                                <div class="mb-4">
+                                    <h5 class="mb-3">Basic Information</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="code" class="form-label required-field">Coupon Code</label>
+                                            <input type="text" 
+                                                class="form-control <%= locals.errors?.code ? 'is-invalid' : '' %>"
+                                                id="code" 
+                                                name="code" 
+                                                required 
+                                                pattern="[A-Za-z0-9]+" 
+                                                maxlength="15"
+                                                value="<%= locals.formData?.code || '' %>">
+                                            <small class="text-muted">Only letters and numbers, max 15 characters</small>
+                                            <% if (locals.errors?.code) { %>
+                                                <div class="invalid-feedback"><%= errors.code.message %></div>
+                                            <% } %>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="description" class="form-label">Description</label>
+                                            <input type="text" 
+                                                class="form-control"
+                                                id="description" 
+                                                name="description"
+                                                maxlength="200"
+                                                value="<%= locals.formData?.description || '' %>">
+                                            <small class="text-muted">Max 200 characters</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Discount Details -->
+                                <div class="mb-4">
+                                    <h5 class="mb-3">Discount Details</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="discountType" class="form-label required-field">Discount Type</label>
+                                            <select class="form-select <%= locals.errors?.discountType ? 'is-invalid' : '' %>"
+                                                id="discountType" 
+                                                name="discountType" 
+                                                required>
+                                                <option value="percentage" 
+                                                    <%= locals.formData?.discountType === 'percentage' ? 'selected' : '' %>>
+                                                    Percentage Off
+                                                </option>
+                                                <option value="fixed"
+                                                    <%= locals.formData?.discountType === 'fixed' ? 'selected' : '' %>>
+                                                    Fixed Amount Off
+                                                </option>
+                                            </select>
+                                            <% if (locals.errors?.discountType) { %>
+                                                <div class="invalid-feedback"><%= errors.discountType.message %></div>
+                                            <% } %>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="discountValue" class="form-label required-field">Discount Value</label>
+                                            <div class="input-group">
+                                                <input type="number" 
+                                                    class="form-control <%= locals.errors?.discountValue ? 'is-invalid' : '' %>"
+                                                    id="discountValue" 
+                                                    name="discountValue" 
+                                                    required 
+                                                    min="0" 
+                                                    step="0.01"
+                                                    value="<%= locals.formData?.discountValue || '' %>">
+                                                <span class="input-group-text" id="discountSymbol">
+                                                    <%= locals.formData?.discountType === 'fixed' ? '₹' : '%' %>
+                                                </span>
+                                            </div>
+                                            <% if (locals.errors?.discountValue) { %>
+                                                <div class="invalid-feedback"><%= errors.discountValue.message %></div>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Purchase Limits -->
+                                <div class="mb-4">
+                                    <h5 class="mb-3">Purchase Limits</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="minPurchaseAmount" class="form-label">Minimum Purchase Amount</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">₹</span>
+                                                <input type="number" 
+                                                    class="form-control"
+                                                    id="minPurchaseAmount" 
+                                                    name="minPurchaseAmount" 
+                                                    min="0" 
+                                                    step="0.01"
+                                                    value="<%= locals.formData?.minPurchaseAmount || '0' %>">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="maxDiscountAmount" class="form-label">Maximum Discount Amount</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">₹</span>
+                                                <input type="number" 
+                                                    class="form-control"
+                                                    id="maxDiscountAmount" 
+                                                    name="maxDiscountAmount" 
+                                                    min="0" 
+                                                    step="0.01"
+                                                    value="<%= locals.formData?.maxDiscountAmount || '' %>">
+                                            </div>
+                                            <small class="text-muted">Leave empty for no limit</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Validity Period -->
+                                <div class="mb-4">
+                                    <h5 class="mb-3">Validity Period</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validFrom" class="form-label required-field">Valid From</label>
+                                            <input type="datetime-local" 
+                                                class="form-control <%= locals.errors?.validFrom ? 'is-invalid' : '' %>"
+                                                id="validFrom" 
+                                                name="validFrom" 
+                                                required
+                                                value="<%= locals.formData?.validFrom || '' %>">
+                                            <% if (locals.errors?.validFrom) { %>
+                                                <div class="invalid-feedback"><%= errors.validFrom.message %></div>
+                                            <% } %>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validUntil" class="form-label required-field">Valid Until</label>
+                                            <input type="datetime-local" 
+                                                class="form-control <%= locals.errors?.validUntil ? 'is-invalid' : '' %>"
+                                                id="validUntil" 
+                                                name="validUntil" 
+                                                required
+                                                value="<%= locals.formData?.validUntil || '' %>">
+                                            <% if (locals.errors?.validUntil) { %>
+                                                <div class="invalid-feedback"><%= errors.validUntil.message %></div>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Usage Limits -->
+                                <div class="mb-4">
+                                    <h5 class="mb-3">Usage Limits</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="usageLimit" class="form-label">Total Usage Limit</label>
+                                            <input type="number" 
+                                                class="form-control"
+                                                id="usageLimit" 
+                                                name="usageLimit" 
+                                                min="1"
+                                                value="<%= locals.formData?.usageLimit || '' %>">
+                                            <small class="text-muted">Leave empty for unlimited uses</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="perUserLimit" class="form-label">Per User Limit</label>
+                                            <input type="number" 
+                                                class="form-control"
+                                                id="perUserLimit" 
+                                                name="perUserLimit" 
+                                                min="1"
+                                                value="<%= locals.formData?.perUserLimit || '1' %>">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Product Selection -->
+                                <div class="mb-4">
+                                    <h5 class="mb-3">Product Selection</h5>
+                                    <div class="row">
+                                        <div class="col-12 mb-3">
+                                            <label for="applicableProducts" class="form-label required-field">
+                                                Select Products
+                                            </label>
+                                            <select class="form-select select2-multiple <%= locals.errors?.applicableProducts ? 'is-invalid' : '' %>"
+                                                id="applicableProducts" 
+                                                name="applicableProducts[]" 
+                                                multiple 
+                                                required>
+                                                <% if (groupedProducts && Object.keys(groupedProducts).length > 0) { %>
+                                                    <% Object.keys(groupedProducts).sort().forEach(function(category) { %>
+                                                        <optgroup label="<%= category %>" class="category-group">
+                                                            <% groupedProducts[category].forEach(function(product) { %>
+                                                                <% if (product.isListed) { %>
+                                                                    <option value="<%= product._id %>"
+                                                                        <%= locals.formData?.applicableProducts?.includes(product._id.toString()) ? 'selected' : '' %>>
+                                                                        <%= product.productName %>
+                                                                        (<%= product.variants.map(v => v.colorName).join(', ') %>)
+                                                                        - ₹<%= product.priceRange.min.toFixed(2) %> to 
+                                                                        ₹<%= product.priceRange.max.toFixed(2) %>
+                                                                        <% if (product.productOffer > 0) { %>
+                                                                            <span class="offer-badge">
+                                                                                <%= product.productOffer %>% OFF
+                                                                            </span>
+                                                                        <% } %>
+                                                                    </option>
+                                                                <% } %>
+                                                            <% }); %>
+                                                        </optgroup>
+                                                    <% }); %>
+                                                <% } %>
+                                            </select>
+                                            <% if (locals.errors?.applicableProducts) { %>
+                                                <div class="invalid-feedback">
+                                                    <%= errors.applicableProducts.message %>
+                                                </div>
+                                            <% } %>
+                                            <small class="text-muted">Products are grouped by category. Multiple selection allowed.</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Status -->
+                                <div class="mb-4">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" 
+                                            type="checkbox" 
+                                            id="isActive" 
+                                            name="isActive"
+                                            <%= !locals.formData || formData.isActive ? 'checked' : '' %>>
+                                        <label class="form-check-label" for="isActive">
+                                            Activate coupon immediately
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Form Buttons -->
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a href="/admin/coupons" class="btn btn-secondary cancel-btn">Cancel</a>
+                                    <button type="submit" class="btn btn-primary submit-btn">Create Coupon</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <%- include('../partials/admin/adminFooter') %>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        $(document).ready(function() {
+        // Initialize Select2
+        initializeSelect2();
+        
+        // Initialize datetime inputs
+        initializeDateTimeInputs();
+        
+        // Initialize form validation
+        initializeFormValidation();
+        
+        // Handle form submission
+        $('#addCouponForm').on('submit', handleFormSubmit);
+        
+        // Handle discount type change
+        $('#discountType').on('change', handleDiscountTypeChange);
+    });
+
+        // Initialize Select2 with custom templates
+        function initializeSelect2() {
+            $('.select2-multiple').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Select products',
+                allowClear: true,
+                templateResult: formatProductOption,
+                templateSelection: formatProductSelection
+            });
+        }
+
+        // Format product option in dropdown
+        function formatProductOption(product) {
+            if (!product.id) return product.text;
+            
+            const $container = $(
+                '<div class="product-option">' +
+                    '<div class="d-flex justify-content-between align-items-center">' +
+                        '<div class="product-info">' +
+                            '<div class="product-name"></div>' +
+                            '<div class="variant-info"></div>' +
+                        '</div>' +
+                        '<div class="price-info"></div>' +
+                    '</div>' +
+                '</div>'
+            );
+
+            const $element = $(product.element);
+            const text = $element.text();
+            const [name, variants, prices] = text.split(/[()]/);
+
+            // Set product name
+            $container.find('.product-name').text(name.trim());
+
+            // Set variants
+            if (variants) {
+                $container.find('.variant-info').text(`(${variants.trim()})`);
+            }
+
+            // Set price range
+            const priceMatch = text.match(/₹[\d.]+ to ₹[\d.]+/);
+            if (priceMatch) {
+                $container.find('.price-info').text(priceMatch[0]);
+            }
+
+            // Add offer badge if exists
+            if ($element.text().includes('OFF')) {
+                const offerMatch = text.match(/(\d+)% OFF/);
+                if (offerMatch) {
+                    $container.find('.product-name').append(
+                        `<span class="offer-badge ms-2">${offerMatch[0]}</span>`
+                    );
+                }
+            }
+
+            return $container;
+        }
+
+        // Format selected product display
+        function formatProductSelection(product) {
+            if (!product.id) return product.text;
+            return $(product.element).text().split('(')[0].trim();
+        }
+
+        // Initialize datetime inputs
+        function initializeDateTimeInputs() {
+            const now = new Date();
+            const validFrom = document.getElementById('validFrom');
+            const validUntil = document.getElementById('validUntil');
+            
+            const formatDateTime = (date) => {
+                return date.toISOString().slice(0, 16);
+            };
+            
+            if (!validFrom.value) {
+                validFrom.min = formatDateTime(now);
+                validFrom.value = formatDateTime(now);
+            }
+            
+            if (!validUntil.value) {
+                const tomorrow = new Date(now);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                validUntil.min = formatDateTime(now);
+                validUntil.value = formatDateTime(tomorrow);
+            }
+            
+            validFrom.addEventListener('change', function() {
+                validUntil.min = this.value;
+                if (validUntil.value < this.value) {
+                    validUntil.value = this.value;
+                }
+                validateDateRange();
+            });
+
+            validUntil.addEventListener('change', validateDateRange);
+        }
+
+        // Handle discount type change
+        function handleDiscountTypeChange() {
+            const discountType = document.getElementById('discountType').value;
+            const discountSymbol = document.getElementById('discountSymbol');
+            const discountValue = document.getElementById('discountValue');
+            const maxDiscountInput = document.getElementById('maxDiscountAmount');
+
+            if (discountType === 'percentage') {
+                discountSymbol.textContent = '%';
+                discountValue.max = '100';
+                maxDiscountInput.parentElement.parentElement.classList.remove('d-none');
+            } else {
+                discountSymbol.textContent = '₹';
+                discountValue.removeAttribute('max');
+                maxDiscountInput.parentElement.parentElement.classList.add('d-none');
+            }
+
+            validateDiscountValue();
+        }
+
+        // Initialize form validation
+        function initializeFormValidation() {
+            const form = document.getElementById('addCouponForm');
+            
+            form.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('input', function() {
+                    validateField(this);
+                });
+            });
+            
+            form.addEventListener('submit', function(event) {
+                if (!validateForm()) {
+                    event.preventDefault();
+                    showValidationErrors();
+                }
+            });
+        }
+
+        // Validate individual field
+        function validateField(field) {
+            let isValid = true;
+            let errorMessage = '';
+
+            switch(field.name) {
+                case 'code':
+                    isValid = /^[A-Za-z0-9]{1,15}$/.test(field.value);
+                    errorMessage = 'Only letters and numbers are allowed (max 15 characters)';
+                    break;
+
+                case 'discountValue':
+                    const value = parseFloat(field.value);
+                    const type = document.getElementById('discountType').value;
+                    
+                    if (type === 'percentage') {
+                        isValid = value > 0 && value <= 100;
+                        errorMessage = 'Percentage must be between 0 and 100';
+                    } else {
+                        isValid = value > 0;
+                        errorMessage = 'Amount must be greater than 0';
+                    }
+                    break;
+
+                case 'minPurchaseAmount':
+                case 'maxDiscountAmount':
+                    isValid = validatePurchaseAmounts();
+                    errorMessage = 'Maximum discount must be less than minimum purchase';
+                    break;
+
+                case 'validFrom':
+                case 'validUntil':
+                    isValid = validateDateRange();
+                    errorMessage = 'End date must be after start date';
+                    break;
+            }
+
+            setFieldValidity(field, isValid, errorMessage);
+            return isValid;
+        }
+
+        // Validate purchase amounts
+        function validatePurchaseAmounts() {
+            const minPurchase = parseFloat(document.getElementById('minPurchaseAmount').value) || 0;
+            const maxDiscount = parseFloat(document.getElementById('maxDiscountAmount').value) || 0;
+            
+            if (maxDiscount > 0 && maxDiscount >= minPurchase) {
+                return false;
+            }
+            return true;
+        }
+
+        // Validate date range
+        function validateDateRange() {
+            const validFrom = new Date(document.getElementById('validFrom').value);
+            const validUntil = new Date(document.getElementById('validUntil').value);
+            return validUntil > validFrom;
+        }
+
+        // Set field validity state
+        function setFieldValidity(field, isValid, message) {
+            if (!isValid) {
+                field.setCustomValidity(message);
+                field.classList.add('is-invalid');
+                
+                let feedback = field.nextElementSibling;
+                if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                    feedback = document.createElement('div');
+                    feedback.className = 'invalid-feedback';
+                    field.parentNode.insertBefore(feedback, field.nextSibling);
+                }
+                feedback.textContent = message;
+            } else {
+                field.setCustomValidity('');
+                field.classList.remove('is-invalid');
+                
+                const feedback = field.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    feedback.remove();
+                }
+            }
+        }
+
+        async function handleFormSubmit(e) {
+        e.preventDefault();
+
+        if (!validateForm()) {
+            showValidationErrors();
+            return;
+        }
+
+        try {
+            // Show loading state
+            const submitBtn = $(this).find('button[type="submit"]');
+            const originalBtnText = submitBtn.html();
+            submitBtn.html('<span class="spinner-border spinner-border-sm me-2"></span>Creating...').prop('disabled', true);
+
+            // Get form data
+            const formData = new FormData(this);
+            
+            // Convert FormData to JSON
+            const jsonData = {};
+            formData.forEach((value, key) => {
+                if (key === 'applicableProducts[]') {
+                    if (!jsonData.applicableProducts) {
+                        jsonData.applicableProducts = [];
+                    }
+                    jsonData.applicableProducts.push(value);
+                } else {
+                    jsonData[key] = value;
+                }
+            });
+
+            // Send AJAX request
+            const response = await fetch('/admin/coupons/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(jsonData)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Show success message
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: result.message || 'Coupon created successfully',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+                
+                // Redirect to coupons list
+                window.location.href = '/admin/coupons';
+            } else {
+                throw new Error(result.message || 'Failed to create coupon');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            
+            // Show error message
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: error.message || 'Failed to create coupon',
+                confirmButtonColor: '#4f46e5'
+            });
+            
+            // Reset button state
+            submitBtn.html(originalBtnText).prop('disabled', false);
+        }
+    }
+
+        // Validate form before submission
+        function validateForm() {
+        let isValid = true;
+        const form = document.getElementById('addCouponForm');
+        const requiredFields = form.querySelectorAll('[required]');
+        
+        // Clear previous errors
+        clearValidationErrors();
+        
+        // Validate required fields
+        requiredFields.forEach(field => {
+            if (!validateField(field)) {
+                isValid = false;
+            }
+        });
+
+        // Validate amounts
+        if (!validatePurchaseAmounts()) {
+            isValid = false;
+        }
+
+        // Validate dates
+        if (!validateDateRange()) {
+            isValid = false;
+        }
+
+        // Validate product selection
+        const selectedProducts = $('#applicableProducts').val();
+        if (!selectedProducts || selectedProducts.length === 0) {
+            setFieldValidity(
+                document.getElementById('applicableProducts'),
+                false,
+                'Please select at least one product'
+            );
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    function clearValidationErrors() {
+        const form = document.getElementById('addCouponForm');
+        form.querySelectorAll('.is-invalid').forEach(field => {
+            field.classList.remove('is-invalid');
+        });
+        form.querySelectorAll('.invalid-feedback').forEach(feedback => {
+            feedback.remove();
+        });
+    }
+
+        // Show validation errors
+        function showValidationErrors() {
+        const invalidFields = document.querySelectorAll('.is-invalid');
+        if (invalidFields.length > 0) {
+            const errorMessages = Array.from(invalidFields).map(field => {
+                const label = field.previousElementSibling?.textContent || field.name;
+                const error = field.nextElementSibling?.textContent || 'This field is invalid';
+                return `${label}: ${error}`;
+            });
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Validation Error',
+                html: errorMessages.join('<br>'),
+                confirmButtonText: 'Ok',
+                confirmButtonColor: '#4f46e5'
+            });
+        }
+    }
+    </script>
+</body>
+</html>

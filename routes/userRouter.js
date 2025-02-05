@@ -60,16 +60,20 @@ router.post('/updateQuantity',cartController.updateQuantity);
 router.post('/removeProduct',cartController.removeProduct);
 
  
-router.get('/checkout',checkoutController.getCheckout);
-router.post('/placeOrder',checkoutController.placeOrder);
-router.post('/create-razorpay-order', checkoutController.createRazorpayOrder);
-router.post('/verify-razorpay-payment', checkoutController.verifyRazorpayPayment);
-router.get('/orderSuccess/:orderId',checkoutController.orderSuccess);
-router.post('/checkout/address',checkoutController.addCheckoutAddress);
-
+router.get('/checkout', checkoutController.getCheckout);
+router.post('/checkout/placeOrder', checkoutController.placeOrder);
+router.post('/checkout/create-razorpay-order', checkoutController.createRazorpayOrder);
+router.post('/checkout/verify-razorpay-payment', checkoutController.verifyRazorpayPayment); // Fixed the path
+router.get('/checkout/orderSuccess/:orderId?', checkoutController.orderSuccess);
+router.post('/checkout/address', checkoutController.addCheckoutAddress);
 router.get('/orders',orderController.getUserOrders);
 router.get('/orders/:orderId', orderController.getOrderDetails);
-router.post('/orders/:orderId/cancel',orderController.cancelOrder);
+router.post('/orders/:orderId/items/:itemId/cancel', orderController.cancelOrderItem);
+router.post('/orders/:orderId/items/:itemId/return', orderController.returnOrderItem);
+
+router.post('/checkout/apply-coupon', checkoutController.applyCoupon);
+router.post('/checkout/remove-coupon', checkoutController.removeCoupon);
+
 
 router.get('/userProfile',userController.loadUserProfile);
 router.get('/editProfile',userController.getEditProfile);
@@ -84,6 +88,8 @@ router.get('/passwordMangement',passwordController.loadPasswordManager);
 router.post('/changePassword',passwordController.changePassword);
 
 router.get('/wallet',walletController.getWalletPage);
+router.post('/wallet/add-money',walletController.addMoneyToWallet);
+
 
 
 

@@ -561,32 +561,22 @@
                                         </div>
                                     <% } %>
                                 </div>
-                                
-                                <div class="button-group">
-                                    <a href="/orders/<%= order.orderId %>" class="btn btn-primary">
-                                        <i class="fas fa-eye"></i>
-                                        View Details
+                            <!-- Replace the existing button-group section with this -->
+                            <div class="button-group">
+                                <a href="/orders/<%= order.orderId %>" class="btn btn-primary">
+                                    <i class="fas fa-eye"></i>
+                                    View Details
+                                </a>
+
+                                <% if (order.paymentStatus === 'completed') { %>
+                                    <a href="/orders/<%= order.orderId %>/invoice" 
+                                    class="btn btn-secondary"
+                                    target="_blank">
+                                        <i class="fas fa-file-invoice"></i>
+                                        Download Invoice
                                     </a>
-    
-                                    <% if (order.paymentStatus === 'completed') { %>
-                                        <a href="/orders/<%= order.orderId %>/invoice" 
-                                           class="btn btn-secondary"
-                                           target="_blank">
-                                            <i class="fas fa-file-invoice"></i>
-                                            Download Invoice
-                                        </a>
-                                    <% } %>
-    
-                    
-    
-                                    <% if (order.canBeReturned()) { %>
-                                        <a href="/account/orders/<%= order.orderId %>/return" 
-                                           class="btn btn-warning">
-                                            <i class="fas fa-undo"></i>
-                                            Return Order
-                                        </a>
-                                    <% } %>
-                                </div>
+                                <% } %>
+                            </div>
                             </div>
                         <% }); %>
                     <% } else { %>

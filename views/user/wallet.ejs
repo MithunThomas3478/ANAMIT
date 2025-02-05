@@ -794,44 +794,44 @@
         }
 
         document.getElementById('addMoneyForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const amount = document.getElementById('amount').value;
-            if (!amount || amount < 100) {
-                showToast('error', 'Minimum amount should be ₹100');
-                return;
-            }
+    e.preventDefault();
+    
+    const amount = document.getElementById('amount').value;
+    if (!amount || amount < 100) {
+        showToast('error', 'Minimum amount should be ₹100');
+        return;
+    }
 
-            const submitButton = this.querySelector('button[type="submit"]');
-            const originalText = submitButton.innerHTML;
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    const submitButton = this.querySelector('button[type="submit"]');
+    const originalText = submitButton.innerHTML;
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
-            try {
-                const response = await fetch('/wallet/add-money', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ amount })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    showToast('success', 'Money added successfully');
-                    setTimeout(() => window.location.reload(), 1500);
-                } else {
-                    showToast('error', result.message || 'Failed to add money');
-                }
-            } catch (error) {
-                console.error('Add money error:', error);
-                showToast('error', 'An unexpected error occurred');
-            } finally {
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalText;
-            }
+    try {
+        const response = await fetch('/wallet/add-money', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ amount })
         });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('success', 'Money added successfully');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            showToast('error', result.message || 'Failed to add money');
+        }
+    } catch (error) {
+        console.error('Add money error:', error);
+        showToast('error', 'An unexpected error occurred');
+    } finally {
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalText;
+    }
+});
 
         document.querySelector('.logout-btn').addEventListener('click', function() {
             Swal.fire({

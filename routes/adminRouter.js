@@ -5,6 +5,7 @@ const categoryController = require('../controllers/admin/categoryController');
 const productController = require('../controllers/admin/productController');
 const orderController = require('../controllers/admin/orderController');
 const offerController = require('../controllers/admin/offerController');
+const couponController = require('../controllers/admin/couponController');
 const multer = require('multer')
 const upload = multer();
 const { v4: uuidv4 } = require('uuid');
@@ -70,10 +71,6 @@ router.get('/product',productController.loadProductPage);
 
 router.patch('/product/:id/toggle-status', productController.toggleProductStatus);
 
-// router.get('/blockProduct',productController.blockProduct);
-
-// router.get('/unblockProduct',productController.unBlockProduct);
-// block and unblock product ends
 
 // edit product
 router.get('/editProduct',productController.loadEditProduct);
@@ -92,6 +89,11 @@ router.get('/offers/edit/:id', offerController.getEditOffer);
 router.post('/offers/edit/:id', offerController.updateOffer);
 router.patch('/offers/:id/toggle-status', offerController.toggleOfferStatus);
 
-
-
+router.get('/coupons', couponController.getCouponTemplate);
+router.get('/coupons/add', couponController.getAddCoupon);
+router.post('/coupons/add', couponController.addCoupon);
+router.get('/coupons/edit/:id', couponController.getEditCouponPage);
+router.post('/coupons/edit/:id', couponController.updateCoupon);
+router.post('/coupons/:id/toggle', couponController.toggleCouponStatus);
+router.delete('/coupons/delete/:id', couponController.deleteCoupon);
 module.exports = router;    
