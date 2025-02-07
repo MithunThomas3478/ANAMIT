@@ -1,6 +1,10 @@
 const User = require('../../models/userSchema');
+const Order = require('../../models/orderSchema')
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const PDFDocument = require('pdfkit');
+const ExcelJS = require('exceljs');
+const moment = require('moment');
 
 
 const pageerror = async (req,res) => {
@@ -9,7 +13,7 @@ const pageerror = async (req,res) => {
     
 }
 
-const loadLogin = async (req, res) => {
+const loadLogin = async     (req, res) => {
     console.log('Admin login page loaded');
     if (req.session.admin) {
         console.log('Admin already logged in. Redirecting to dashboard...');
@@ -77,11 +81,15 @@ const logout = async (req,res) => {
 }
 
 
+
+
+
 module.exports = {
     loadLogin,
     adminLogin,
     loadDashboard,
     pageerror,
-    logout
+    logout,
+  
 }
 

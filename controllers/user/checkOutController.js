@@ -189,16 +189,14 @@ const applyCoupon = async (req, res) => {
     try {
         const { couponCode } = req.body;
         const userId = req.user._id;
-        console.log(couponCode);
         
-        // Find active coupon with corrected field names
         const coupon = await Coupon.findOne({
             code: couponCode.toUpperCase(),
             isActive: true,
             validFrom: { $lte: new Date() },
             validUntil: { $gte: new Date() }
         });
-        console.log("coupon",coupon);
+
         if (!coupon) {
             return res.status(400).json({
                 success: false,
@@ -206,7 +204,6 @@ const applyCoupon = async (req, res) => {
             });
         }
 
-        // Get user's cart for validation
         const cart = await Cart.findOne({ 
             user: userId,
             active: true 
@@ -219,13 +216,11 @@ const applyCoupon = async (req, res) => {
             });
         }
 
-        // Calculate cart subtotal
         const subtotal = cart.items.reduce((total, item) => {
             const itemPrice = item.discountedPrice || item.price;
             return total + (itemPrice * item.quantity);
         }, 0);
-        console.log("subtotal",subtotal);
-        // Check minimum purchase requirement with corrected field name
+
         if (coupon.minPurchaseAmount && subtotal < coupon.minPurchaseAmount) {
             return res.status(400).json({
                 success: false,
@@ -237,7 +232,7 @@ const applyCoupon = async (req, res) => {
         if (coupon.perUserLimit) {
             const userUsageCount = await Order.countDocuments({
                 user: userId,
-                'couponUsed.code': coupon.code
+                'coupon.code': coupon.code
             });
 
             if (userUsageCount >= coupon.perUserLimit) {
@@ -248,18 +243,17 @@ const applyCoupon = async (req, res) => {
             }
         }
 
-        // Calculate discount amount
+        // Calculate discount based on type
         let calculatedDiscount;
         if (coupon.discountType === 'percentage') {
             calculatedDiscount = (subtotal * coupon.discountValue) / 100;
-            // Apply max discount cap if exists
             if (coupon.maxDiscountAmount) {
                 calculatedDiscount = Math.min(calculatedDiscount, coupon.maxDiscountAmount);
             }
         } else {
-            calculatedDiscount = coupon.discountValue;
+            calculatedDiscount = Math.min(coupon.discountValue, subtotal);
         }
-        console.log("calculatedDiscount",calculatedDiscount);
+
         // Store coupon in session
         req.session.appliedCoupon = {
             code: coupon.code,
@@ -306,7 +300,71 @@ const removeCoupon = async (req, res) => {
         });
     }
 };
+const getAvailableCoupons = async (req, res) => {
+    try {
+        const currentDate = new Date();
+        const cart = await Cart.findOne({ user: req.user._id, active: true })
+            .populate('items.product');
+            
+        if (!cart || !cart.items.length) {
+            return res.json({
+                success: true,
+                coupons: []
+            });
+        }
 
+        const cartTotal = cart.items.reduce((sum, item) => 
+            sum + (item.price * item.quantity), 0);
+        
+        // Fetch all active coupons
+        const coupons = await Coupon.find({
+            isActive: true,
+            validFrom: { $lte: currentDate },
+            validUntil: { $gte: currentDate },
+            minPurchaseAmount: { $lte: cartTotal }
+        }).lean();
+
+        // Filter coupons based on usage limits
+        const validCoupons = await Promise.all(coupons.map(async (coupon) => {
+            // Check total usage limit
+            if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) {
+                return null;
+            }
+
+            // Check per-user limit
+            if (coupon.perUserLimit) {
+                const userUsageCount = await Order.countDocuments({
+                    user: req.user._id,
+                    'coupon.code': coupon.code
+                });
+                
+                if (userUsageCount >= coupon.perUserLimit) {
+                    return null;
+                }
+            }
+
+            return {
+                ...coupon,
+                discountValue: coupon.discountValue,
+                minPurchaseAmount: coupon.minPurchaseAmount,
+                maxDiscountAmount: coupon.maxDiscountAmount,
+                validUntil: coupon.validUntil,
+            };
+        }));
+
+        res.json({
+            success: true,
+            coupons: validCoupons.filter(Boolean)
+        });
+
+    } catch (error) {
+        console.error('Error fetching available coupons:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch available coupons'
+        });
+    }
+};
 const createRazorpayOrder = async (req, res) => {
     try {
         const { amount } = req.body;
@@ -522,22 +580,15 @@ const placeOrder = async (req, res) => {
         const shippingFee = 128;
         const totalAmount = subtotal - totalDiscount - (couponData?.discountAmount || 0);
 
-        // Handle wallet payment
+        // Check wallet balance if payment method is wallet
         if (paymentMethod === 'wallet') {
             const wallet = await Wallet.findOne({ user: userId });
             if (!wallet || wallet.balance < totalAmount) {
                 throw new Error('Insufficient wallet balance');
             }
-
-            // Debit wallet
-            await wallet.debit(
-                totalAmount,
-                `Order payment for #${orderNumber}`,
-                orderId
-            );
         }
 
-        // Create order
+        // Create order first
         const order = new Order({
             orderId,
             orderNumber,
@@ -580,6 +631,30 @@ const placeOrder = async (req, res) => {
             }]
         });
 
+        // Save order to get MongoDB _id
+        await order.save();
+
+        // Handle wallet payment after order creation
+        if (paymentMethod === 'wallet') {
+            const wallet = await Wallet.findOne({ user: userId });
+            // Debit wallet using order._id instead of orderId
+            await wallet.debit(
+                totalAmount,
+                `Order payment for #${orderNumber}`,
+                order._id, // Using MongoDB _id instead of orderId string
+                { reason: 'order_payment' }
+            );
+
+            // Update order with wallet details
+            order.walletDetails = {
+                transactionId: wallet.transactions[wallet.transactions.length - 1]._id,
+                debitedAmount: totalAmount,
+                debitedAt: new Date()
+            };
+            await order.save();
+        }
+
+        // Handle Razorpay payment details
         if (paymentMethod === 'razorpay' && paymentDetails) {
             order.paymentDetails = {
                 razorpayOrderId: paymentDetails.razorpay_order_id,
@@ -588,9 +663,8 @@ const placeOrder = async (req, res) => {
                 paidAmount: totalAmount,
                 paidAt: new Date()
             };
+            await order.save();
         }
-
-        await order.save();
 
         // Update cart status
         await Cart.findOneAndUpdate(
@@ -714,6 +788,7 @@ module.exports = {
     placeOrder,
     orderSuccess,
     applyCoupon,
-    removeCoupon
+    removeCoupon,
+    getAvailableCoupons
 
 };

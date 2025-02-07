@@ -18,11 +18,9 @@ const couponSchema = new Schema({
     },
     discountType: {
         type: String,
-        enum: {
-            values: ['percentage', 'fixed'],
-            message: '{VALUE} is not a valid discount type'
-        },
-        required: [true, 'Discount type is required']
+        enum: ['percentage', 'fixed'],
+        default: 'percentage',
+        required: true
     },
     discountValue: {
         type: Number,
@@ -31,21 +29,22 @@ const couponSchema = new Schema({
         validate: {
             validator: function(value) {
                 if (this.discountType === 'percentage') {
-                    return value <= 100;
+                    return value <= 90;
                 }
                 return true;
             },
-            message: 'Percentage discount cannot exceed 100%'
+            message: 'Percentage discount cannot exceed 90%'
         }
     },
     minPurchaseAmount: {
         type: Number,
-        default: 0,
-        min: [0, 'Minimum purchase amount cannot be negative']
+        required: [true, 'Minimum purchase amount is required'],
+        min: [1, 'Minimum purchase amount must be at least 1']
     },
     maxDiscountAmount: {
         type: Number,
-        min: [0, 'Maximum discount amount cannot be negative']
+        required: [true, 'Maximum discount amount is required'],
+        min: [1, 'Maximum discount amount must be at least 1']
     },
     validFrom: {
         type: Date,
@@ -69,19 +68,6 @@ const couponSchema = new Schema({
         default: 1,
         min: [1, 'Per-user limit must be at least 1']
     },
-    applicableUsers: [{
-        type: Schema.Types.ObjectId,
-        ref: 'User'
-    }],
-    applicableCategories: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Category'
-    }],
-    applicableProducts: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Product',
-        required: [true, 'At least one applicable product is required']
-    }],
     isActive: {
         type: Boolean,
         default: true
@@ -96,6 +82,14 @@ couponSchema.index({
     validFrom: 1, 
     validUntil: 1,
     code: 1
+});
+
+// Add validation to ensure maxDiscountAmount is less than minPurchaseAmount
+couponSchema.pre('save', function(next) {
+    if (this.maxDiscountAmount >= this.minPurchaseAmount) {
+        next(new Error('Maximum discount amount must be less than minimum purchase amount'));
+    }
+    next();
 });
 
 const Coupon = mongoose.model('Coupon', couponSchema);

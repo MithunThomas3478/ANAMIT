@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shopping Cart - ANAMIT</title>
+    <title>Shopping Cart</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
@@ -187,6 +187,11 @@
             color: white;
         }
 
+        .quantity-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .quantity-input {
             width: 50px;
             text-align: center;
@@ -249,6 +254,13 @@
             color: var(--primary-color);
         }
 
+        .savings-message {
+            color: var(--success-color);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
         .checkout-btn {
             width: 100%;
             padding: 1rem;
@@ -266,6 +278,12 @@
         .checkout-btn:hover {
             background: var(--secondary-color);
             transform: translateY(-2px);
+        }
+
+        .checkout-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
         }
 
         /* Empty Cart */
@@ -306,6 +324,26 @@
         .continue-shopping:hover {
             background: var(--secondary-color);
             transform: translateY(-2px);
+        }
+
+        /* Loading States */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         /* Responsive Design */
@@ -349,6 +387,13 @@
                 padding: 1rem;
             }
         }
+
+        /* Stock Warning */
+        .stock-warning {
+            color: var(--warning-color);
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
     </style>
 </head>
 <body>
@@ -369,16 +414,18 @@
                              data-color="<%= item.colorName %>"
                              data-size="<%= item.size %>">
                             <!-- Product Image -->
-                            <img src="<%= item.product.variants.find(v => v.colorName === item.colorName).productImage[0] %>" 
+                            <img src="<%= item.product.variants.find(v => v.colorName === item.colorName)?.productImage[0] %>" 
                                  alt="<%= item.product.productName %>" 
-                                 class="item-image">
+                                 class="item-image"
+                                 onerror="this.src='/images/placeholder.jpg'">
                             
                             <!-- Product Details -->
                             <div class="item-details">
                                 <h3><%= item.product.productName %></h3>
                                 <div class="item-variant">
                                     <span>Color: <%= item.colorName %></span> | 
-                                    <span>Size: <%= item.size %></span>
+                                    <span>Size: <%= item.size %></span> |
+                                    <span>Category: <%= item.product.category %></span>
                                 </div>
                             </div>
 
@@ -403,19 +450,30 @@
                                         <% } %>
                                     </div>
                                 <% } %>
+
+                                <% if (item.stockWarning) { %>
+                                    <div class="stock-warning">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        Only <%= item.stockWarning %> items left
+                                    </div>
+                                <% } %>
                             </div>
 
                             <!-- Quantity Controls -->
                             <div class="quantity-controls">
                                 <button class="quantity-btn decrease" 
-                                        onclick="updateQuantity('<%= item.productId %>', '<%= item.colorName %>', '<%= item.size %>', -1)">
+                                        onclick="updateQuantity('<%= item.productId %>', '<%= item.colorName %>', '<%= item.size %>', -1)"
+                                        <%= item.quantity <= 1 ? 'disabled' : '' %>>
                                     <i class="fas fa-minus"></i>
                                 </button>
                                 <input type="number" class="quantity-input" 
-                                       value="<%= item.quantity %>" min="1" max="5"
+                                       value="<%= item.quantity %>" 
+                                       min="1" 
+                                       max="5"
                                        onchange="updateQuantity('<%= item.productId %>', '<%= item.colorName %>', '<%= item.size %>', 0, this.value)">
                                 <button class="quantity-btn increase" 
-                                        onclick="updateQuantity('<%= item.productId %>', '<%= item.colorName %>', '<%= item.size %>', 1)">
+                                        onclick="updateQuantity('<%= item.productId %>', '<%= item.colorName %>', '<%= item.size %>', 1)"
+                                        <%= item.quantity >= 5 ? 'disabled' : '' %>>
                                     <i class="fas fa-plus"></i>
                                 </button>
                             </div>
@@ -448,17 +506,24 @@
                             <span>Shipping</span>
                             <span>₹128</span>
                         </div>
-                    </div>
-                    
-                    <div class="summary-row total">
-                        <span>Total</span>
-                        <span>₹<%= ((cart.totalAmount - cart.totalDiscount) + 128).toLocaleString('en-IN') %></span>
+
+                        <div class="summary-divider"></div>
+                        
+                        <div class="summary-row total">
+                            <span>Total Amount</span>
+                            <span class="summary-total">₹<%= ((cart.totalAmount - cart.totalDiscount) + 128).toLocaleString('en-IN') %></span>
+                        </div>
+
+                        <% if (cart.totalDiscount > 0) { %>
+                            <div class="savings-message">
+                                You saved ₹<%= cart.totalDiscount.toLocaleString('en-IN') %> on this order!
+                            </div>
+                        <% } %>
                     </div>
                 
                     <button class="checkout-btn" onclick="proceedToCheckout()">
                         Proceed to Checkout
                     </button>
-                </div>
                 </div>
             </div>
         <% } else { %>
@@ -467,7 +532,7 @@
                 <h2>Your cart is empty</h2>
                 <p>Looks like you haven't added any items to your cart yet.</p>
                 <a href="/" class="continue-shopping">
-                   </i> Continue Shopping
+                    <i class="fas fa-arrow-left"></i> Continue Shopping
                 </a>
             </div>
         <% } %>
@@ -479,12 +544,13 @@
     <script>
         async function updateQuantity(productId, colorName, size, change, newValue = null) {
             try {
-                let finalQuantity;
-                const quantityInput = document.querySelector(
-                    `[data-item-id="${productId}"][data-color="${colorName}"][data-size="${size}"] .quantity-input`
+                const itemElement = document.querySelector(
+                    `[data-item-id="${productId}"][data-color="${colorName}"][data-size="${size}"]`
                 );
+                const quantityInput = itemElement.querySelector('.quantity-input');
                 const currentQuantity = parseInt(quantityInput.value);
 
+                let finalQuantity;
                 if (newValue !== null) {
                     finalQuantity = parseInt(newValue);
                 } else {
@@ -492,7 +558,7 @@
                 }
 
                 // Validate quantity
-                if (finalQuantity < 1) {
+                if (finalQuantity < 1 || isNaN(finalQuantity)) {
                     finalQuantity = 1;
                     quantityInput.value = 1;
                     return;
@@ -511,6 +577,9 @@
                     return;
                 }
 
+                // Add loading state
+                itemElement.classList.add('loading');
+                
                 const response = await fetch('/updateQuantity', {
                     method: 'POST',
                     headers: {
@@ -525,6 +594,10 @@
                 });
 
                 const result = await response.json();
+                
+                // Remove loading state
+                itemElement.classList.remove('loading');
+
                 if (!response.ok) {
                     throw new Error(result.message || 'Failed to update quantity');
                 }
@@ -560,6 +633,7 @@
         }
 
         function updateCartUI(cartData) {
+            // Update each cart item
             cartData.items.forEach(item => {
                 const itemElement = document.querySelector(
                     `[data-item-id="${item.productId}"][data-color="${item.colorName}"][data-size="${item.size}"]`
@@ -571,14 +645,27 @@
                         quantityInput.value = item.quantity;
                     }
 
+                    // Update quantity buttons
+                    const decreaseBtn = itemElement.querySelector('.quantity-btn.decrease');
+                    const increaseBtn = itemElement.querySelector('.quantity-btn.increase');
+                    if (decreaseBtn) decreaseBtn.disabled = item.quantity <= 1;
+                    if (increaseBtn) increaseBtn.disabled = item.quantity >= 5;
+
                     // Update prices
                     const priceInfo = itemElement.querySelector('.price-info');
                     if (priceInfo) {
                         const originalPrice = item.price;
                         const finalPrice = item.price * (1 - (item.appliedProductOffer + item.appliedCategoryOffer)/100) * item.quantity;
 
-                        priceInfo.querySelector('.original-price').textContent = `₹${originalPrice.toLocaleString('en-IN')}`;
-                        priceInfo.querySelector('.final-price').textContent = `₹${finalPrice.toLocaleString('en-IN')}`;
+                        const originalPriceElement = priceInfo.querySelector('.original-price');
+                        const finalPriceElement = priceInfo.querySelector('.final-price');
+
+                        if (originalPriceElement) {
+                            originalPriceElement.textContent = `₹${originalPrice.toLocaleString('en-IN')}`;
+                        }
+                        if (finalPriceElement) {
+                            finalPriceElement.textContent = `₹${finalPrice.toLocaleString('en-IN')}`;
+                        }
                     }
                 }
             });
@@ -586,24 +673,31 @@
             // Update cart summary
             const summaryElement = document.querySelector('.cart-summary');
             if (summaryElement) {
-                summaryElement.querySelector('.summary-row:first-child span:last-child')
-                    .textContent = `₹${cartData.totalAmount.toLocaleString('en-IN')}`;
-
-                const discountRow = summaryElement.querySelector('.summary-row:nth-child(2) span:last-child');
-                if (discountRow && cartData.totalDiscount > 0) {
-                    discountRow.textContent = `-₹${cartData.totalDiscount.toLocaleString('en-IN')}`;
+                // Update subtotal
+                const subtotalElement = summaryElement.querySelector('.summary-row:first-child span:last-child');
+                if (subtotalElement) {
+                    subtotalElement.textContent = `₹${cartData.totalAmount.toLocaleString('en-IN')}`;
                 }
 
-                const totalElement = summaryElement.querySelector('.summary-total span:last-child');
+                // Update discount
+                const discountRow = summaryElement.querySelector('.discount-text')?.closest('.summary-row');
+                if (discountRow && cartData.totalDiscount > 0) {
+                    discountRow.querySelector('span:last-child').textContent = 
+                        `-₹${cartData.totalDiscount.toLocaleString('en-IN')}`;
+                }
+
+                // Update total amount
+                const totalElement = summaryElement.querySelector('.summary-total');
                 if (totalElement) {
-                    const total = cartData.totalAmount - cartData.totalDiscount + 128;
-                    totalElement.textContent = `₹${total.toLocaleString('en-IN')}`;
+                    const finalTotal = (cartData.totalAmount - cartData.totalDiscount + 128);
+                    totalElement.textContent = `₹${finalTotal.toLocaleString('en-IN')}`;
                 }
 
                 // Update savings message
-                const savingsMsg = summaryElement.querySelector('div[style*="color: var(--success-color)"]');
-                if (savingsMsg && cartData.totalDiscount > 0) {
-                    savingsMsg.textContent = `You saved ₹${cartData.totalDiscount.toLocaleString('en-IN')} on this order!`;
+                const savingsMessage = summaryElement.querySelector('.savings-message');
+                if (savingsMessage && cartData.totalDiscount > 0) {
+                    savingsMessage.textContent = 
+                        `You saved ₹${cartData.totalDiscount.toLocaleString('en-IN')} on this order!`;
                 }
             }
 
@@ -629,6 +723,15 @@
 
                 if (!result.isConfirmed) return;
 
+                const itemElement = document.querySelector(
+                    `[data-item-id="${productId}"][data-color="${colorName}"][data-size="${size}"]`
+                );
+                
+                // Add loading state
+                if (itemElement) {
+                    itemElement.classList.add('loading');
+                }
+
                 const response = await fetch('/removeProduct', {
                     method: 'POST',
                     headers: {
@@ -638,14 +741,17 @@
                 });
 
                 const data = await response.json();
+                
+                // Remove loading state
+                if (itemElement) {
+                    itemElement.classList.remove('loading');
+                }
+
                 if (!response.ok || !data.success) {
                     throw new Error(data.message || 'Failed to remove item');
                 }
 
                 // Remove item from DOM
-                const itemElement = document.querySelector(
-                    `[data-item-id="${productId}"][data-color="${colorName}"][data-size="${size}"]`
-                );
                 if (itemElement) {
                     itemElement.remove();
                 }
@@ -686,8 +792,9 @@
             window.location.href = '/checkout';
         }
 
-        // Add input validation on page load
+        // Initialize quantity input validation
         document.addEventListener('DOMContentLoaded', () => {
+            // Quantity input validation
             document.querySelectorAll('.quantity-input').forEach(input => {
                 input.addEventListener('input', function() {
                     const value = parseInt(this.value);
@@ -707,6 +814,19 @@
                     }
                 });
             });
+
+            // Check for auto-removed items notification
+            if (typeof removedItems !== 'undefined' && removedItems.length > 0) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Cart Updated',
+                    text: 'Some items were removed from your cart because they are no longer available.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 5000
+                });
+            }
         });
     </script>
 </body>

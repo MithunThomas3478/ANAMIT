@@ -5,6 +5,7 @@ const Address = require('../../models/addressSchema');
 const Order = require('../../models/orderSchema');
 const User = require("../../models/userSchema");
 const Wallet = require('../../models/walletSchema');
+const mongoose = require('mongoose');
 
 const getUserOrders = async (req, res) => {
     try {
@@ -83,7 +84,8 @@ const getOrderDetails = async (req, res) => {
 
         if (!order) {
             return res.status(404).render('error', {
-                message: 'Order not found'
+                message: 'Order not found',
+                title: 'Error'
             });
         }
 
@@ -94,22 +96,76 @@ const getOrderDetails = async (req, res) => {
                 return item.status === 'active' && !nonCancellableStatuses.includes(order.orderStatus);
             },
             canBeReturned: (item) => {
-                if (item.status !== 'active' || order.orderStatus !== 'delivered') return false;
+                // Check basic conditions first
+                if (item.status !== 'active') return false;
+                if (order.orderStatus !== 'delivered') return false;
+        
+                // Find the delivery entry from status history
+                const deliveryEntry = order.statusHistory
+                    .filter(status => status.status === 'delivered')
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+        
+                if (!deliveryEntry) return false;
+        
+                // Calculate days since delivery
+                const deliveryDate = new Date(deliveryEntry.timestamp);
+                const currentDate = new Date();
+                const daysSinceDelivery = Math.floor((currentDate - deliveryDate) / (1000 * 60 * 60 * 24));
+        
+                // Return true if within 7-day window
+                return daysSinceDelivery <= 7;
+            },
+            getRemainingReturnDays: (item) => {
+                // Find the delivery entry
+                const deliveryEntry = order.statusHistory
+                    .filter(status => status.status === 'delivered')
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+        
+                if (!deliveryEntry) return 0;
+        
+                const deliveryDate = new Date(deliveryEntry.timestamp);
+                const currentDate = new Date();
+                const daysSinceDelivery = Math.floor((currentDate - deliveryDate) / (1000 * 60 * 60 * 24));
                 
-                const deliveredDate = order.statusHistory.find(h => h.status === 'delivered')?.timestamp;
-                if (!deliveredDate) return false;
+                return Math.max(0, 7 - daysSinceDelivery);
+            },
+            isDelivered: (order) => {
+                return order.orderStatus === 'delivered';
+            },
+            getDeliveryDate: (order) => {
+                const deliveryEntry = order.statusHistory
+                    .filter(status => status.status === 'delivered')
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
                 
-                const returnWindow = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
-                return (Date.now() - deliveredDate.getTime()) <= returnWindow;
+                return deliveryEntry ? new Date(deliveryEntry.timestamp) : null;
+            },
+            formatCurrency: (amount) => {
+                return amount ? amount.toFixed(2) : '0.00';
             }
         };
 
-        // Render order details page
+        // Process coupon information safely
+        let couponInfo = null;
+        if (order.coupon && order.coupon.code) {
+            const discountAmount = order.coupon.discountAmount || 0;
+            couponInfo = {
+                code: order.coupon.code,
+                discountAmount: discountAmount,
+                discountType: order.coupon.discountType || 'fixed',
+                formattedDiscount: `₹${discountAmount.toFixed(2)}${
+                    order.coupon.discountType === 'percentage' ? ` (${discountAmount}%)` : ''
+                }`
+            };
+        }
+
         res.render('orderViewDetails', {
             order,
             user: req.user,
-            itemHelpers
+            itemHelpers,
+            couponInfo,
+            title: `Order #${order.orderNumber}`
         });
+
     } catch (error) {
         console.error('Error fetching order details:', error);
         res.status(500).render('error', {
@@ -117,6 +173,14 @@ const getOrderDetails = async (req, res) => {
             error: process.env.NODE_ENV === 'development' ? error : {}
         });
     }
+};
+
+// Helper function to calculate remaining return days
+const calculateReturnDays = (deliveryDate) => {
+    if (!deliveryDate) return 0;
+    const timeDiff = Date.now() - new Date(deliveryDate).getTime();
+    const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    return Math.max(0, 7 - daysDiff);
 };
 
 const cancelOrderItem = async (req, res) => {
@@ -265,49 +329,64 @@ const cancelOrderItem = async (req, res) => {
 
 const returnOrderItem = async (req, res) => {
     try {
-        const { orderId, itemId } = req.params;
         const userId = req.user._id;
+        const { orderId, itemId } = req.params;
         const { reason, condition, comments } = req.body;
 
-        // Validate inputs
+        console.log("Processing return request:", { orderId, itemId, userId });
+
+        // Input validation
         if (!reason || !condition) {
-            req.flash('error', 'Return reason and condition are required');
-            return res.redirect(`/orders/${orderId}`);
+            return res.status(400).json({
+                success: false,
+                message: 'Return reason and condition are required'
+            });
         }
 
+        // Find the order
         const order = await Order.findOne({
             orderId: orderId,
             user: userId
-        }).populate('items.product');
+        });
 
         if (!order) {
-            req.flash('error', 'Order not found');
-            return res.redirect('/orders');
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
         }
 
         // Find the specific item
         const orderItem = order.items.id(itemId);
         if (!orderItem) {
-            req.flash('error', 'Item not found');
-            return res.redirect(`/orders/${orderId}`);
+            return res.status(404).json({
+                success: false,
+                message: 'Item not found in order'
+            });
         }
 
-        // Check return eligibility
-        if (orderItem.status !== 'active' || order.orderStatus !== 'delivered') {
-            req.flash('error', 'Item is not eligible for return');
-            return res.redirect(`/orders/${orderId}`);
+        console.log("Current item status:", orderItem.status);
+
+        // Validate return eligibility
+        if (orderItem.status !== 'active') {
+            return res.status(400).json({
+                success: false,
+                message: 'Item is not in an active state'
+            });
         }
 
-        const deliveredDate = order.statusHistory.find(h => h.status === 'delivered')?.timestamp;
-        if (!deliveredDate || Date.now() - deliveredDate.getTime() > 7 * 24 * 60 * 60 * 1000) {
-            req.flash('error', 'Return window has expired');
-            return res.redirect(`/orders/${orderId}`);
+        if (order.orderStatus !== 'delivered') {
+            return res.status(400).json({
+                success: false,
+                message: 'Order must be delivered to process return'
+            });
         }
+
 
         // Calculate refund amount
         const refundAmount = orderItem.calculateRefundAmount();
 
-        // Update item status
+        // Update item status and return details
         orderItem.status = 'return_pending';
         orderItem.returnDetails = {
             requestedAt: new Date(),
@@ -319,33 +398,37 @@ const returnOrderItem = async (req, res) => {
             refundStatus: 'pending'
         };
 
-        // Handle refund for online payments
+        // Handle wallet refund if payment was completed
         if (order.paymentStatus === 'completed' && 
-            (order.paymentMethod === 'razorpay' || order.paymentMethod === 'wallet')) {
-            try {
-                const wallet = await Wallet.findOne({ user: userId });
-                if (!wallet) {
-                    throw new Error('Wallet not found');
-                }
+            ['razorpay', 'wallet'].includes(order.paymentMethod)) {
+            
+            let wallet = await Wallet.findOne({ user: userId });
+            if (!wallet) {
+                wallet = new Wallet({
+                    user: userId,
+                    balance: 0
+                });
+                await wallet.save();
+            }
 
-                // Credit wallet
-                const walletTransaction = await wallet.credit(refundAmount, 'Refund for returned order item', {
+            const walletTransaction = await wallet.credit(
+                refundAmount,
+                'Refund for returned order item',
+                {
                     reason: 'order_return',
                     orderId: order._id,
-                    itemId: itemId
-                });
+                    itemId: itemId,
+                    originalOrderNumber: order.orderNumber
+                }
+            );
 
-                orderItem.returnDetails.refundStatus = 'completed';
-                orderItem.returnDetails.walletTransactionId = walletTransaction._id;
-                orderItem.returnDetails.processedAt = new Date();
-            } catch (walletError) {
-                console.error('Wallet refund error:', walletError);
-                orderItem.returnDetails.refundStatus = 'failed';
-            }
+            orderItem.returnDetails.refundStatus = 'completed';
+            orderItem.returnDetails.walletTransactionId = walletTransaction._id;
+            orderItem.returnDetails.processedAt = new Date();
         }
 
-        // Update product stock on return approval
-        if (orderItem.status === 'returned' && orderItem.product) {
+        // Update product inventory
+        if (orderItem.product) {
             const product = await Product.findById(orderItem.product);
             if (product) {
                 const variant = product.variants.find(v => 
@@ -361,19 +444,42 @@ const returnOrderItem = async (req, res) => {
             }
         }
 
+        // Add to status history
+        order.statusHistory.push({
+            status: 'partially_returned',
+            timestamp: new Date(),
+            comment: `Return requested: ${reason}`
+        });
+
         // Update order status
         order.updateOrderStatus();
+        
+        // Save the order
         await order.save();
 
-        req.flash('success', 'Return request submitted successfully');
-        res.redirect(`/orders/${orderId}`);
+        console.log("Return process completed successfully");
+
+        return res.status(200).json({
+            success: true,
+            message: 'Return request submitted successfully',
+            details: {
+                orderStatus: order.orderStatus,
+                itemStatus: orderItem.status,
+                refundAmount,
+                refundStatus: orderItem.returnDetails.refundStatus
+            }
+        });
 
     } catch (error) {
-        console.error('Error processing return:', error);
-        req.flash('error', error.message || 'Error processing return request');
-        res.redirect(`/orders/${req.params.orderId}`);
+        console.error('Return processing error:', error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Error processing return request'
+        });
     }
 };
+
+
 module.exports = {
     getUserOrders,
     getOrderDetails,

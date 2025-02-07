@@ -59,7 +59,7 @@ const orderItemSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ['active', 'cancelled', 'returned', 'return_pending', 'return_rejected'],
+        enum: ['cancelled', 'returned', 'return_pending', 'active'],
         default: 'active'
     },
     cancellationDetails: {
@@ -362,6 +362,30 @@ orderSchema.pre('save', function(next) {
         next();
     }
 });
+
+orderSchema.methods.isDelivered = function() {
+    return this.orderStatus === 'delivered';
+};
+
+orderSchema.methods.getDeliveryDate = function() {
+    const deliveryEntry = this.statusHistory
+        .filter(status => status.status === 'delivered')
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+    
+    return deliveryEntry ? new Date(deliveryEntry.timestamp) : null;
+};
+
+orderSchema.methods.getRemainingReturnDays = function() {
+    const deliveryDate = this.getDeliveryDate();
+    if (!deliveryDate) return 0;
+    
+    const currentDate = new Date();
+    const daysSinceDelivery = Math.floor(
+        (currentDate - deliveryDate) / (1000 * 60 * 60 * 24)
+    );
+    
+    return Math.max(0, 7 - daysSinceDelivery);
+};
 
 const Order = mongoose.model('Order', orderSchema);
 module.exports = Order;

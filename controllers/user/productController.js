@@ -648,7 +648,7 @@ const getMensFashion = async (req, res) => {
             },
             categoryOffer,
             wishlistCount, // Add wishlist count to the response
-            isAuthenticated: !!req.user // Add authentication status
+            isAuthenticated: true
         });
 
     } catch (error) {
@@ -988,7 +988,7 @@ const getWomensFashion = async (req, res) => {
             },
             categoryOffer,
             wishlistCount, // Add wishlist count to the response
-            isAuthenticated: !!req.user // Add authentication status
+            isAuthenticated: true
         });
 
     } catch (error) {

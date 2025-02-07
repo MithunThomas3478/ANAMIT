@@ -15,7 +15,14 @@ const transactionSchema = new Schema({
     orderId: {
         type: Schema.Types.ObjectId,
         ref: 'Order',
-        required: false  // Not required for non-order transactions like refunds or rewards
+        required: false,
+        validate: {
+            validator: function(v) {
+                // Allow null/undefined or valid ObjectId
+                return v === null || v === undefined || mongoose.Types.ObjectId.isValid(v);
+            },
+            message: 'Invalid Order ID format'
+        }
     },
     description: {
         type: String,
@@ -108,10 +115,18 @@ walletSchema.methods.debit = async function(amount, description, orderId = null,
         type: 'debit',
         amount,
         description,
-        orderId,
         status: 'completed',
         metadata
     };
+
+    // Only set orderId if it's provided and valid
+    if (orderId) {
+        if (mongoose.Types.ObjectId.isValid(orderId)) {
+            transaction.orderId = orderId;
+        } else {
+            throw new Error('Invalid Order ID format');
+        }
+    }
     
     this.balance -= amount;
     this.transactions.push(transaction);

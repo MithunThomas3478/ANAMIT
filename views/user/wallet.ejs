@@ -6,6 +6,7 @@
     <title>My Wallet</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.7.32/sweetalert2.min.css" rel="stylesheet">
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
         * {
             margin: 0;
@@ -76,7 +77,6 @@
             color: #333;
             text-decoration: none;
             transition: all 0.3s;
-            font-size: 16px;
         }
 
         .menu-item:hover {
@@ -92,25 +92,6 @@
         .menu-item i {
             margin-right: 1rem;
             width: 24px;
-            font-size: 18px;
-        }
-
-        .logout-btn {
-            background: #ff8800;
-            color: white;
-            border: none;
-            padding: 1.25rem;
-            width: 100%;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 3rem;
-            font-weight: bold;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-
-        .logout-btn:hover {
-            background: #ff7700;
         }
 
         .wallet-container {
@@ -197,8 +178,7 @@
         }
 
         .action-btn {
-            flex: 1;
-            padding: 1rem;
+            padding: 1rem 2rem;
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -214,20 +194,11 @@
         .btn-add-money {
             background: #ff8800;
             color: white;
+            flex: 1;
         }
 
         .btn-add-money:hover {
             background: #ff7700;
-            transform: translateY(-2px);
-        }
-
-        .btn-withdraw {
-            background: #f5f5f5;
-            color: #333;
-        }
-
-        .btn-withdraw:hover {
-            background: #e5e5e5;
             transform: translateY(-2px);
         }
 
@@ -255,24 +226,24 @@
             display: flex;
             gap: 1rem;
             margin-bottom: 1rem;
+            flex-wrap: wrap;
         }
 
         .amount-btn {
-            padding: 0.5rem 1rem;
+            padding: 0.75rem 1.5rem;
             border: 1px solid #ddd;
             border-radius: 6px;
             background: white;
             cursor: pointer;
             transition: all 0.3s;
+            font-size: 16px;
         }
 
         .amount-btn:hover {
             background: #f5f5f5;
             border-color: #ccc;
         }
-        .form-actions{
-            display: flex;
-        }
+
         .form-group input[type="number"] {
             width: 100%;
             padding: 0.75rem;
@@ -283,70 +254,12 @@
 
         .amount-hint {
             color: #666;
-            font-size: 0.875rem;
+            font-size: 14px;
             margin-top: 0.5rem;
-            display: block;
-        }
-
-        .transaction-filters {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .filter-group {
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .filter-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .filter-group select,
-        .filter-group input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-            color: #333;
-            background: white;
-        }
-
-        .search-group {
-            position: relative;
-            flex: 2;
-        }
-
-        .search-icon {
-            position: absolute;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #666;
-            pointer-events: none;
-        }
-
-        .transactions-section {
-            margin-top: 3rem;
-        }
-
-        .section-title {
-            font-size: 18px;
-            color: #333;
-            margin-bottom: 1.5rem;
-            font-weight: 500;
         }
 
         .transaction-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+            margin-top: 2rem;
         }
 
         .transaction-item {
@@ -356,6 +269,7 @@
             padding: 1.5rem;
             background: #f8f9fa;
             border-radius: 8px;
+            margin-bottom: 1rem;
             transition: transform 0.3s;
         }
 
@@ -380,24 +294,19 @@
             color: #0066cc;
         }
 
-        .transaction-details {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-
-        .transaction-title {
-            font-weight: 500;
+        .transaction-details h4 {
+            font-size: 16px;
             color: #333;
+            margin-bottom: 0.25rem;
         }
 
-        .transaction-date {
+        .transaction-details p {
             font-size: 14px;
             color: #666;
         }
 
         .transaction-amount {
-            font-weight: 500;
+            font-weight: 600;
             font-size: 16px;
         }
 
@@ -409,43 +318,20 @@
             color: #dc3545;
         }
 
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 2rem;
-            gap: 1rem;
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #ff8800;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
         }
 
-        .pagination-btn {
-            padding: 0.5rem 1rem;
-            border: 1px solid #ddd;
-            background: white;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s;
-            color: #333;
-            text-decoration: none;
-        }
-
-        .pagination-btn:hover {
-            background: #f5f5f5;
-        }
-
-        .pagination-btn.active {
-            background: #ff8800;
-            color: white;
-            border-color: #ff8800;
-        }
-
-        .pagination-btn.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .pagination-info {
-            color: #666;
-            font-size: 14px;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         @media (max-width: 1200px) {
@@ -458,39 +344,18 @@
         @media (max-width: 768px) {
             .profile-container {
                 grid-template-columns: 1fr;
-                gap: 2rem;
             }
             
-            .container {
-                padding: 0 1rem;
-            }
-
-            .wallet-container {
-                padding: 2rem;
-            }
-
-            .wallet-actions {
-                flex-direction: column;
-            }
-
             .wallet-summary {
                 grid-template-columns: 1fr;
             }
-
-            .filter-group {
-                min-width: 100%;
-            }
-
-            .payment-methods {
-                grid-template-columns: 1fr;
+            
+            .wallet-actions {
+                flex-direction: column;
             }
             
             .amount-suggestions {
-                flex-wrap: wrap;
-            }
-            
-            .pagination {
-                flex-wrap: wrap;
+                grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
@@ -516,24 +381,14 @@
                     <i class="fas fa-box"></i>
                     My Orders
                 </a>
-                <a href="/address" class="menu-item">
-                    <i class="fas fa-map-marker-alt"></i>
-                    Manage Address
-                </a>
                 <a href="/wallet" class="menu-item active">
                     <i class="fas fa-wallet"></i>
                     Wallet
-                </a>
-                <a href="/password" class="menu-item">
-                    <i class="fas fa-lock"></i>
-                    Manage Password
                 </a>
                 <a href="/wishlist" class="menu-item">
                     <i class="fas fa-heart"></i>
                     Wishlist
                 </a>
-                
-                <button class="logout-btn">LOG OUT</button>
             </div>
 
             <!-- Wallet Content -->
@@ -551,7 +406,7 @@
                             <i class="fas fa-arrow-down"></i>
                         </div>
                         <div class="summary-info">
-                            <div class="summary-label">Total Income</div>
+                            <div class="summary-label">Total Added</div>
                             <div class="summary-value amount-credit">₹<%= wallet.totalCredits.toFixed(2) %></div>
                         </div>
                     </div>
@@ -582,119 +437,66 @@
                     </button>
                 </div>
 
-                <form id="addMoneyForm" class="add-money-form" action="/wallet/add-money" method="POST" style="display: none;">
+                <!-- Add Money Form -->
+                <form id="addMoneyForm" class="add-money-form">
                     <div class="form-group">
-                        <label for="amount">Amount (₹)</label>
+                        <label for="amount">Enter Amount (₹)</label>
                         <div class="amount-suggestions">
                             <button type="button" class="amount-btn" onclick="setAmount(500)">₹500</button>
                             <button type="button" class="amount-btn" onclick="setAmount(1000)">₹1000</button>
                             <button type="button" class="amount-btn" onclick="setAmount(2000)">₹2000</button>
+                            <button type="button" class="amount-btn" onclick="setAmount(5000)">₹5000</button>
                         </div>
-                        <input type="number" id="amount" name="amount" min="100" step="100" required>
-                        <small class="amount-hint">Minimum amount: ₹100</small>
+                        <input type="number" id="amount" name="amount" min="100" step="1" required>
+                        <span class="amount-hint">Minimum amount: ₹100</span>
                     </div>
-
-                    <div class="form-actions">
-                        <button type="button" class="action-btn btn-withdraw" onclick="hideAddMoneyForm()">Cancel</button>
-                        <button type="submit" class="action-btn btn-add-money">Proceed to Pay</button>
+                    <div class="wallet-actions">
+                        <button type="button" class="action-btn" onclick="hideAddMoneyForm()" style="background: #f5f5f5; color: #333;">
+                            Cancel
+                        </button>
+                        <button type="submit" class="action-btn btn-add-money">
+                            Proceed to Pay
+                        </button>
                     </div>
                 </form>
 
-                <div class="transactions-section">
-                    <h3 class="section-title">Recent Transactions</h3>
+                <!-- Transactions List -->
+                <div class="transaction-list">
+                    <h3 class="wallet-title" style="font-size: 20px;">Recent Transactions</h3>
                     
-                    <div class="transaction-filters">
-                        <div class="filter-group">
-                            <label for="transactionType">Type</label>
-                            <select id="transactionType" onchange="filterTransactions()">
-                                <option value="all">All</option>
-                                <option value="credit">Credit</option>
-                                <option value="debit">Debit</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label for="dateRange">Period</label>
-                            <select id="dateRange" onchange="filterTransactions()">
-                                <option value="all">All Time</option>
-                                <option value="today">Today</option>
-                                <option value="week">This Week</option>
-                                <option value="month">This Month</option>
-                                <option value="year">This Year</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group search-group">
-                            <input type="text" id="searchTransaction" 
-                                   placeholder="Search transactions..." 
-                                   onkeyup="filterTransactions()">
-                            <i class="fas fa-search search-icon"></i>
-                        </div>
-                    </div>
-
-                    <div class="transaction-list">
-                        <% if (wallet.transactions && wallet.transactions.length > 0) { %>
-                            <% wallet.transactions.sort((a, b) => b.createdAt - a.createdAt).slice(startIndex, endIndex).forEach(function(transaction) { %>
-                                <div class="transaction-item" data-type="<%= transaction.type %>" data-date="<%= transaction.createdAt %>">
-                                    <div class="transaction-info">
-                                        <div class="transaction-icon">
-                                            <i class="fas fa-<%= transaction.type === 'credit' ? 'arrow-down' : 'arrow-up' %>"></i>
-                                        </div>
-                                        <div class="transaction-details">
-                                            <div class="transaction-title"><%= transaction.description %></div>
-                                            <div class="transaction-date">
-                                                <%= new Date(transaction.createdAt).toLocaleDateString('en-US', {
-                                                    year: 'numeric',
-                                                    month: 'short',
-                                                    day: 'numeric'
-                                                }) %>
-                                            </div>
-                                        </div>
+                    <% if (wallet.transactions && wallet.transactions.length > 0) { %>
+                        <% wallet.transactions.sort((a, b) => b.createdAt - a.createdAt).forEach(function(transaction) { %>
+                            <div class="transaction-item">
+                                <div class="transaction-info">
+                                    <div class="transaction-icon">
+                                        <i class="fas fa-<%= transaction.type === 'credit' ? 'arrow-down' : 'arrow-up' %>"></i>
                                     </div>
-                                    <div class="transaction-amount amount-<%= transaction.type %>">
-                                        <%= transaction.type === 'credit' ? '+' : '-' %>₹<%= transaction.amount.toFixed(2) %>
+                                    <div class="transaction-details">
+                                        <h4><%= transaction.description %></h4>
+                                        <p><%= new Date(transaction.createdAt).toLocaleDateString('en-US', {
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        }) %></p>
                                     </div>
                                 </div>
-                            <% }); %>
-
-                            <!-- Pagination -->
-                            <% if (totalPages > 1) { %>
-                                <div class="pagination">
-                                    <% if (currentPage > 1) { %>
-                                        <a href="?page=<%= currentPage - 1 %>" class="pagination-btn">
-                                            <i class="fas fa-chevron-left"></i> Previous
-                                        </a>
-                                    <% } %>
-
-                                    <% for(let i = 1; i <= totalPages; i++) { %>
-                                        <a href="?page=<%= i %>" 
-                                           class="pagination-btn <%= i === currentPage ? 'active' : '' %>">
-                                            <%= i %>
-                                        </a>
-                                    <% } %>
-
-                                    <% if (currentPage < totalPages) { %>
-                                        <a href="?page=<%= currentPage + 1 %>" class="pagination-btn">
-                                            Next <i class="fas fa-chevron-right"></i>
-                                        </a>
-                                    <% } %>
-
-                                    <span class="pagination-info">
-                                        Page <%= currentPage %> of <%= totalPages %>
-                                    </span>
+                                <div class="transaction-amount <%= transaction.type === 'credit' ? 'amount-credit' : 'amount-debit' %>">
+                                    <%= transaction.type === 'credit' ? '+' : '-' %>₹<%= transaction.amount.toFixed(2) %>
                                 </div>
-                            <% } %>
-                        <% } else { %>
-                            <div class="no-transactions">
-                                No transactions yet
                             </div>
-                        <% } %>
-                    </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="transaction-item" style="justify-content: center; color: #666;">
+                            No transactions yet
+                        </div>
+                    <% } %>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <%- include('../partials/user/footer')%>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.7.32/sweetalert2.min.js"></script>
@@ -720,15 +522,14 @@
         }
 
         function showAddMoneyForm() {
-            const form = document.getElementById('addMoneyForm');
-            form.style.display = 'block';
-            document.querySelector('.action-btn.btn-add-money').style.display = 'none';
+            document.getElementById('addMoneyForm').style.display = 'block';
+            document.querySelector('.btn-add-money').style.display = 'none';
         }
 
         function hideAddMoneyForm() {
             Swal.fire({
-                title: 'Are you sure?',
-                text: "You will lose all entered information!",
+                title: 'Cancel Transaction?',
+                text: "Are you sure you want to cancel adding money?",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ff8800',
@@ -736,10 +537,9 @@
                 confirmButtonText: 'Yes, cancel it!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    const form = document.getElementById('addMoneyForm');
-                    form.style.display = 'none';
-                    document.querySelector('.action-btn.btn-add-money').style.display = 'flex';
-                    form.reset();
+                    document.getElementById('addMoneyForm').style.display = 'none';
+                    document.querySelector('.btn-add-money').style.display = 'flex';
+                    document.getElementById('addMoneyForm').reset();
                 }
             });
         }
@@ -748,95 +548,105 @@
             document.getElementById('amount').value = value;
         }
 
-        function filterTransactions() {
-            const type = document.getElementById('transactionType').value;
-            const dateRange = document.getElementById('dateRange').value;
-            const search = document.getElementById('searchTransaction').value.toLowerCase();
-            const items = document.querySelectorAll('.transaction-item');
+        function initializeRazorpay(orderId, amount) {
+            const options = {
+                key: '<%= process.env.RAZORPAY_KEY_ID %>',
+                amount: amount * 100,
+                currency: 'INR',
+                name: '<%= process.env.STORE_NAME %>',
+                description: 'Wallet Recharge',
+                order_id: orderId,
+                handler: async function (response) {
+                    try {
+                        const verificationResponse = await fetch('/wallet/verify-payment', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature
+                            })
+                        });
 
-            items.forEach(item => {
-                let showItem = true;
-
-                if (type !== 'all') {
-                    const itemType = item.querySelector('.transaction-amount').classList.contains('amount-credit') ? 'credit' : 'debit';
-                    showItem = itemType === type;
-                }
-
-                if (showItem && dateRange !== 'all') {
-                    const itemDate = new Date(item.getAttribute('data-date'));
-                    const now = new Date();
-
-                    switch(dateRange) {
-                        case 'today':
-                            showItem = itemDate.toDateString() === now.toDateString();
-                            break;
-                        case 'week':
-                            const weekAgo = new Date(now.setDate(now.getDate() - 7));
-                            showItem = itemDate >= weekAgo;
-                            break;
-                        case 'month':
-                            showItem = itemDate.getMonth() === now.getMonth() && 
-                                     itemDate.getFullYear() === now.getFullYear();
-                            break;
-                        case 'year':
-                            showItem = itemDate.getFullYear() === now.getFullYear();
-                            break;
+                        const result = await verificationResponse.json();
+                        
+                        if (result.success) {
+                            showToast('success', 'Payment successful! Your wallet has been updated.');
+                            setTimeout(() => window.location.reload(), 1500);
+                        } else {
+                            showToast('error', result.message || 'Payment verification failed');
+                        }
+                    } catch (error) {
+                        console.error('Payment verification error:', error);
+                        showToast('error', 'Failed to verify payment');
+                    }
+                },
+                prefill: {
+                    name: '<%= user.name %>',
+                    email: '<%= user.email %>',
+                    contact: '<%= user.phone %>'
+                },
+                theme: {
+                    color: '#ff8800'
+                },
+                modal: {
+                    ondismiss: function() {
+                        document.getElementById('addMoneyForm').reset();
+                        hideAddMoneyForm();
                     }
                 }
+            };
 
-                if (showItem && search) {
-                    const title = item.querySelector('.transaction-title').textContent.toLowerCase();
-                    showItem = title.includes(search);
-                }
-
-                item.style.display = showItem ? 'flex' : 'none';
-            });
+            const rzp = new Razorpay(options);
+            rzp.open();
         }
 
         document.getElementById('addMoneyForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const amount = document.getElementById('amount').value;
-    if (!amount || amount < 100) {
-        showToast('error', 'Minimum amount should be ₹100');
-        return;
-    }
+            e.preventDefault();
+            
+            const amount = Number(document.getElementById('amount').value);
+            if (!amount || amount < 100) {
+                showToast('error', 'Minimum amount should be ₹100');
+                return;
+            }
 
-    const submitButton = this.querySelector('button[type="submit"]');
-    const originalText = submitButton.innerHTML;
-    submitButton.disabled = true;
-    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<div class="loading-spinner"></div>Processing...';
 
-    try {
-        const response = await fetch('/wallet/add-money', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ amount })
+            try {
+                const response = await fetch('/wallet/create-order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ amount })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    initializeRazorpay(result.order.id, amount);
+                } else {
+                    showToast('error', result.message || 'Failed to create payment order');
+                }
+            } catch (error) {
+                console.error('Payment initiation error:', error);
+                showToast('error', 'An unexpected error occurred');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+            }
         });
 
-        const result = await response.json();
-        
-        if (result.success) {
-            showToast('success', 'Money added successfully');
-            setTimeout(() => window.location.reload(), 1500);
-        } else {
-            showToast('error', result.message || 'Failed to add money');
-        }
-    } catch (error) {
-        console.error('Add money error:', error);
-        showToast('error', 'An unexpected error occurred');
-    } finally {
-        submitButton.disabled = false;
-        submitButton.innerHTML = originalText;
-    }
-});
-
+        // Logout functionality
         document.querySelector('.logout-btn').addEventListener('click', function() {
             Swal.fire({
-                title: 'Are you sure?',
-                text: "You will be logged out of your account",
+                title: 'Logout',
+                text: "Are you sure you want to logout?",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ff8800',

@@ -340,6 +340,206 @@
             border-color: var(--primary-color);
             color: var(--primary-color);
         }
+   
+    .available-coupons-section {
+        margin-top: 1rem;
+    }
+
+    .view-coupons-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        background: white;
+        border: 2px dashed var(--primary-color);
+        color: var(--primary-color);
+        transition: var(--transition);
+    }
+
+    .view-coupons-btn:hover {
+        background: rgba(252, 123, 3, 0.05);
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal.active {
+        opacity: 1;
+    }
+
+    .modal-content {
+        position: relative;
+        background: white;
+        width: 90%;
+        max-width: 600px;
+        margin: 2rem auto;
+        border-radius: 12px;
+        box-shadow: var(--shadow-md);
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: var(--text-color);
+    }
+
+    .close-modal {
+        background: none;
+        border: none;
+        font-size: 1.25rem;
+        color: var(--text-light);
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 50%;
+        transition: var(--transition);
+    }
+
+    .close-modal:hover {
+        background: var(--bg-color);
+        color: var(--text-color);
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+        overflow-y: auto;
+    }
+
+    .coupons-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .coupon-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.coupon-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.no-coupons-message {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-light);
+}
+.coupon-loading {
+    text-align: center;
+    padding: 2rem;
+}
+.coupon-error {
+    color: #dc3545;
+    text-align: center;
+    padding: 1rem;
+}
+    .coupon-card::before {
+        content: '';
+        position: absolute;
+        left: -4px;
+        top: 50%;
+        width: 8px;
+        height: 8px;
+        background: var(--bg-color);
+        border-radius: 50%;
+        transform: translateY(-50%);
+    }
+
+    .coupon-card::after {
+        content: '';
+        position: absolute;
+        right: -4px;
+        top: 50%;
+        width: 8px;
+        height: 8px;
+        background: var(--bg-color);
+        border-radius: 50%;
+        transform: translateY(-50%);
+    }
+
+    .coupon-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .coupon-code {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+    .discount-badge {
+        background: rgba(252, 123, 3, 0.1);
+        color: var(--primary-color);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+
+    .coupon-description {
+        color: var(--text-light);
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+    }
+
+    .coupon-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+        font-size: 0.9rem;
+    }
+
+    .meta-item {
+        color: var(--text-light);
+    }
+
+    .meta-label {
+        font-weight: 500;
+        color: var(--text-color);
+    }
+
+    @media (max-width: 768px) {
+        .modal-content {
+            width: 95%;
+            margin: 1rem auto;
+        }
+
+        .coupon-header {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .coupon-meta {
+            grid-template-columns: 1fr;
+        }
+    }
 
         /* Loading State */
         .loading {
@@ -547,8 +747,30 @@
                         </div>
                         <div id="couponError" class="error-message" style="display: none;"></div>
                     <% } %>
-                </div>
+                  
                 
+                <div class="available-coupons-section">
+                    <button class="btn btn-secondary view-coupons-btn" onclick="openCouponsModal()">
+                        <i class="fas fa-ticket-alt"></i> View Available Coupons
+                    </button>
+                </div>
+                <div id="couponsModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Available Coupons</h3>
+                            <button class="close-modal" onclick="closeCouponsModal()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="availableCouponsContainer" class="coupons-grid">
+                                <!-- Coupons will be dynamically inserted here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                 
                 <!-- Subtotal -->
                 <div class="summary-row">
                     <span>Subtotal</span>
@@ -562,15 +784,13 @@
                         <span class="discount-amount">-₹<%= checkoutData.totalDiscount.toLocaleString('en-IN') %></span>
                     </div>
                 <% } %>
-
-                <!-- Coupon Discount -->
+                      <!-- Coupon Discount -->
                 <% if (checkoutData.couponDiscount > 0) { %>
                     <div class="summary-row discount-row">
                         <span>Coupon Discount</span>
                         <span class="discount-amount">-₹<%= checkoutData.couponDiscount.toLocaleString('en-IN') %></span>
                     </div>
                 <% } %>
-
                 <!-- Shipping -->
                 <div class="summary-row">
                     <span>Shipping Fee</span>
@@ -603,6 +823,7 @@
         let selectedPaymentMethod = null;
         const grandTotal = <%= checkoutData.finalAmount %>;
         const walletBalance = <%= userWallet.balance %>;
+        let couponsLoaded = false;
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', () => {
@@ -674,7 +895,120 @@
                 errorElement.style.display = 'none';
             }, 3000);
         }
+        function openCouponsModal() {
+        const modal = document.getElementById('couponsModal');
+        modal.style.display = 'block';
+        setTimeout(() => modal.classList.add('active'), 10);
+        fetchAvailableCoupons();
+    }
 
+    function closeCouponsModal() {
+        const modal = document.getElementById('couponsModal');
+        modal.classList.remove('active');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('couponsModal');
+        if (event.target === modal) {
+            closeCouponsModal();
+        }
+    }
+
+    // Format date helper
+    function formatDate(dateString) {
+        const options = { day: 'numeric', month: 'short', year: 'numeric' };
+        return new Date(dateString).toLocaleDateString('en-IN', options);
+    }
+
+    // Fetch and render available coupons
+    async function fetchAvailableCoupons() {
+    if (couponsLoaded) return;
+    
+    const container = document.getElementById('availableCouponsContainer');
+    container.innerHTML = '<div class="text-center py-4">Loading available coupons...</div>';
+    
+    try {
+        const response = await fetch('/checkout/available-coupons');
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to fetch coupons');
+        }
+        
+        couponsLoaded = true;
+        renderCoupons(data.coupons);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        container.innerHTML = `
+            <div class="text-center py-4 text-danger">
+                <i class="fas fa-exclamation-circle"></i>
+                Failed to load coupons. Please try again.
+                <button onclick="fetchAvailableCoupons()" class="btn btn-link">
+                    Retry
+                </button>
+            </div>
+        `;
+    }
+}
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0
+    }).format(amount);
+}
+function renderCoupons(coupons) {
+    const container = document.getElementById('availableCouponsContainer');
+    
+    if (!coupons || coupons.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-ticket-alt mb-2"></i>
+                <p>No coupons available at the moment</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = coupons.map(coupon => `
+        <div class="coupon-card" onclick="selectCoupon('${coupon.code}')">
+            <div class="coupon-header">
+                <div class="coupon-code">${coupon.code}</div>
+                <div class="discount-badge">
+                    ${coupon.discountType === 'percentage' 
+                        ? `${coupon.discountValue}% OFF` 
+                        : `₹${coupon.discountValue} OFF`}
+                </div>
+            </div>
+            ${coupon.description ? `
+                <div class="coupon-description">${coupon.description}</div>
+            ` : ''}
+            <div class="coupon-meta">
+                <div class="meta-item">
+                    <div class="meta-label">Min. Purchase:</div>
+                    ${formatCurrency(coupon.minPurchaseAmount)}
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Max. Discount:</div>
+                    ${formatCurrency(coupon.maxDiscountAmount)}
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Valid Till:</div>
+                    ${formatDate(coupon.validUntil)}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+    function selectCoupon(code) {
+        document.getElementById('couponCode').value = code;
+        applyCoupon();
+        closeCouponsModal();
+    }
         // Address Functions
         function selectAddress(addressId) {
             selectedAddressId = addressId;

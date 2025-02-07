@@ -7,30 +7,24 @@ const getCouponTemplate = async (req, res) => {
     try {
         // Get query parameters for filtering and pagination
         const { 
-            searchQuery,
-            discountType,
+            search,          // Changed from searchQuery to match template
             status,
             validOnly,
-            page = 1 // Default to first page
+            page = 1        // Default to first page
         } = req.query;
 
-        const limit = 10; // Items per page
+        const limit = 10;    // Items per page
         const skip = (page - 1) * limit;
 
         // Build filter object
         let filter = {};
         
         // Search filter
-        if (searchQuery) {
+        if (search) {       // Changed from searchQuery to search
             filter.$or = [
-                { code: new RegExp(searchQuery, 'i') },
-                { description: new RegExp(searchQuery, 'i') }
+                { code: new RegExp(search, 'i') },
+                { description: new RegExp(search, 'i') }
             ];
-        }
-
-        // Discount type filter
-        if (discountType) {
-            filter.discountType = discountType;
         }
 
         // Status filter
@@ -63,7 +57,6 @@ const getCouponTemplate = async (req, res) => {
 
         // Fetch coupons with pagination
         const coupons = await Coupon.find(filter)
-            .populate('applicableProducts', 'productName')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
@@ -93,28 +86,29 @@ const getCouponTemplate = async (req, res) => {
 
             // Add status class for badge
             if (!coupon.isActive) {
-                couponObj.statusClass = 'bg-warning';
+                couponObj.statusClass = 'badge-inactive';
             } else if (couponObj.isExpired) {
-                couponObj.statusClass = 'bg-danger';
+                couponObj.statusClass = 'badge-expired';
             } else if (couponObj.isExhausted) {
-                couponObj.statusClass = 'bg-secondary';
+                couponObj.statusClass = 'badge-inactive';
             } else {
-                couponObj.statusClass = 'bg-success';
+                couponObj.statusClass = 'badge-active';
             }
-
-            // Format discount value
-            couponObj.formattedDiscount = coupon.discountType === 'percentage' 
-                ? `${coupon.discountValue}%` 
-                : `₹${coupon.discountValue}`;
-
-            // Format usage limits
-            couponObj.formattedUsage = coupon.usageLimit 
-                ? `${coupon.usageCount}/${coupon.usageLimit}`
-                : `${coupon.usageCount}/∞`;
-
+            // No need for formattedDiscount since it's always percentage
+            couponObj.minPurchaseAmount = couponObj.minPurchaseAmount || 0;
+            couponObj.maxDiscountAmount = couponObj.maxDiscountAmount || 0;
+            couponObj.discountValue = couponObj.discountValue || 0;
+            couponObj.usageCount = couponObj.usageCount || 0;
+        
+            // Format usage information
+            if (coupon.usageLimit) {
+                couponObj.formattedUsage = `${couponObj.usageCount}/${coupon.usageLimit}`;
+            } else {
+                couponObj.formattedUsage = `${couponObj.usageCount}/∞`;
+            }
+        
             return couponObj;
         });
-
         // Create pagination object
         const pagination = {
             totalPages,
@@ -125,19 +119,17 @@ const getCouponTemplate = async (req, res) => {
         };
 
         // Render the template with data
-        res.render('admin/couponManagement', {
+        res.render('couponManagement', {
             title: 'Coupon Management',
             coupons: enhancedCoupons,
             pagination,
-            query: req.query,
             filters: {
-                searchQuery,
-                discountType,
+                search,          // Changed from searchQuery to search
                 status,
                 validOnly
             },
-            success: req.flash('success'),
-            error: req.flash('error')
+            successMessage: req.flash('success'),    // Changed to match template
+            errorMessage: req.flash('error')         // Changed to match template
         });
 
     } catch (error) {
@@ -151,58 +143,60 @@ const getCouponTemplate = async (req, res) => {
 
 const getAddCoupon = async (req, res) => {
     try {
-        // Fetch all active categories
-        const categories = await Category.find({ isListed: true })
-            .select('name categoryOffer')
-            .sort({ name: 1 });
+        // Get any flash messages for errors or previously entered form data
+        const formData = req.flash('formData')[0] || {};
+        const errors = req.flash('errors')[0] || {};
 
-        // Fetch all active products with necessary fields
-        const products = await Product.find({ isListed: true })
-            .select('productName brand variants productOffer category isListed')
-            .populate('category', 'name')
-            .lean();
+        // Set default values for dates
+        const currentDate = new Date();
+        const defaultValidFrom = currentDate.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
+        
+        // Set default end date to 30 days from now
+        const defaultValidUntil = new Date(currentDate);
+        defaultValidUntil.setDate(defaultValidUntil.getDate() + 30);
+        const defaultValidUntilStr = defaultValidUntil.toISOString().slice(0, 16);
 
-        // Group products by category with enhanced details
-        const groupedProducts = products.reduce((acc, product) => {
-            const categoryName = product.category?.name || 'Uncategorized';
-            
-            if (!acc[categoryName]) {
-                acc[categoryName] = [];
-            }
+        // Prepare initial form data with defaults
+        const initialFormData = {
+            code: '',
+            description: '',
+            discountValue: '',
+            minPurchaseAmount: '',
+            maxDiscountAmount: '',
+            validFrom: defaultValidFrom,
+            validUntil: defaultValidUntilStr,
+            usageLimit: '',
+            perUserLimit: 1,
+            isActive: true,
+            ...formData // Override defaults with any flashed form data
+        };
 
-            // Calculate price range with any active offers
-            const priceRange = calculatePriceRange(product);
-
-            // Format variants info
-            const variants = formatVariantInfo(product.variants);
-
-            acc[categoryName].push({
-                _id: product._id,
-                productName: product.productName,
-                brand: product.brand,
-                variants: variants,
-                productOffer: product.productOffer,
-                isListed: product.isListed,
-                priceRange: priceRange
-            });
-
-            return acc;
-        }, {});
-
-        res.render('couponAdd', {
+        res.render('admin/couponAdd', {
             title: 'Add New Coupon',
-            categories,
-            groupedProducts,
-            formData: req.flash('formData')[0],
-            errors: req.flash('errors')[0]
+            formData: initialFormData,
+            errors: errors,
+            defaultValidFrom,
+            defaultValidUntil: defaultValidUntilStr,
+            // Add validation constants that might be useful in the view
+            validationRules: {
+                maxDiscountPercentage: 90,
+                minDiscountPercentage: 0,
+                codePattern: '^[A-Z0-9]{1,15}$',
+                maxDescriptionLength: 200
+            },
+            // Add any success or error messages from flash
+            messages: {
+                success: req.flash('success'),
+                error: req.flash('error')
+            }
         });
+
     } catch (error) {
         console.error('Error in getAddCoupon:', error);
         req.flash('error', 'Failed to load coupon form');
         res.redirect('/admin/coupons');
     }
 };
-
 
 // Helper function to calculate price range
 const calculatePriceRange = (product) => {
@@ -234,7 +228,6 @@ const addCoupon = async (req, res) => {
         const {
             code,
             description,
-            discountType,
             discountValue,
             minPurchaseAmount,
             maxDiscountAmount,
@@ -242,7 +235,6 @@ const addCoupon = async (req, res) => {
             validUntil,
             usageLimit,
             perUserLimit,
-            applicableProducts,
             isActive
         } = req.body;
 
@@ -250,7 +242,7 @@ const addCoupon = async (req, res) => {
         const errors = {};
         
         // Validate coupon code
-        if (!code || !/^[A-Za-z0-9]{1,15}$/.test(code)) {
+        if (!code || !/^[A-Z0-9]{1,15}$/.test(code)) {
             errors.code = { message: 'Invalid coupon code format' };
         } else {
             const existingCoupon = await Coupon.findOne({ code: code.toUpperCase() });
@@ -259,24 +251,26 @@ const addCoupon = async (req, res) => {
             }
         }
 
-        // Validate discount type and value
-        if (!discountType || !['percentage', 'fixed'].includes(discountType)) {
-            errors.discountType = { message: 'Invalid discount type' };
-        }
-
-        if (!discountValue || isNaN(discountValue) || parseFloat(discountValue) <= 0) {
-            errors.discountValue = { message: 'Invalid discount value' };
-        } else if (discountType === 'percentage' && parseFloat(discountValue) > 100) {
-            errors.discountValue = { message: 'Percentage discount cannot exceed 100%' };
+        // Validate discount value
+        const discountNum = parseFloat(discountValue);
+        if (!discountValue || isNaN(discountNum) || discountNum < 0 || discountNum > 90) {
+            errors.discountValue = { message: 'Discount must be between 0 and 90%' };
         }
 
         // Validate amounts
-        if (minPurchaseAmount && isNaN(minPurchaseAmount)) {
-            errors.minPurchaseAmount = { message: 'Invalid minimum purchase amount' };
+        const minPurchase = parseFloat(minPurchaseAmount);
+        const maxDiscount = parseFloat(maxDiscountAmount);
+
+        if (!minPurchaseAmount || isNaN(minPurchase) || minPurchase < 1) {
+            errors.minPurchaseAmount = { message: 'Minimum purchase amount must be at least 1' };
         }
 
-        if (maxDiscountAmount && isNaN(maxDiscountAmount)) {
-            errors.maxDiscountAmount = { message: 'Invalid maximum discount amount' };
+        if (!maxDiscountAmount || isNaN(maxDiscount) || maxDiscount < 1) {
+            errors.maxDiscountAmount = { message: 'Maximum discount amount must be at least 1' };
+        }
+
+        if (maxDiscount >= minPurchase) {
+            errors.maxDiscountAmount = { message: 'Maximum discount must be less than minimum purchase amount' };
         }
 
         // Validate dates
@@ -296,18 +290,17 @@ const addCoupon = async (req, res) => {
             errors.validUntil = { message: 'End date must be after start date' };
         }
 
+        if (validFromDate < currentDate) {
+            errors.validFrom = { message: 'Start date cannot be in the past' };
+        }
+
         // Validate usage limits
         if (usageLimit && (isNaN(usageLimit) || parseInt(usageLimit) < 1)) {
             errors.usageLimit = { message: 'Usage limit must be at least 1' };
         }
 
-        if (perUserLimit && (isNaN(perUserLimit) || parseInt(perUserLimit) < 1)) {
+        if (!perUserLimit || isNaN(perUserLimit) || parseInt(perUserLimit) < 1) {
             errors.perUserLimit = { message: 'Per user limit must be at least 1' };
-        }
-
-        // Validate applicable products
-        if (!applicableProducts || !Array.isArray(applicableProducts) || applicableProducts.length === 0) {
-            errors.applicableProducts = { message: 'At least one product must be selected' };
         }
 
         // If there are validation errors, return them
@@ -319,19 +312,17 @@ const addCoupon = async (req, res) => {
             });
         }
 
-        // Create new coupon with proper type casting
+        // Create new coupon
         const newCoupon = new Coupon({
             code: code.toUpperCase(),
             description: description || '',
-            discountType: discountType,
-            discountValue: parseFloat(discountValue),
-            minPurchaseAmount: minPurchaseAmount ? parseFloat(minPurchaseAmount) : 0,
-            maxDiscountAmount: maxDiscountAmount ? parseFloat(maxDiscountAmount) : null,
+            discountValue: discountNum,
+            minPurchaseAmount: minPurchase,
+            maxDiscountAmount: maxDiscount,
             validFrom: validFromDate,
             validUntil: validUntilDate,
             usageLimit: usageLimit ? parseInt(usageLimit) : null,
-            perUserLimit: parseInt(perUserLimit) || 1,
-            applicableProducts: applicableProducts,
+            perUserLimit: parseInt(perUserLimit),
             isActive: isActive === 'on' || isActive === true,
             usageCount: 0
         });
@@ -374,65 +365,35 @@ const getEditCouponPage = async (req, res) => {
     try {
         const couponId = req.params.id;
 
-        // Fetch coupon with populated products
-        const coupon = await Coupon.findById(couponId)
-            .populate('applicableProducts', 'productName variants productOffer category isListed')
-            .populate('applicableCategories', 'name');
+        // Fetch coupon with lean() for better performance
+        const coupon = await Coupon.findById(couponId).lean();
 
         if (!coupon) {
             req.flash('error', 'Coupon not found');
             return res.redirect('/admin/coupons');
         }
 
-        // Fetch all active categories
-        const categories = await Category.find({ isListed: true })
-            .select('name categoryOffer')
-            .sort({ name: 1 });
+        // Prepare validation constraints from schema
+        const validationRules = {
+            maxDiscountPercentage: 90,
+            minDiscountPercentage: 0,
+            codePattern: '^[A-Z0-9]{1,15}$',
+            maxDescriptionLength: 200,
+            minimumPurchaseAmount: 1,
+            minimumDiscountAmount: 1
+        };
 
-        // Fetch all active products
-        const products = await Product.find({ isListed: true })
-            .select('productName brand variants productOffer category isListed')
-            .populate('category', 'name')
-            .lean();
-
-        // Group products by category with enhanced details
-        const groupedProducts = products.reduce((acc, product) => {
-            const categoryName = product.category?.name || 'Uncategorized';
-            
-            if (!acc[categoryName]) {
-                acc[categoryName] = [];
-            }
-
-            // Calculate price range
-            const priceRange = {
-                min: Math.min(...product.variants.map(v => v.price)),
-                max: Math.max(...product.variants.map(v => v.price))
-            };
-
-            // Apply product offer if exists
-            if (product.productOffer > 0) {
-                priceRange.min *= (1 - product.productOffer / 100);
-                priceRange.max *= (1 - product.productOffer / 100);
-            }
-
-            acc[categoryName].push({
-                _id: product._id,
-                productName: product.productName,
-                brand: product.brand,
-                variants: product.variants,
-                productOffer: product.productOffer,
-                isListed: product.isListed,
-                priceRange: priceRange
-            });
-
-            return acc;
-        }, {});
+        // Format dates for datetime-local inputs
+        const formattedDates = {
+            validFrom: new Date(coupon.validFrom).toISOString().slice(0, 16),
+            validUntil: new Date(coupon.validUntil).toISOString().slice(0, 16)
+        };
 
         res.render('couponEdit', {
             title: 'Edit Coupon',
             coupon,
-            categories,
-            groupedProducts,
+            formattedDates,
+            validationRules,
             errors: req.flash('errors'),
             success: req.flash('success')
         });
@@ -450,7 +411,6 @@ const updateCoupon = async (req, res) => {
         const {
             code,
             description,
-            discountType,
             discountValue,
             minPurchaseAmount,
             maxDiscountAmount,
@@ -458,33 +418,24 @@ const updateCoupon = async (req, res) => {
             validUntil,
             usageLimit,
             perUserLimit,
-            applicableProducts,
             isActive
         } = req.body;
 
         // Validation
         const errors = {};
-        
+
         // Validate coupon code
-        if (!code || !/^[A-Za-z0-9]{1,15}$/.test(code)) {
-            errors.code = { message: 'Invalid coupon code format' };
+        if (!code || !/^[A-Z0-9]{1,15}$/.test(code.toUpperCase())) {
+            errors.code = 'Invalid coupon code format';
         } else {
             // Check if code exists (excluding current coupon)
-            const existingCoupon = await Coupon.findOne({ 
+            const existingCoupon = await Coupon.findOne({
                 code: code.toUpperCase(),
                 _id: { $ne: couponId }
             });
             if (existingCoupon) {
-                errors.code = { message: 'Coupon code already exists' };
+                errors.code = 'Coupon code already exists';
             }
-        }
-
-        // Validate discount value
-        const discountVal = parseFloat(discountValue);
-        if (isNaN(discountVal) || discountVal <= 0) {
-            errors.discountValue = { message: 'Invalid discount value' };
-        } else if (discountType === 'percentage' && discountVal > 100) {
-            errors.discountValue = { message: 'Percentage cannot exceed 100%' };
         }
 
         // Validate dates
@@ -492,12 +443,28 @@ const updateCoupon = async (req, res) => {
         const untilDate = new Date(validUntil);
         
         if (untilDate <= fromDate) {
-            errors.validUntil = { message: 'End date must be after start date' };
+            errors.validUntil = 'End date must be after start date';
         }
 
-        // Validate applicable products
-        if (!applicableProducts || !Array.isArray(applicableProducts) || applicableProducts.length === 0) {
-            errors.applicableProducts = { message: 'At least one product must be selected' };
+        // Check discount and amount validations
+        const discountVal = parseFloat(discountValue);
+        const minPurchase = parseFloat(minPurchaseAmount);
+        const maxDiscount = parseFloat(maxDiscountAmount);
+
+        if (isNaN(discountVal) || discountVal < 0 || discountVal > 90) {
+            errors.discountValue = 'Discount must be between 0 and 90%';
+        }
+
+        if (isNaN(minPurchase) || minPurchase < 1) {
+            errors.minPurchaseAmount = 'Minimum purchase amount must be at least 1';
+        }
+
+        if (isNaN(maxDiscount) || maxDiscount < 1) {
+            errors.maxDiscountAmount = 'Maximum discount amount must be at least 1';
+        }
+
+        if (maxDiscount >= minPurchase) {
+            errors.maxDiscountAmount = 'Maximum discount must be less than minimum purchase amount';
         }
 
         // If there are validation errors, return them
@@ -515,18 +482,20 @@ const updateCoupon = async (req, res) => {
             {
                 code: code.toUpperCase(),
                 description: description || '',
-                discountType,
                 discountValue: discountVal,
-                minPurchaseAmount: parseFloat(minPurchaseAmount) || 0,
-                maxDiscountAmount: maxDiscountAmount ? parseFloat(maxDiscountAmount) : null,
+                minPurchaseAmount: minPurchase,
+                maxDiscountAmount: maxDiscount,
                 validFrom: fromDate,
                 validUntil: untilDate,
                 usageLimit: usageLimit ? parseInt(usageLimit) : null,
                 perUserLimit: parseInt(perUserLimit) || 1,
-                applicableProducts,
                 isActive: isActive === 'on' || isActive === true
             },
-            { new: true, runValidators: true }
+            { 
+                new: true, 
+                runValidators: true,
+                context: 'query' 
+            }
         );
 
         if (!updatedCoupon) {
@@ -538,17 +507,20 @@ const updateCoupon = async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Coupon updated successfully'
+            message: 'Coupon updated successfully',
+            coupon: updatedCoupon
         });
 
     } catch (error) {
         console.error('Error in updateCoupon:', error);
-
+        
         if (error.name === 'ValidationError') {
             return res.status(400).json({
                 success: false,
                 message: 'Validation failed',
-                errors: error.errors
+                errors: Object.fromEntries(
+                    Object.entries(error.errors).map(([key, value]) => [key, value.message])
+                )
             });
         }
 
@@ -558,7 +530,6 @@ const updateCoupon = async (req, res) => {
         });
     }
 };
-
 
 const toggleCouponStatus = async (req, res) => {
     try {

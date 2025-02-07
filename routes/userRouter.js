@@ -8,6 +8,7 @@ const cartController = require('../controllers/user/cartController');
 const checkoutController = require('../controllers/user/checkOutController');
 const orderController = require('../controllers/user/orderController');
 const walletController = require('../controllers/user/walletController');
+
 const { userAuth } = require("../middlewares/auth");
 const passport = require("passport");
 
@@ -63,7 +64,7 @@ router.post('/removeProduct',cartController.removeProduct);
 router.get('/checkout', checkoutController.getCheckout);
 router.post('/checkout/placeOrder', checkoutController.placeOrder);
 router.post('/checkout/create-razorpay-order', checkoutController.createRazorpayOrder);
-router.post('/checkout/verify-razorpay-payment', checkoutController.verifyRazorpayPayment); // Fixed the path
+router.post('/checkout/verify-razorpay-payment', checkoutController.verifyRazorpayPayment);
 router.get('/checkout/orderSuccess/:orderId?', checkoutController.orderSuccess);
 router.post('/checkout/address', checkoutController.addCheckoutAddress);
 router.get('/orders',orderController.getUserOrders);
@@ -73,6 +74,7 @@ router.post('/orders/:orderId/items/:itemId/return', orderController.returnOrder
 
 router.post('/checkout/apply-coupon', checkoutController.applyCoupon);
 router.post('/checkout/remove-coupon', checkoutController.removeCoupon);
+router.get('/checkout/available-coupons', checkoutController.getAvailableCoupons);
 
 
 router.get('/userProfile',userController.loadUserProfile);
@@ -88,7 +90,11 @@ router.get('/passwordMangement',passwordController.loadPasswordManager);
 router.post('/changePassword',passwordController.changePassword);
 
 router.get('/wallet',walletController.getWalletPage);
-router.post('/wallet/add-money',walletController.addMoneyToWallet);
+router.post('/wallet/create-order',walletController.createOrder);
+router.post('/wallet/verify-payment',walletController.verifyPayment);
+router.get('/wallet/transactions',walletController.getTransactionHistory);
+router.get('/wallet/balance',walletController.checkBalance);
+router.post('/wallet/deduct',walletController.deductMoney);
 
 
 

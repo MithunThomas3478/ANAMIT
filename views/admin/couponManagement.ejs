@@ -114,24 +114,12 @@
             <div class="card filter-card">
                 <div class="card-body">
                     <form id="filterForm" class="row g-3">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label">Search</label>
                             <input type="text" class="form-control" name="search" 
-                                   placeholder="Search coupons..." value="<%= filters?.search || '' %>">
+                                   placeholder="Search by coupon code..." value="<%= filters?.search || '' %>">
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Discount Type</label>
-                            <select class="form-select" name="discountType">
-                                <option value="">All Types</option>
-                                <option value="percentage" <%= filters?.discountType === 'percentage' ? 'selected' : '' %>>
-                                    Percentage
-                                </option>
-                                <option value="fixed" <%= filters?.discountType === 'fixed' ? 'selected' : '' %>>
-                                    Fixed Amount
-                                </option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <label class="form-label">Status</label>
                             <select class="form-select" name="status">
                                 <option value="">All Status</option>
@@ -169,6 +157,7 @@
                                 <tr>
                                     <th>Code</th>
                                     <th>Discount</th>
+                                    <th>Purchase Requirements</th>
                                     <th>Validity</th>
                                     <th>Usage</th>
                                     <th>Status</th>
@@ -178,7 +167,7 @@
                             <tbody>
                                 <% if (coupons.length === 0) { %>
                                     <tr>
-                                        <td colspan="6" class="text-center py-4">
+                                        <td colspan="7" class="text-center py-4">
                                             <i class="fas fa-search fa-2x text-muted mb-3 d-block"></i>
                                             <p class="text-muted mb-0">No coupons found</p>
                                         </td>
@@ -193,17 +182,18 @@
                                                 </div>
                                             </td>
                                             <td>
+                                                <span class="badge bg-primary">
+                                                    <%= coupon.discountValue %>% OFF
+                                                </span>
+                                            </td>
+                                            <td>
                                                 <div class="d-flex flex-column">
-                                                    <span class="badge bg-primary">
-                                                        <%= coupon.discountType === 'percentage' ? 
-                                                            `${coupon.discountValue}% OFF` : 
-                                                            `₹${coupon.discountValue} OFF` %>
-                                                    </span>
-                                                    <% if (coupon.minPurchaseAmount > 0) { %>
-                                                        <small class="text-muted mt-1">
-                                                            Min Purchase: ₹<%= coupon.minPurchaseAmount %>
-                                                        </small>
-                                                    <% } %>
+                                                    <small class="text-muted">
+                                                        Min Purchase: ₹<%= (coupon.minPurchaseAmount || 0).toLocaleString('en-IN') %>
+                                                    </small>
+                                                    <small class="text-muted">
+                                                        Max Discount: ₹<%= (coupon.maxDiscountAmount || 0).toLocaleString('en-IN') %>
+                                                    </small>
                                                 </div>
                                             </td>
                                             <td>
@@ -213,7 +203,7 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <%= coupon.formattedUsage %>
+                                                <%= coupon.usageCount %> / <%= coupon.usageLimit || '∞' %>
                                                 <% if (coupon.perUserLimit > 1) { %>
                                                     <br>
                                                     <small class="text-muted">

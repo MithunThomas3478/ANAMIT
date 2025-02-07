@@ -6,6 +6,7 @@ const productController = require('../controllers/admin/productController');
 const orderController = require('../controllers/admin/orderController');
 const offerController = require('../controllers/admin/offerController');
 const couponController = require('../controllers/admin/couponController');
+const salesController = require('../controllers/admin/salesReportController')
 const multer = require('multer')
 const upload = multer();
 const { v4: uuidv4 } = require('uuid');
@@ -80,6 +81,8 @@ router.post('/editProduct/:id',newUploads,productController.editProduct);
 router.get('/orders',orderController.getOrderManagement);
 router.patch('/order/:orderId/update-status', orderController.updateOrderStatus);
 router.get('/order/:orderId/invoice', orderController.generateInvoice);
+router.get('/order/view/:orderId', orderController.getOrderDetails);
+
 
 router.get('/offers',offerController.getOfferManagement);
 router.get('/offers/add', offerController.getAddOffer);
@@ -96,4 +99,12 @@ router.get('/coupons/edit/:id', couponController.getEditCouponPage);
 router.post('/coupons/edit/:id', couponController.updateCoupon);
 router.post('/coupons/:id/toggle', couponController.toggleCouponStatus);
 router.delete('/coupons/delete/:id', couponController.deleteCoupon);
+
+router.get('/sales-report/:type?',salesController.getSalesReport);
+
+// Add these to your existing routes
+router.post('/orders/:orderId/items/:itemId/return/:action', orderController.handleReturnRequest);
+
+
+
 module.exports = router;    

@@ -31,11 +31,6 @@ const productSchema = new Schema({
         ref: 'Category',
         required: [true, 'Category is required']
     },
-    brand: {
-        type: String,
-        trim: true,
-        required: [true, 'Brand is required']
-    },
     productOffer: {
         type: Number,
         default: 0,

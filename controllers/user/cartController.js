@@ -36,47 +36,25 @@ const getCart = async (req, res) => {
         }).lean();
 
         const formattedCart = {
-            items: await Promise.all(cart.items.map(async (item) => {
-                const productOffer = activeOffers.find(
-                    offer => offer.offerType === 'product' && 
-                    offer.product?.toString() === item.product._id.toString()
-                );
-
-                const categoryOffer = activeOffers.find(
-                    offer => offer.offerType === 'category' && 
-                    offer.category?.toString() === item.product.category._id.toString()
-                );
-
-                const productDiscount = productOffer?.discountPercentage || 0;
-                const categoryDiscount = categoryOffer?.discountPercentage || 0;
-
-                item.appliedProductOffer = productDiscount;
-                item.appliedCategoryOffer = categoryDiscount;
-
-                const discountPercentage = productDiscount + categoryDiscount;
-                const finalPrice = item.price * (1 - discountPercentage/100);
-
-                return {
-                    productId: item.product._id,
-                    product: {
-                        productName: item.product.productName,
-                        variants: item.product.variants,
-                        category: item.product.category.name
-                    },
-                    colorName: item.selectedColor.colorName,
-                    size: item.selectedSize,
-                    quantity: item.quantity,
-                    price: item.price,
-                    appliedProductOffer: productDiscount,
-                    appliedCategoryOffer: categoryDiscount,
-                    total: finalPrice * item.quantity
-                };
+            items: cart.items.map(item => ({
+                productId: item.product._id,
+                colorName: item.selectedColor.colorName,
+                colorValue: item.selectedColor.colorValue,
+                size: item.selectedSize,
+                quantity: item.quantity,
+                price: item.price,
+                appliedProductOffer: item.appliedProductOffer,
+                appliedCategoryOffer: item.appliedCategoryOffer,
+                product: {
+                    productName: item.product.productName,
+                    variants: item.product.variants,
+                    category: item.product.category.name
+                }
             })),
             totalAmount: cart.totalAmount,
             totalDiscount: cart.totalDiscount
         };
 
-        await cart.save();
         res.render('shoppingCart', { cart: formattedCart });
 
     } catch (error) {
