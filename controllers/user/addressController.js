@@ -1,13 +1,33 @@
 const Address = require('../../models/addressSchema');
 
-const getAllAdress = async (req,res) => {
+const getAllAdress = async (req, res) => {
     try {
-        const addresses = await Address.find({userId : req.user._id});
-        res.render('userAddressManagement',{
+        const page = parseInt(req.query.page) || 1;
+        const limit = 6; // Items per page
+        
+        // Get total addresses count
+        const totalAddresses = await Address.countDocuments({ userId: req.user._id });
+        
+        // Calculate pagination values
+        const totalPages = Math.ceil(totalAddresses / limit);
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+
+        // Get paginated addresses
+        const addresses = await Address.find({ userId: req.user._id })
+            .skip(startIndex)
+            .limit(limit);
+
+        res.render('userAddressManagement', {
             addresses,
-            user : req.user,
-            title : 'Manage Addressess'
-        })
+            user: req.user,
+            title: 'Manage Addresses',
+            currentPage: page,
+            totalPages,
+            startIndex,
+            endIndex,
+            totalAddresses
+        });
     } catch (error) {
         res.status(500).send('Error fetching addresses');
     }

@@ -202,16 +202,42 @@
                     </div>
                 </div>
 
-                <div class="info-box">
-                    <div class="info-label">Order Summary</div>
-                    <div class="info-value">
-                        Total Items: <%= order.items.length %><br>
-                        Subtotal: ₹<%= order.totalAmount ? order.totalAmount.toFixed(2) : '0.00' %><br>
-                        Shipping: ₹<%= order.shippingFee ? order.shippingFee.toFixed(2) : '0.00' %><br>
-                        <% if (order.totalDiscount && order.totalDiscount > 0) { %>
-                            Discount: -₹<%= order.totalDiscount.toFixed(2) %><br>
-                        <% } %>
-                        <strong>Final Total: ₹<%= order.finalAmount ? order.finalAmount.toFixed(2) : (order.totalAmount + order.shippingFee).toFixed(2) %></strong>
+                <div class="info-grid">
+                    <!-- Other info boxes remain the same -->
+                    <div class="info-box">
+                        <div class="info-label">Order Summary</div>
+                        <div class="info-value">
+                            <% 
+                                // Calculate active items
+                                const activeItems = order.items.filter(item => item.status === 'active');
+                                const activeItemsTotal = activeItems.reduce((total, item) => total + item.itemTotal, 0);
+                                
+                                // Calculate total discount proportionally
+                                let totalDiscount = 0;
+                                if (order.totalDiscount && order.totalDiscount > 0) {
+                                    const totalOrderAmount = order.items.reduce((total, item) => total + item.itemTotal, 0);
+                                    const activeItemRatio = activeItemsTotal / totalOrderAmount;
+                                    totalDiscount = order.totalDiscount * activeItemRatio;
+                                }
+                                
+                                // Calculate final amount
+                                const finalAmount = activeItemsTotal - totalDiscount + 
+                                    (activeItems.length === order.items.length ? order.shippingFee : 0);
+                            %>
+                            Total Items: <%= order.items.length %><br>
+                            Active Items: <%= activeItems.length %><br>
+                            Subtotal: ₹<%= activeItemsTotal.toFixed(2) %><br>
+                            
+                            <% if (totalDiscount > 0) { %>
+                                Discount: -₹<%= totalDiscount.toFixed(2) %><br>
+                            <% } %>
+                            
+                            <% if (activeItems.length === order.items.length) { %>
+                                Shipping: ₹<%= order.shippingFee.toFixed(2) %><br>
+                            <% } %>
+                            
+                            <strong>Final Total: ₹<%= finalAmount.toFixed(2) %></strong>
+                        </div>
                     </div>
                 </div>
             </div>

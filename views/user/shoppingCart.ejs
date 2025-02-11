@@ -87,6 +87,12 @@
             padding: 1.5rem;
             border-bottom: 1px solid var(--border-color);
             align-items: center;
+            transition: opacity 0.3s ease, background-color 0.3s ease;
+        }
+
+        .cart-item.out-of-stock {
+            opacity: 0.7;
+            background-color: #fff5f5;
         }
 
         .cart-item:last-child {
@@ -182,7 +188,7 @@
             transition: all 0.2s ease;
         }
 
-        .quantity-btn:hover {
+        .quantity-btn:hover:not(:disabled) {
             background: var(--primary-color);
             color: white;
         }
@@ -273,14 +279,19 @@
             cursor: pointer;
             transition: all 0.2s ease;
             margin-top: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
 
-        .checkout-btn:hover {
+        .checkout-btn:not(:disabled):hover {
             background: var(--secondary-color);
             transform: translateY(-2px);
         }
 
         .checkout-btn:disabled {
+            background-color: #dc3545;
             opacity: 0.7;
             cursor: not-allowed;
             transform: none;
@@ -312,7 +323,9 @@
         }
 
         .continue-shopping {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
             padding: 0.75rem 1.5rem;
             background: var(--primary-color);
             color: white;
@@ -324,6 +337,34 @@
         .continue-shopping:hover {
             background: var(--secondary-color);
             transform: translateY(-2px);
+        }
+
+        /* Stock Warning */
+        .stock-warning {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--warning-color);
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+
+        .stock-error {
+            color: var(--danger-color);
+        }
+
+        /* Alert */
+        .alert {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
         }
 
         /* Loading States */
@@ -344,6 +385,11 @@
 
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* Responsive Design */
@@ -387,13 +433,6 @@
                 padding: 1rem;
             }
         }
-
-        /* Stock Warning */
-        .stock-warning {
-            color: var(--warning-color);
-            font-size: 0.8rem;
-            margin-top: 0.25rem;
-        }
     </style>
 </head>
 <body>
@@ -409,7 +448,7 @@
             <div class="cart-content">
                 <div class="cart-items">
                     <% cart.items.forEach(item => { %>
-                        <div class="cart-item" 
+                        <div class="cart-item <%= item.isOutOfStock ? 'out-of-stock' : '' %>" 
                              data-item-id="<%= item.productId %>"
                              data-color="<%= item.colorName %>"
                              data-size="<%= item.size %>">
@@ -451,7 +490,12 @@
                                     </div>
                                 <% } %>
 
-                                <% if (item.stockWarning) { %>
+                                <% if (item.isOutOfStock) { %>
+                                    <div class="stock-warning stock-error">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        Out of Stock
+                                    </div>
+                                <% } else if (item.stockWarning) { %>
                                     <div class="stock-warning">
                                         <i class="fas fa-exclamation-triangle"></i>
                                         Only <%= item.stockWarning %> items left
@@ -463,17 +507,18 @@
                             <div class="quantity-controls">
                                 <button class="quantity-btn decrease" 
                                         onclick="updateQuantity('<%= item.productId %>', '<%= item.colorName %>', '<%= item.size %>', -1)"
-                                        <%= item.quantity <= 1 ? 'disabled' : '' %>>
+                                        <%= item.quantity <= 1 || item.isOutOfStock ? 'disabled' : '' %>>
                                     <i class="fas fa-minus"></i>
                                 </button>
                                 <input type="number" class="quantity-input" 
                                        value="<%= item.quantity %>" 
                                        min="1" 
                                        max="5"
+                                       <%= item.isOutOfStock ? 'disabled' : '' %>
                                        onchange="updateQuantity('<%= item.productId %>', '<%= item.colorName %>', '<%= item.size %>', 0, this.value)">
                                 <button class="quantity-btn increase" 
                                         onclick="updateQuantity('<%= item.productId %>', '<%= item.colorName %>', '<%= item.size %>', 1)"
-                                        <%= item.quantity >= 5 ? 'disabled' : '' %>>
+                                        <%= item.quantity >= 5 || item.isOutOfStock ? 'disabled' : '' %>>
                                     <i class="fas fa-plus"></i>
                                 </button>
                             </div>
@@ -520,9 +565,24 @@
                             </div>
                         <% } %>
                     </div>
+
+                    <% if (cart.hasOutOfStock) { %>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Some items in your cart are out of stock. Please remove them to proceed with checkout.
+                        </div>
+                    <% } %>
                 
-                    <button class="checkout-btn" onclick="proceedToCheckout()">
-                        Proceed to Checkout
+                    <button class="checkout-btn" 
+                            onclick="proceedToCheckout()"
+                            <%= cart.hasOutOfStock ? 'disabled' : '' %>
+                            title="<%= cart.hasOutOfStock ? 'Remove out of stock items before checkout' : '' %>">
+                        <% if (cart.hasOutOfStock) { %>
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Remove Out of Stock Items
+                        <% } else { %>
+                            Proceed to Checkout
+                        <% } %>
                     </button>
                 </div>
             </div>
@@ -648,8 +708,8 @@
                     // Update quantity buttons
                     const decreaseBtn = itemElement.querySelector('.quantity-btn.decrease');
                     const increaseBtn = itemElement.querySelector('.quantity-btn.increase');
-                    if (decreaseBtn) decreaseBtn.disabled = item.quantity <= 1;
-                    if (increaseBtn) increaseBtn.disabled = item.quantity >= 5;
+                    if (decreaseBtn) decreaseBtn.disabled = item.quantity <= 1 || item.isOutOfStock;
+                    if (increaseBtn) increaseBtn.disabled = item.quantity >= 5 || item.isOutOfStock;
 
                     // Update prices
                     const priceInfo = itemElement.querySelector('.price-info');
@@ -666,6 +726,13 @@
                         if (finalPriceElement) {
                             finalPriceElement.textContent = `₹${finalPrice.toLocaleString('en-IN')}`;
                         }
+                    }
+
+                    // Update out of stock status
+                    if (item.isOutOfStock) {
+                        itemElement.classList.add('out-of-stock');
+                    } else {
+                        itemElement.classList.remove('out-of-stock');
                     }
                 }
             });
@@ -698,6 +765,16 @@
                 if (savingsMessage && cartData.totalDiscount > 0) {
                     savingsMessage.textContent = 
                         `You saved ₹${cartData.totalDiscount.toLocaleString('en-IN')} on this order!`;
+                }
+
+                // Update checkout button
+                const checkoutBtn = summaryElement.querySelector('.checkout-btn');
+                if (checkoutBtn) {
+                    const hasOutOfStock = cartData.items.some(item => item.isOutOfStock);
+                    checkoutBtn.disabled = hasOutOfStock;
+                    checkoutBtn.innerHTML = hasOutOfStock ? 
+                        '<i class="fas fa-exclamation-triangle"></i> Remove Out of Stock Items' : 
+                        'Proceed to Checkout';
                 }
             }
 
@@ -751,9 +828,12 @@
                     throw new Error(data.message || 'Failed to remove item');
                 }
 
-                // Remove item from DOM
+                // Remove item from DOM with animation
                 if (itemElement) {
-                    itemElement.remove();
+                    itemElement.style.animation = 'fadeOut 0.3s ease-in-out';
+                    setTimeout(() => {
+                        itemElement.remove();
+                    }, 300);
                 }
 
                 // Update cart UI
@@ -789,6 +869,18 @@
         }
 
         function proceedToCheckout() {
+            const checkoutBtn = document.querySelector('.checkout-btn');
+            
+            if (checkoutBtn.disabled) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Out of Stock Items',
+                    text: 'Please remove out of stock items from your cart before proceeding to checkout.',
+                    confirmButtonColor: '#dc3545'
+                });
+                return;
+            }
+            
             window.location.href = '/checkout';
         }
 
@@ -813,6 +905,21 @@
                         });
                     }
                 });
+
+                // Prevent manual input when disabled
+                input.addEventListener('keydown', function(e) {
+                    if (this.disabled) {
+                        e.preventDefault();
+                    }
+                });
+            });
+
+            // Add out-of-stock class to cart items
+            document.querySelectorAll('.cart-item').forEach(item => {
+                const stockWarning = item.querySelector('.stock-warning');
+                if (stockWarning && stockWarning.classList.contains('stock-error')) {
+                    item.classList.add('out-of-stock');
+                }
             });
 
             // Check for auto-removed items notification
@@ -828,6 +935,16 @@
                 });
             }
         });
+
+        // Add keyframe animation for fadeOut
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from { opacity: 1; transform: translateX(0); }
+                to { opacity: 0; transform: translateX(-20px); }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>

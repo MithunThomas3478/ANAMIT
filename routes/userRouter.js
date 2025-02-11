@@ -28,8 +28,8 @@ router.post('/forgot-password', userController.forgotPassword);
 router.post('/verify-forgot-password-otp', userController.verifyForgotPasswordOtp);
 router.post('/reset-password', userController.resetPassword);
 router.post('/resend-forgot-password-otp', userController.resendForgotPasswordOtp);
-router.get('/api/search', userController.searchProducts);
 
+router.get('/search',userController.search)
 
 // Google login
 router.get(
@@ -47,6 +47,7 @@ router.get(
 );
 
 router.use(userAuth);
+router.post('/apply-referral',userController.applyReferral)
 router.get('/mens',productController.getMensFashion);
 router.get('/womens',productController.getWomensFashion);
 router.get('/productDetails/:id',productController.getProductDetails);

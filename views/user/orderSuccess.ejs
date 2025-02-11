@@ -12,6 +12,7 @@
             --text-primary: #333;
             --text-secondary: #666;
             --bg-light: #f5f5f5;
+            --border-color: #e5e5e5;
         }
 
         .container {
@@ -27,16 +28,6 @@
             padding: 40px;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .status-bar {
-            background: var(--bg-light);
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-radius: 8px;
-            margin-bottom: 40px;
         }
 
         .success-icon {
@@ -85,6 +76,9 @@
 
         .order-info-item {
             padding: 10px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
         }
 
         .info-label {
@@ -96,6 +90,41 @@
         .info-value {
             color: var(--text-primary);
             font-weight: 500;
+        }
+
+        .price-breakdown {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .price-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+        }
+
+        .price-item.total {
+            border-top: 2px solid var(--border-color);
+            margin-top: 10px;
+            padding-top: 10px;
+            font-weight: bold;
+        }
+
+        .savings {
+            color: var(--success-color);
+            font-weight: 500;
+        }
+
+        .delivery-info {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 1px solid var(--border-color);
         }
 
         .action-buttons {
@@ -123,7 +152,6 @@
 
         .btn-primary:hover {
             background: var(--primary-hover);
-            transform: translateY(-2px);
         }
 
         .btn-secondary {
@@ -133,7 +161,6 @@
 
         .btn-secondary:hover {
             background: #e5e5e5;
-            transform: translateY(-2px);
         }
 
         @media (max-width: 768px) {
@@ -176,8 +203,8 @@
                         <div class="info-value">#<%= order.orderNumber %></div>
                     </div>
                     <div class="order-info-item">
-                        <div class="info-label">Order Amount</div>
-                        <div class="info-value">₹<%= order.totalAmount.toLocaleString('en-IN') %></div>
+                        <div class="info-label">Order Date</div>
+                        <div class="info-value"><%= moment(order.createdAt).format('MMM DD, YYYY, hh:mm A') %></div>
                     </div>
                     <div class="order-info-item">
                         <div class="info-label">Payment Method</div>
@@ -194,10 +221,11 @@
                         </div>
                     </div>
                 </div>
-            </div>
+
+               
 
             <div class="action-buttons">
-                <a href="/orders/" class="btn btn-primary">View Order Details</a>
+                <a href="/orders" class="btn btn-primary">View Order Details</a>
                 <a href="/" class="btn btn-secondary">Continue Shopping</a>
             </div>
         </div>

@@ -1,4 +1,4 @@
-]<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -22,19 +22,6 @@
         .edit-btn:hover { 
             background-color: #7c3aed !important; 
         }
-        .form-check-input:checked {
-            background-color: #ef4444 !important;
-            border-color: #ef4444 !important;
-        }
-
-        .add-offer-btn:hover {
-            background-color: #5b21b6 !important;
-        }
-
-        .edit-btn:hover {
-            background-color: #7c3aed !important;
-        }
-
         .form-check-input:checked {
             background-color: #ef4444 !important;
             border-color: #ef4444 !important;
@@ -91,6 +78,15 @@
             background-color: #6B7280 !important;
             padding: 0.75rem 1.5rem !important;
         }
+
+        /* Custom Tabs */
+        .nav-tabs .nav-link {
+            color: #6b7280;
+        }
+        .nav-tabs .nav-link.active {
+            color: #6d28d9;
+            border-color: #6d28d9;
+        }
     </style>
 </head>
 <body>
@@ -106,75 +102,146 @@
                 </a>
             </div>
 
-            <div class="table-responsive bg-white rounded shadow">
-                <table class="table mb-0">
-                    <thead style="background-color: #4f46e5; color: white;">
-                        <tr>
-                            <th>Offer Name</th>
-                            <th>Type</th>
-                            <th>Applied To</th>
-                            <th>Discount</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% offers.forEach(offer => { %>
-                            <tr>
-                                <td>
-                                    <div class="d-flex flex-column">
-                                        <span class="fw-medium"><%= offer.name %></span>
-                                        <small class="text-muted">ID: <%= offer._id %></small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="badge" style="background-color: #8b5cf6;">
-                                        <%= offer.offerType %>
-                                    </span>
-                                </td>
-                                <td>
-                                    <%= offer.offerType === 'category' ? offer.category.name : offer.product.productName %>
-                                </td>
-                                <td>
-                                    <span class="badge bg-success">
-                                        <%= offer.discountPercentage %>% OFF
-                                    </span>
-                                </td>
-                                <td><%= new Date(offer.startDate).toLocaleDateString() %></td>
-                                <td><%= new Date(offer.endDate).toLocaleDateString() %></td>
-                                <td>
-                                    <span class="badge <%= offer.isActive ? 'bg-success' : 'bg-warning' %>">
-                                        <%= offer.isActive ? 'Active' : 'Inactive' %>
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <button class="edit-btn" 
-                                                onclick="editOffer('<%= offer._id %>')"
-                                                style="background-color: #8b5cf6; color: white; border: none; padding: 0.5rem; border-radius: 0.25rem;">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
-                                            </svg>
-                                        </button>
-                                        
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input status-toggle" 
-                                                   type="checkbox" 
-                                                   <%= offer.isActive ? 'checked' : '' %>
-                                                   data-offer-id="<%= offer._id %>"
-                                                   style="cursor: pointer;">
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
-                </table>
+            <!-- Offer Type Tabs -->
+            <ul class="nav nav-tabs mb-3" id="offerTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="category-offers-tab" data-bs-toggle="tab" data-bs-target="#category-offers" type="button" role="tab">
+                        Category Offers
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="product-offers-tab" data-bs-toggle="tab" data-bs-target="#product-offers" type="button" role="tab">
+                        Product Offers
+                    </button>
+                </li>
+            </ul>
 
-                <!-- Pagination -->
-                
+            <div class="tab-content" id="offerTabsContent">
+                <!-- Category Offers Tab -->
+                <div class="tab-pane fade show active" id="category-offers" role="tabpanel">
+                    <div class="table-responsive bg-white rounded shadow">
+                        <table class="table mb-0">
+                            <thead style="background-color: #4f46e5; color: white;">
+                                <tr>
+                                    <th>Offer Name</th>
+                                    <th>Category</th>
+                                    <th>Discount</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% offers.filter(offer => offer.offerType === 'category').forEach(offer => { %>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex flex-column">
+                                                <span class="fw-medium"><%= offer.name %></span>
+                                                <small class="text-muted">ID: <%= offer._id %></small>
+                                            </div>
+                                        </td>
+                                        <td><%= offer.category.name %></td>
+                                        <td>
+                                            <span class="badge bg-success">
+                                                <%= offer.discountPercentage %>% OFF
+                                            </span>
+                                        </td>
+                                        <td><%= new Date(offer.startDate).toLocaleDateString() %></td>
+                                        <td><%= new Date(offer.endDate).toLocaleDateString() %></td>
+                                        <td>
+                                            <span class="badge <%= offer.isActive ? 'bg-success' : 'bg-warning' %>">
+                                                <%= offer.isActive ? 'Active' : 'Inactive' %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex gap-2">
+                                                <button class="edit-btn" 
+                                                        onclick="editOffer('<%= offer._id %>')"
+                                                        style="background-color: #8b5cf6; color: white; border: none; padding: 0.5rem; border-radius: 0.25rem;">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                                                    </svg>
+                                                </button>
+                                                
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input status-toggle" 
+                                                           type="checkbox" 
+                                                           <%= offer.isActive ? 'checked' : '' %>
+                                                           data-offer-id="<%= offer._id %>"
+                                                           style="cursor: pointer;">
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Product Offers Tab -->
+                <div class="tab-pane fade" id="product-offers" role="tabpanel">
+                    <div class="table-responsive bg-white rounded shadow">
+                        <table class="table mb-0">
+                            <thead style="background-color: #4f46e5; color: white;">
+                                <tr>
+                                    <th>Offer Name</th>
+                                    <th>Product</th>
+                                    <th>Discount</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% offers.filter(offer => offer.offerType === 'product').forEach(offer => { %>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex flex-column">
+                                                <span class="fw-medium"><%= offer.name %></span>
+                                                <small class="text-muted">ID: <%= offer._id %></small>
+                                            </div>
+                                        </td>
+                                        <td><%= offer.product.productName %></td>
+                                        <td>
+                                            <span class="badge bg-success">
+                                                <%= offer.discountPercentage %>% OFF
+                                            </span>
+                                        </td>
+                                        <td><%= new Date(offer.startDate).toLocaleDateString() %></td>
+                                        <td><%= new Date(offer.endDate).toLocaleDateString() %></td>
+                                        <td>
+                                            <span class="badge <%= offer.isActive ? 'bg-success' : 'bg-warning' %>">
+                                                <%= offer.isActive ? 'Active' : 'Inactive' %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex gap-2">
+                                                <button class="edit-btn" 
+                                                        onclick="editOffer('<%= offer._id %>')"
+                                                        style="background-color: #8b5cf6; color: white; border: none; padding: 0.5rem; border-radius: 0.25rem;">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                                                    </svg>
+                                                </button>
+                                                
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input status-toggle" 
+                                                           type="checkbox" 
+                                                           <%= offer.isActive ? 'checked' : '' %>
+                                                           data-offer-id="<%= offer._id %>"
+                                                           style="cursor: pointer;">
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -185,67 +252,88 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Status toggle handler
-            document.querySelectorAll('.status-toggle').forEach(toggle => {
-    toggle.addEventListener('change', async function() {
-        const offerId = this.dataset.offerId;
-        const isActive = this.checked;
-        
-        try {
-            const result = await Swal.fire({
-                title: `Confirm ${isActive ? 'Activate' : 'Deactivate'}?`,
-                text: `Are you sure you want to ${isActive ? 'activate' : 'deactivate'} this offer?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: isActive ? '#10b981' : '#f59e0b',
-                confirmButtonText: `Yes, ${isActive ? 'activate' : 'deactivate'} it!`
-            });
-
-            if (result.isConfirmed) {
-                // Update the API endpoint to match your controller route
-                const response = await fetch(`/admin/offers/${offerId}/toggle-status`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ isActive })
+    // Status toggle handler
+    document.querySelectorAll('.status-toggle').forEach(toggle => {
+        toggle.addEventListener('change', async function() {
+            const offerId = this.dataset.offerId;
+            const isActive = this.checked;
+            
+            console.log('Toggling offer status:', { offerId, isActive }); // Detailed logging
+            
+            try {
+                const result = await Swal.fire({
+                    title: `Confirm ${isActive ? 'Activate' : 'Deactivate'}?`,
+                    text: `Are you sure you want to ${isActive ? 'activate' : 'deactivate'} this offer?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: isActive ? '#10b981' : '#f59e0b',
+                    confirmButtonText: `Yes, ${isActive ? 'activate' : 'deactivate'} it!`,
+                    cancelButtonText: 'No, cancel'
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Failed to update status');
-                }
+                if (result.isConfirmed) {
+                    // Send request to toggle offer status
+                    const response = await fetch(`/admin/offers/${offerId}/toggle-status`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // Add CSRF token if your application uses it
+                            // 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ isActive })
+                    });
 
-                const data = await response.json();
+                    // Log the full response for debugging
+                    console.log('Server Response:', {
+                        status: response.status,
+                        statusText: response.statusText
+                    });
 
-                Swal.fire({
-                    title: 'Success!',
-                    text: data.message,
-                    icon: 'success',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
+                    // Parse response body
+                    const data = await response.json();
 
-                // Reload the page to reflect the changes
-                setTimeout(() => {
+                    // Log parsed response data
+                    console.log('Parsed Response:', data);
+
+                    // Check if the response was successful
+                    if (!response.ok) {
+                        // Throw an error with the message from the server
+                        throw new Error(data.message || 'Failed to update offer status');
+                    }
+
+                    // Show success message
+                    await Swal.fire({
+                        title: 'Success!',
+                        text: data.message || 'Offer status updated successfully',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+
+                    // Reload the page or update UI
                     window.location.reload();
-                }, 1500);
-            } else {
+                } else {
+                    // If user cancels, revert the toggle
+                    this.checked = !isActive;
+                }
+            } catch (error) {
+                // Log the full error for debugging
+                console.error('Complete Error Object:', error);
+
+                // Revert the toggle
                 this.checked = !isActive;
+
+                // Show error message
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message || 'An unexpected error occurred',
+                    footer: 'Please check the console for more details'
+                });
             }
-        } catch (error) {
-            console.error('Error:', error);
-            this.checked = !isActive;
-            Swal.fire({
-                icon: 'error',
-                title: 'Operation Failed',
-                text: error.message
-            });
-        }
+        });
     });
 });
-        });
-
 
         async function editOffer(offerId) {
             try {

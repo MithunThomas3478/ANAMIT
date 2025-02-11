@@ -264,6 +264,55 @@
             background: #ff7700;
             transform: translateY(-2px);
         }
+        .pagination-container {
+        margin-top: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .pagination {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .pagination-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        height: 36px;
+        padding: 0 0.75rem;
+        border-radius: 6px;
+        background: white;
+        border: 1px solid #ddd;
+        color: #333;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+
+    .pagination-btn:hover {
+        background: #f5f5f5;
+        border-color: #ccc;
+    }
+
+    .pagination-btn.active {
+        background: #ff8800;
+        border-color: #ff8800;
+        color: white;
+    }
+
+    .pagination-ellipsis {
+        color: #666;
+        padding: 0 0.5rem;
+    }
+
+    .pagination-info {
+        color: #666;
+        font-size: 14px;
+    }
 
         @media (max-width: 1200px) {
             .container {
@@ -304,8 +353,9 @@
                 <div class="profile-avatar">
                     <i class="fas fa-user"></i>
                 </div>
-                
-                <a href="/userProfile" class="menu-item">
+              
+                <br>
+                <a href="userProfile" class="menu-item ">
                     <i class="fas fa-user"></i>
                     Account Overview
                 </a>
@@ -313,11 +363,11 @@
                     <i class="fas fa-box"></i>
                     My Orders
                 </a>
-                <a href="#" class="menu-item active">
+                <a href="userAddress" class="menu-item active">
                     <i class="fas fa-map-marker-alt"></i>
                     Manage Address
                 </a>
-                <a href="#" class="menu-item">
+                <a href="wallet" class="menu-item">
                     <i class="fas fa-wallet"></i>
                     Wallet
                 </a>
@@ -325,12 +375,7 @@
                     <i class="fas fa-lock"></i>
                     Manage Password
                 </a>
-                <a href="#" class="menu-item">
-                    <i class="fas fa-heart"></i>
-                    Wishlist
-                </a>
-                
-                <a href="/logout"><button class="logout-btn">LOG OUT</button></a>
+                <a href="/logout"><button class="logout-btn">LOG OUT</button></a> 
             </div>
 
             <!-- Address Content -->
@@ -402,6 +447,57 @@
                     </div>
                 </div>
             </div>
+        </div>
+        <div class="pagination-container">
+            <% if (totalPages > 1) { %>
+                <div class="pagination">
+                    <% if (currentPage > 1) { %>
+                        <a href="/userAddress?page=<%= currentPage - 1 %>" class="pagination-btn">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    <% } %>
+        
+                    <% 
+                    let startPage = Math.max(1, currentPage - 2);
+                    let endPage = Math.min(totalPages, startPage + 4);
+                    
+                    if (endPage - startPage < 4) {
+                        startPage = Math.max(1, endPage - 4);
+                    }
+                    %>
+        
+                    <% if (startPage > 1) { %>
+                        <a href="/userAddress?page=1" class="pagination-btn">1</a>
+                        <% if (startPage > 2) { %>
+                            <span class="pagination-ellipsis">...</span>
+                        <% } %>
+                    <% } %>
+        
+                    <% for (let i = startPage; i <= endPage; i++) { %>
+                        <a href="/userAddress?page=<%= i %>" 
+                           class="pagination-btn <%= i === currentPage ? 'active' : '' %>">
+                            <%= i %>
+                        </a>
+                    <% } %>
+        
+                    <% if (endPage < totalPages) { %>
+                        <% if (endPage < totalPages - 1) { %>
+                            <span class="pagination-ellipsis">...</span>
+                        <% } %>
+                        <a href="/userAddress?page=<%= totalPages %>" class="pagination-btn"><%= totalPages %></a>
+                    <% } %>
+        
+                    <% if (currentPage < totalPages) { %>
+                        <a href="/userAddress?page=<%= currentPage + 1 %>" class="pagination-btn">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    <% } %>
+                </div>
+        
+                <div class="pagination-info">
+                    Showing <%= startIndex + 1 %> to <%= Math.min(endIndex, totalAddresses) %> of <%= totalAddresses %> addresses
+                </div>
+            <% } %>
         </div>
     </div>
     <%- include('../partials/user/footer')%>

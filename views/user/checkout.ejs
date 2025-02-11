@@ -143,9 +143,31 @@
             background-color: rgba(252, 123, 3, 0.05);
         }
 
-        .address-form {
-            margin-top: 1.5rem;
+        .address-overlay {
             display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .address-overlay.active {
+            display: flex;
+        }
+
+        .address-form-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .form-grid {
@@ -162,6 +184,7 @@
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 500;
+            color: var(--text-color);
         }
 
         .form-group input {
@@ -179,6 +202,15 @@
             box-shadow: 0 0 0 2px rgba(252, 123, 3, 0.1);
         }
 
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .form-group input.error {
+            border-color: #dc3545;
+        }
         /* Payment Methods */
         .payment-methods {
             display: flex;
@@ -658,7 +690,7 @@
                         <i class="fas fa-plus"></i> Add New Address
                     </button>
                 </div>
-
+                
                 <!-- Payment Methods -->
                 <div class="card">
                     <h2>Payment Method</h2>
@@ -810,7 +842,49 @@
             </div>
         </div>
     </div>
+    <!-- Address Form Overlay -->
+    <div class="address-overlay" id="addressFormOverlay">
+        <div class="address-form-container">
+            <h3>Add New Address</h3>
+            <form id="newAddressForm" onsubmit="handleAddressSubmit(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="fullName">Full Name</label>
+                        <input type="text" id="fullName" name="fullName" required minlength="3">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" required pattern="[0-9]{10}">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="street">Street Address</label>
+                    <input type="text" id="street" name="street" required>
+                </div>
 
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="city">City</label>
+                        <input type="text" id="city" name="city" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="state">State</label>
+                        <input type="text" id="state" name="state" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="pincode">Pincode</label>
+                        <input type="text" id="pincode" name="pincode" required pattern="[0-9]{6}">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Address</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideAddressForm()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
     <!-- Loading Overlay -->
     <div class="loading" id="loading">
         <div class="spinner"></div>
@@ -824,7 +898,232 @@
         const grandTotal = <%= checkoutData.finalAmount %>;
         const walletBalance = <%= userWallet.balance %>;
         let couponsLoaded = false;
+        function validateInput(input) {
+            let isValid = true;
+            const value = input.value.trim();
 
+            switch(input.id) {
+                case 'fullName':
+                    if (value.length < 3) {
+                        showError(input, 'Name must be at least 3 characters long');
+                        isValid = false;
+                    } else if (!/^[a-zA-Z\s]*$/.test(value)) {
+                        showError(input, 'Name should contain only letters and spaces');
+                        isValid = false;
+                    }
+                    break;
+                case 'phone':
+                    if (!/^\d{10}$/.test(value)) {
+                        showError(input, 'Phone number must be exactly 10 digits');
+                        isValid = false;
+                    }
+                    break;
+                case 'street':
+                    if (value.length < 5) {
+                        showError(input, 'Street address must be at least 5 characters long');
+                        isValid = false;
+                    }
+                    break;
+                case 'city':
+                case 'state':
+                    if (!/^[a-zA-Z\s]*$/.test(value)) {
+                        showError(input, `${input.id.charAt(0).toUpperCase() + input.id.slice(1)} should contain only letters and spaces`);
+                        isValid = false;
+                    }
+                    break;
+                case 'pincode':
+                    if (!/^\d{6}$/.test(value)) {
+                        showError(input, 'Pincode must be exactly 6 digits');
+                        isValid = false;
+                    }
+                    break;
+            }
+
+            if (isValid) {
+                clearError(input);
+            }
+
+            return isValid;
+        }
+
+        function showError(input, message) {
+            const formGroup = input.closest('.form-group');
+            const existingError = formGroup.querySelector('.error-message');
+            
+            if (!existingError) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.textContent = message;
+                formGroup.appendChild(errorDiv);
+            } else {
+                existingError.textContent = message;
+            }
+            
+            input.classList.add('error');
+        }
+
+        function clearError(input) {
+            const formGroup = input.closest('.form-group');
+            const existingError = formGroup.querySelector('.error-message');
+            if (existingError) {
+                existingError.remove();
+            }
+            input.classList.remove('error');
+        }
+
+        // Add input event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('newAddressForm');
+            if (form) {
+                form.querySelectorAll('input').forEach(input => {
+                    input.addEventListener('input', function() {
+                        clearError(this);
+                        
+                        // Real-time validation
+                        switch(this.id) {
+                            case 'fullName':
+                                if (!/^[a-zA-Z\s]*$/.test(this.value)) {
+                                    showError(this, 'Name should contain only letters and spaces');
+                                }
+                                break;
+                            case 'pincode':
+                                if (this.value && !/^\d{0,6}$/.test(this.value)) {
+                                    this.value = this.value.replace(/\D/g, '').slice(0, 6);
+                                }
+                                break;
+                            case 'phone':
+                                if (this.value && !/^\d{0,10}$/.test(this.value)) {
+                                    this.value = this.value.replace(/\D/g, '').slice(0, 10);
+                                }
+                                break;
+                            case 'city':
+                            case 'state':
+                                if (!/^[a-zA-Z\s]*$/.test(this.value)) {
+                                    showError(this, `${this.id.charAt(0).toUpperCase() + this.id.slice(1)} should contain only letters and spaces`);
+                                }
+                                break;
+                        }
+                    });
+                });
+            }
+        });
+
+        // Address form functions
+        function showAddressForm() {
+            document.getElementById('addressFormOverlay').classList.add('active');
+            document.getElementById('newAddressForm').reset();
+            document.querySelectorAll('.error-message').forEach(el => el.remove());
+            document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+        }
+
+        function hideAddressForm() {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You will lose all entered information!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ff8800',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, cancel it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('addressFormOverlay').classList.remove('active');
+                    document.getElementById('newAddressForm').reset();
+                }
+            });
+        }
+
+        function createAddressCard(address) {
+    const addressCard = document.createElement('div');
+    addressCard.className = 'address-card';
+    addressCard.setAttribute('data-address-id', address._id);
+    addressCard.setAttribute('onclick', `selectAddress('${address._id}')`);
+    
+    addressCard.innerHTML = `
+        <div class="address-name">${address.name || address.fullName}</div>
+        <div class="address-details">
+            ${address.street || address.streetAddress}<br>
+            ${address.city}, ${address.state}<br>
+            ${address.pincode}<br>
+            Phone: ${address.phone || address.phoneNumber}
+        </div>
+    `;
+
+    return addressCard;
+}
+
+
+function attachInputListeners() {
+    const form = document.getElementById('newAddressForm');
+    if (form) {
+        form.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', function() {
+                clearError(this);
+            });
+        });
+    }
+}
+
+        async function handleAddressSubmit(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            let isValid = true;
+            
+            form.querySelectorAll('input').forEach(input => {
+                if (!validateInput(input)) {
+                    isValid = false;
+                }
+            });
+
+            if (!isValid) {
+                showNotification('Please fill all fields correctly', 'error');
+                return;
+            }
+
+            const formData = {
+                name: form.fullName.value,
+                street: form.street.value,
+                city: form.city.value,
+                state: form.state.value,
+                pincode: form.pincode.value,
+                phone: form.phone.value
+            };
+
+            try {
+                showLoading();
+                const response = await fetch('/checkout/address', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const addressCard = createAddressCard(data.address);
+            document.querySelector('.address-list').appendChild(addressCard);
+            selectAddress(data.address._id);
+            
+            // Explicitly close the address form overlay
+            document.getElementById('addressFormOverlay').classList.remove('active');
+            
+            // Reset the form
+            form.reset();
+            
+            // Show success notification
+            showNotification('Address added successfully', 'success');
+                } else {
+                    throw new Error(data.message || 'Failed to add address');
+                }
+            } catch (error) {
+                showNotification(error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        
         // Initialize page
         document.addEventListener('DOMContentLoaded', () => {
             attachInputListeners();

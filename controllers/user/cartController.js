@@ -29,31 +29,40 @@ const getCart = async (req, res) => {
             });
         }
 
-        const activeOffers = await Offer.find({
-            isActive: true,
-            startDate: { $lte: currentDate },
-            endDate: { $gte: currentDate }
-        }).lean();
-
+        // Check stock availability for each item
         const formattedCart = {
-            items: cart.items.map(item => ({
-                productId: item.product._id,
-                colorName: item.selectedColor.colorName,
-                colorValue: item.selectedColor.colorValue,
-                size: item.selectedSize,
-                quantity: item.quantity,
-                price: item.price,
-                appliedProductOffer: item.appliedProductOffer,
-                appliedCategoryOffer: item.appliedCategoryOffer,
-                product: {
-                    productName: item.product.productName,
-                    variants: item.product.variants,
-                    category: item.product.category.name
-                }
+            items: await Promise.all(cart.items.map(async item => {
+                const variant = item.product.variants.find(v => v.colorName === item.selectedColor.colorName);
+                const sizeVariant = variant?.colorVariant.find(sv => sv.size === item.selectedSize);
+                
+                const isOutOfStock = !sizeVariant || sizeVariant.stock < item.quantity;
+                const stockWarning = sizeVariant && sizeVariant.stock <= 5 ? sizeVariant.stock : null;
+
+                return {
+                    productId: item.product._id,
+                    colorName: item.selectedColor.colorName,
+                    colorValue: item.selectedColor.colorValue,
+                    size: item.selectedSize,
+                    quantity: item.quantity,
+                    price: item.price,
+                    appliedProductOffer: item.appliedProductOffer,
+                    appliedCategoryOffer: item.appliedCategoryOffer,
+                    product: {
+                        productName: item.product.productName,
+                        variants: item.product.variants,
+                        category: item.product.category.name
+                    },
+                    isOutOfStock,
+                    stockWarning
+                };
             })),
             totalAmount: cart.totalAmount,
-            totalDiscount: cart.totalDiscount
+            totalDiscount: cart.totalDiscount,
+            hasOutOfStock: false // Will be set to true if any item is out of stock
         };
+
+        // Check if any item is out of stock
+        formattedCart.hasOutOfStock = formattedCart.items.some(item => item.isOutOfStock);
 
         res.render('shoppingCart', { cart: formattedCart });
 

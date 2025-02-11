@@ -417,30 +417,49 @@ const toggleOfferStatus = async (req, res) => {
         const offerId = req.params.id;
         const { isActive } = req.body;
 
-        console.log('Toggling offer status:', { offerId, isActive }); // Add logging
+        console.log('Received toggle request:', { 
+            offerId, 
+            isActive, 
+            requestBody: req.body 
+        });
 
+        // Validate input
         if (typeof isActive !== 'boolean') {
+            console.error('Invalid status value:', isActive);
             return res.status(400).json({
                 success: false,
-                message: 'Invalid status value'
+                message: 'Invalid status value. Must be a boolean.'
             });
         }
 
+        // Find the offer
         const offer = await Offer.findById(offerId);
         
         if (!offer) {
+            console.error('Offer not found:', offerId);
             return res.status(404).json({
                 success: false,
                 message: 'Offer not found'
             });
         }
 
+        // Additional validation for activation
         if (isActive) {
             const currentDate = new Date();
             currentDate.setHours(0, 0, 0, 0);
 
+            const startDate = new Date(offer.startDate);
+            startDate.setHours(0, 0, 0, 0);
+
             const endDate = new Date(offer.endDate);
             endDate.setHours(23, 59, 59, 999);
+
+            if (currentDate < startDate) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cannot activate an offer before its start date'
+                });
+            }
 
             if (endDate < currentDate) {
                 return res.status(400).json({
@@ -450,10 +469,17 @@ const toggleOfferStatus = async (req, res) => {
             }
         }
 
+        // Bypass start date validation
+        offer.bypassStartDateValidation = true;
+
+        // Update offer status
         offer.isActive = isActive;
         await offer.save();
 
-        console.log('Offer status updated successfully:', { offerId, isActive }); // Add logging
+        console.log('Offer status updated successfully:', { 
+            offerId, 
+            newStatus: isActive 
+        });
 
         res.status(200).json({
             success: true,
@@ -462,13 +488,24 @@ const toggleOfferStatus = async (req, res) => {
 
     } catch (error) {
         console.error('Error in toggleOfferStatus:', error);
+        
+        // Check if it's a validation error
+        if (error.name === 'ValidationError') {
+            const validationErrors = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({
+                success: false,
+                message: 'Validation failed',
+                errors: validationErrors
+            });
+        }
+
         res.status(500).json({
             success: false,
-            message: error.message || 'Failed to update offer status'
+            message: 'Internal server error',
+            errorDetails: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 };
-
 module.exports = {
     getOfferManagement,
     getOfferById,

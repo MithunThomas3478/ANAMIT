@@ -59,12 +59,26 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
         }
 
         .profile-avatar i {
             font-size: 48px;
             color: #999;
+        }
+
+        .edit-btn {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: auto;
+            background-color: #ff8800;
+            border-radius: 8px;
+            border: none;
+            color: #ffffff;
+            font-size: 16px;
+            height: 40px;
+            width: 150px;
+            text-decoration: none;
         }
 
         .menu-item {
@@ -77,6 +91,7 @@
             color: #333;
             text-decoration: none;
             transition: all 0.3s;
+            font-size: 16px;
         }
 
         .menu-item:hover {
@@ -92,6 +107,25 @@
         .menu-item i {
             margin-right: 1rem;
             width: 24px;
+            font-size: 18px;
+        }
+
+        .logout-btn {
+            background: #ff8800;
+            color: white;
+            border: none;
+            padding: 1.25rem;
+            width: 100%;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 3rem;
+            font-weight: bold;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #ff7700;
         }
 
         .wallet-container {
@@ -328,6 +362,68 @@
             animation: spin 1s linear infinite;
             margin-right: 8px;
         }
+        .pagination-container {
+        margin-top: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .pagination {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .pagination-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        height: 36px;
+        padding: 0 0.75rem;
+        border-radius: 6px;
+        background: white;
+        border: 1px solid #ddd;
+        color: #333;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+
+    .pagination-btn:hover {
+        background: #f5f5f5;
+        border-color: #ccc;
+    }
+
+    .pagination-btn.active {
+        background: #ff8800;
+        border-color: #ff8800;
+        color: white;
+    }
+
+    .pagination-ellipsis {
+        color: #666;
+        padding: 0 0.5rem;
+    }
+
+    .pagination-info {
+        color: #666;
+        font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+        .pagination {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .pagination-btn {
+            min-width: 32px;
+            height: 32px;
+            padding: 0 0.5rem;
+        }
+    }
 
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -372,23 +468,29 @@
                 <div class="profile-avatar">
                     <i class="fas fa-user"></i>
                 </div>
-                
-                <a href="/account" class="menu-item">
+              
+                <br>
+                <a href="userProfile" class="menu-item ">
                     <i class="fas fa-user"></i>
                     Account Overview
                 </a>
-                <a href="/orders" class="menu-item">
+                <a href="orders" class="menu-item">
                     <i class="fas fa-box"></i>
                     My Orders
                 </a>
-                <a href="/wallet" class="menu-item active">
+                <a href="userAddress" class="menu-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Manage Address
+                </a>
+                <a href="wallet" class="menu-item active">
                     <i class="fas fa-wallet"></i>
                     Wallet
                 </a>
-                <a href="/wishlist" class="menu-item">
-                    <i class="fas fa-heart"></i>
-                    Wishlist
+                <a href="passwordMangement" class="menu-item">
+                    <i class="fas fa-lock"></i>
+                    Manage Password
                 </a>
+                <a href="/logout"><button class="logout-btn">LOG OUT</button></a> 
             </div>
 
             <!-- Wallet Content -->
@@ -494,6 +596,57 @@
                     <% } %>
                 </div>
             </div>
+        </div>
+        <div class="pagination-container">
+            <% if (totalPages > 1) { %>
+                <div class="pagination">
+                    <% if (currentPage > 1) { %>
+                        <a href="/wallet?page=<%= currentPage - 1 %>" class="pagination-btn">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    <% } %>
+        
+                    <% 
+                    let startPage = Math.max(1, currentPage - 2);
+                    let endPage = Math.min(totalPages, startPage + 4);
+                    
+                    if (endPage - startPage < 4) {
+                        startPage = Math.max(1, endPage - 4);
+                    }
+                    %>
+        
+                    <% if (startPage > 1) { %>
+                        <a href="/wallet?page=1" class="pagination-btn">1</a>
+                        <% if (startPage > 2) { %>
+                            <span class="pagination-ellipsis">...</span>
+                        <% } %>
+                    <% } %>
+        
+                    <% for (let i = startPage; i <= endPage; i++) { %>
+                        <a href="/wallet?page=<%= i %>" 
+                           class="pagination-btn <%= i === currentPage ? 'active' : '' %>">
+                            <%= i %>
+                        </a>
+                    <% } %>
+        
+                    <% if (endPage < totalPages) { %>
+                        <% if (endPage < totalPages - 1) { %>
+                            <span class="pagination-ellipsis">...</span>
+                        <% } %>
+                        <a href="/wallet?page=<%= totalPages %>" class="pagination-btn"><%= totalPages %></a>
+                    <% } %>
+        
+                    <% if (currentPage < totalPages) { %>
+                        <a href="/wallet?page=<%= currentPage + 1 %>" class="pagination-btn">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    <% } %>
+                </div>
+        
+                <div class="pagination-info">
+                    Showing <%= startIndex + 1 %> to <%= Math.min(endIndex, totalTransactions) %> of <%= totalTransactions %> transactions
+                </div>
+            <% } %>
         </div>
     </div>
 

@@ -578,49 +578,7 @@
                     <% }); %>
                 </div>
     
-                <!-- Price Summary -->
-                <div class="price-summary">
-                    <div class="price-row">
-                        <span>Subtotal</span>
-                        <span>₹<%= itemHelpers.formatCurrency(order.totalAmount) %></span>
-                    </div>
-                    
-                    <% if (couponInfo) { %>
-                        <div class="price-row coupon-applied">
-                            <span>
-                                Coupon Applied 
-                                <span class="coupon-code">(<%= couponInfo.code %>)</span>
-                            </span>
-                            <span>
-                                <%= couponInfo.formattedDiscount %>
-                            </span>
-                        </div>
-                    <% } %>
                 
-                    <% if (order.totalDiscount && order.totalDiscount > 0) { %>
-                        <div class="price-row">
-                            <span>Discount</span>
-                            <span>-₹<%= itemHelpers.formatCurrency(order.totalDiscount) %></span>
-                        </div>
-                    <% } %>
-                    
-                    <div class="price-row">
-                        <span>Shipping</span>
-                        <span>₹<%= itemHelpers.formatCurrency(order.shippingFee) %></span>
-                    </div>
-                    
-                    <% if (order.walletDetails?.debitedAmount) { %>
-                        <div class="price-row">
-                            <span>Paid from Wallet</span>
-                            <span>₹<%= itemHelpers.formatCurrency(order.walletDetails.debitedAmount) %></span>
-                        </div>
-                    <% } %>
-                    
-                    <div class="price-row total">
-                        <span>Total</span>
-                        <span>₹<%= itemHelpers.formatCurrency(order.finalAmount) %></span>
-                    </div>
-                </div>
     
             <!-- Shipping Information -->
             <div class="card">
@@ -638,7 +596,39 @@
                     </div>
                 </div>
             </div>
-    
+            <!-- Price Summary -->
+            <% 
+            // Check if any items are cancelled or returned
+            const isCancelledOrReturned = order.items.some(item => 
+                item.status === 'cancelled' || item.status === 'returned'
+            );
+        %>
+        
+        <% if (!isCancelledOrReturned) { %>
+            <div class="price-summary">
+                <div class="price-row">
+                    <span>Subtotal</span>
+                    <span>₹<%= itemHelpers.formatCurrency(order.totalAmount) %></span>
+                </div>
+                
+                <% if (order.totalDiscount && order.totalDiscount > 0) { %>
+                    <div class="price-row">
+                        <span>Discount</span>
+                        <span>-₹<%= itemHelpers.formatCurrency(order.totalDiscount) %></span>
+                    </div>
+                <% } %>
+                
+                <div class="price-row">
+                    <span>Shipping</span>
+                    <span>₹<%= itemHelpers.formatCurrency(order.shippingFee) %></span>
+                </div>
+                
+                <div class="price-row total">
+                    <span>Total</span>
+                    <span>₹<%= itemHelpers.formatCurrency(order.finalAmount) %></span>
+                </div>
+            </div>
+        <% } %>
             <!-- Cancel Item Modal -->
             <div class="modal fade" id="cancelItemModal" tabindex="-1">
                 <div class="modal-dialog">
@@ -897,6 +887,12 @@
         });
 
         if (response.ok) {
+            const modalElement = document.getElementById('returnItemModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+            
+            if (modalInstance) {
+                modalInstance.hide();
+            }
             Swal.fire({
                 icon: 'success',
                 title: 'Return Request Submitted',

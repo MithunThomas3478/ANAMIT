@@ -232,9 +232,15 @@ const addToCart = async (req, res) => {
             }).lean()
         ]);
 
-        // Calculate best offer once
+        // Calculate best offer - take only the highest
         const productOfferPercentage = productOffer?.discountPercentage || 0;
         const categoryOfferPercentage = categoryOffer?.discountPercentage || 0;
+        
+        // Choose the higher offer
+        const bestOffer = Math.max(productOfferPercentage, categoryOfferPercentage);
+        
+        // Determine which type of offer was selected
+        const selectedOfferType = bestOffer === productOfferPercentage ? 'product' : 'category';
 
         // Initialize or get existing cart
         let userCart = cart || new Cart({
@@ -263,10 +269,12 @@ const addToCart = async (req, res) => {
                 });
             }
 
-            // Update quantity only, keep existing offers
+            // Update quantity and apply the best offer
             userCart.items[existingItemIndex].quantity = newQuantity;
+            userCart.items[existingItemIndex].appliedProductOffer = selectedOfferType === 'product' ? bestOffer : 0;
+            userCart.items[existingItemIndex].appliedCategoryOffer = selectedOfferType === 'category' ? bestOffer : 0;
         } else {
-            // Add new item with offers
+            // Add new item with the best offer
             userCart.items.push({
                 product: productId,
                 selectedColor: {
@@ -276,8 +284,8 @@ const addToCart = async (req, res) => {
                 selectedSize: size,
                 quantity: parsedQuantity,
                 price: basePrice,
-                appliedProductOffer: productOfferPercentage,
-                appliedCategoryOffer: categoryOfferPercentage
+                appliedProductOffer: selectedOfferType === 'product' ? bestOffer : 0,
+                appliedCategoryOffer: selectedOfferType === 'category' ? bestOffer : 0
             });
         }
 
@@ -306,361 +314,7 @@ const addToCart = async (req, res) => {
         });
     }
 };
-
 const getMensFashion = async (req, res) => {
-    try {
-        // Pagination setup
-        const page = parseInt(req.query.page) || 1;
-        const limit = 5;
-        const skip = (page - 1) * limit;
-
-        // Get the men's category
-        const menCategory = await Category.findOne({
-            isListed: true,
-            name: 'MEN'
-        });
-
-        if (!menCategory) {
-            return res.status(404).render('error', {
-                message: 'Men\'s category not found',
-                error: { status: 404 }
-            });
-        }
-
-        const currentDate = new Date();
-        const categoryOffer = await Offer.findOne({
-            offerType: 'category',
-            category: menCategory._id,
-            isActive: true,
-            startDate: { $lte: currentDate },
-            endDate: { $gte: currentDate }
-        });
-
-        // Get user's wishlist if user is logged in
-      
-        let userWishlist = [];
-        if (req.user) {
-            const wishlistDoc = await Wishlist.findOne({ user: req.user._id });
-            console.log(wishlistDoc);
-            if (wishlistDoc) {
-                userWishlist = wishlistDoc.items.map(item => item.product.toString());
-
-            }
-        }
-
-
-        // Build pipeline stages for aggregation
-        const pipeline = [
-            // Match base criteria
-            {
-                $match: {
-                    isListed: true,
-                    category: menCategory._id
-                }
-            },
-            {
-                $lookup: {
-                    from: 'offers',
-                    let: { productId: '$_id' },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ['$offerType', 'product'] },
-                                        { $eq: ['$product', '$$productId'] },
-                                        { $eq: ['$isActive', true] },
-                                        { $lte: ['$startDate', currentDate] },
-                                        { $gte: ['$endDate', currentDate] }
-                                    ]
-                                }
-                            }
-                        }
-                    ],
-                    as: 'productOffer'
-                }
-            },
-            // Unwind variants array
-            { $unwind: '$variants' },
-            // Unwind colorVariant array
-            { $unwind: '$variants.colorVariant' },
-            {
-                $addFields: {
-                    basePrice: '$variants.colorVariant.price',
-                    productOfferDiscount: {
-                        $cond: {
-                            if: { $gt: [{ $size: '$productOffer' }, 0] },
-                            then: {
-                                $multiply: [
-                                    '$variants.colorVariant.price',
-                                    { $divide: [{ $arrayElemAt: ['$productOffer.discountPercentage', 0] }, 100] }
-                                ]
-                            },
-                            else: 0
-                        }
-                    },
-                    categoryOfferDiscount: {
-                        $cond: {
-                            if: { $ne: [categoryOffer, null] },
-                            then: {
-                                $multiply: [
-                                    '$variants.colorVariant.price',
-                                    { $divide: [categoryOffer.discountPercentage, 100] }
-                                ]
-                            },
-                            else: 0
-                        }
-                    }
-                }
-            },
-            // Calculate final price
-            {
-                $addFields: {
-                    maxDiscount: {
-                        $max: ['$productOfferDiscount', '$categoryOfferDiscount']
-                    },
-                    finalPrice: {
-                        $subtract: [
-                            '$basePrice',
-                            {
-                                $max: ['$productOfferDiscount', '$categoryOfferDiscount']
-                            }
-                        ]
-                    },
-                    appliedOfferType: {
-                        $cond: {
-                            if: { $gt: ['$productOfferDiscount', '$categoryOfferDiscount'] },
-                            then: 'product',
-                            else: 'category'
-                        }
-                    },
-                    hasOffer: {
-                        $gt: [
-                            { $max: ['$productOfferDiscount', '$categoryOfferDiscount'] },
-                            0
-                        ]
-                    }
-                }
-            }
-              
-        ];
-      
-
-        // [Previous filtering logic remains the same]
-        if (req.query.maxPrice) {
-            const maxPrice = parseFloat(req.query.maxPrice);
-            if (!isNaN(maxPrice) && maxPrice > 0) {
-                pipeline.push({
-                    $match: {
-                        'variants.colorVariant.price': { $lte: maxPrice }
-                    }
-                });
-            }
-        }
-
-        // Size filter
-        if (req.query.sizes) {
-            const validSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-            const sizes = Array.isArray(req.query.sizes) 
-                ? req.query.sizes 
-                : req.query.sizes.split(',');
-            
-            const filteredSizes = sizes.filter(size => 
-                validSizes.includes(size.toUpperCase())
-            );
-            
-            if (filteredSizes.length > 0) {
-                pipeline.push({
-                    $match: {
-                        'variants.colorVariant.size': {
-                            $in: filteredSizes.map(size => size.toUpperCase())
-                        }
-                    }
-                });
-            }
-        }
-
-        // Color filter
-        if (req.query.colors) {
-            const colors = Array.isArray(req.query.colors)
-                ? req.query.colors
-                : req.query.colors.split(',');
-            
-            const validColors = colors.filter(color => color.trim());
-            if (validColors.length > 0) {
-                pipeline.push({
-                    $match: {
-                        'variants.colorName': {
-                            $in: validColors.map(color => 
-                                new RegExp(color.trim(), 'i')
-                            )
-                        }
-                    }
-                });
-            }
-        }
-
-        // Group back with all previous fields
-        pipeline.push({
-            $group: {
-                _id: '$_id',
-                productName: { $first: '$productName' },
-                productOffer: { $first: '$productOffer' },
-                createdAt: { $first: '$createdAt' },
-                viewCount: { $first: '$viewCount' },
-                // Add these fields to preserve offer calculations
-                basePrice: { $first: '$basePrice' },
-                finalPrice: { $first: '$finalPrice' },
-                hasOffer: { $first: '$hasOffer' },
-                appliedOfferType: { $first: '$appliedOfferType' },
-                maxDiscount: { $first: '$maxDiscount' },
-                variants: {
-                    $first: {
-                        $map: {
-                            input: ['$variants'],
-                            as: 'variant',
-                            in: {
-                                colorName: '$$variant.colorName',
-                                colorValue: '$$variant.colorValue',
-                                productImage: '$$variant.productImage',
-                                colorVariant: {
-                                    $map: {
-                                        input: ['$variants.colorVariant'],
-                                        as: 'cv',
-                                        in: {
-                                            size: '$$cv.size',
-                                            price: '$$cv.price',
-                                            stock: '$$cv.stock'
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        });
-        // Add sorting
-        let sortStage = {};
-        switch (req.query.sort) {
-            case 'popularity':
-                sortStage = { viewCount: -1, createdAt: -1 };
-                break;
-            case 'price_asc':
-                sortStage = { 'variants.colorVariant.price': 1 };
-                break;
-            case 'price_desc':
-                sortStage = { 'variants.colorVariant.price': -1 };
-                break;
-            case 'newest':
-                sortStage = { createdAt: -1 };
-                break;
-            case 'name_asc':
-                sortStage = { productName: 1 };
-                break;
-            case 'name_desc':
-                sortStage = { productName: -1 };
-                break;
-            default:
-                sortStage = { productOffer: -1, createdAt: -1 };
-        }
-
-        pipeline.push({ $sort: sortStage });
-        pipeline.push({ $skip: skip });
-        pipeline.push({ $limit: limit });
-
-        // Execute the aggregation
-        let products = await Product.aggregate(pipeline);
-
-        // Add isInWishlist field to products
-       // Products mapping section in your controller
-        products = products.map(product => {
-            const originalPrice = product.variants[0].colorVariant[0].price;
-            const hasOffer = product.hasOffer || false;
-            const finalPrice = product.finalPrice || originalPrice;
-            const appliedOfferType = product.appliedOfferType || null;
-            
-            return {
-                ...product,
-                isInWishlist: userWishlist.includes(product._id.toString()),
-                hasOffer,
-                finalPrice,
-                appliedOfferType,
-                discountPercentage: hasOffer ? 
-                    Math.round(((originalPrice - finalPrice) / originalPrice) * 100) : 0
-            };
-        });
-
-        // Get total count for pagination
-        const totalProducts = await Product.aggregate([
-            ...pipeline.slice(0, -2),
-            { $count: 'total' }
-        ]);
-
-        const total = totalProducts[0]?.total || 0;
-        const totalPages = Math.ceil(total / limit);
-
-        // Get unique colors
-        const allColors = [...new Set(products.flatMap(product => 
-            product.variants.map(variant => JSON.stringify({
-                colorName: variant.colorName,
-                colorValue: variant.colorValue
-            }))
-        ))].map(color => JSON.parse(color));
-
-        // Get price range
-        const priceStats = await Product.aggregate([
-            { $match: { category: menCategory._id, isListed: true } },
-            { $unwind: '$variants' },
-            { $unwind: '$variants.colorVariant' },
-            {
-                $group: {
-                    _id: null,
-                    minPrice: { $min: '$variants.colorVariant.price' },
-                    maxPrice: { $max: '$variants.colorVariant.price' }
-                }
-            }
-        ]);
-
-        // Get wishlist count if user is logged in
-        let wishlistCount = 0;
-        if (req.user) {
-            const wishlistDoc = await Wishlist.findOne({ userId: req.user._id });
-            wishlistCount = wishlistDoc ? wishlistDoc.products.length : 0;
-        }
-
-        // Render response
-        res.render('categoryMenwear', {
-            title: "MEN",
-            category: menCategory,
-            products,
-            colors: allColors,
-            currentFilters: req.query,
-            priceRange: priceStats[0] || { minPrice: 0, maxPrice: 10000 },
-            pagination: {
-                currentPage: page,
-                totalPages,
-                hasNextPage: page < totalPages,
-                hasPreviousPage: page > 1,
-                nextPage: page + 1,
-                previousPage: page - 1,
-                totalProducts: total
-            },
-            categoryOffer,
-            wishlistCount, // Add wishlist count to the response
-            isAuthenticated: true
-        });
-
-    } catch (error) {
-        console.error('Error in getMensFashion:', error);
-        res.status(500).render('error', {
-            message: 'Something went wrong while fetching products',
-            error: process.env.NODE_ENV === 'development' ? error : {}
-        });
-    }
-};
-
-const getWomensFashion = async (req, res) => {
     try {
         // Pagination setup
         const page = parseInt(req.query.page) || 1;
@@ -670,12 +324,12 @@ const getWomensFashion = async (req, res) => {
         // Get the women's category
         const womenCategory = await Category.findOne({
             isListed: true,
-            name: 'WOMEN'
+            name: 'MEN'
         });
 
         if (!womenCategory) {
             return res.status(404).render('error', {
-                message: 'Women\'s category not found',
+                message: 'Men\'s category not found',
                 error: { status: 404 }
             });
         }
@@ -751,11 +405,14 @@ const getWomensFashion = async (req, res) => {
                     },
                     categoryOfferDiscount: {
                         $cond: {
-                            if: { $ne: [categoryOffer, null] },
+                            if: { $and: [
+                                { $ne: [categoryOffer, null] },
+                                { $ne: [categoryOffer?.discountPercentage, null] }
+                            ]},
                             then: {
                                 $multiply: [
                                     '$variants.colorVariant.price',
-                                    { $divide: [categoryOffer.discountPercentage, 100] }
+                                    { $divide: [(categoryOffer?.discountPercentage || 0), 100] }
                                 ]
                             },
                             else: 0
@@ -921,14 +578,412 @@ const getWomensFashion = async (req, res) => {
         let products = await Product.aggregate(pipeline);
 
         // Add isInWishlist field to products
+       
         products = products.map(product => {
-            const originalPrice = product.variants[0].colorVariant[0].price;
-            return {
-                ...product,
-                isInWishlist: userWishlist.includes(product._id.toString()),
-                discountPercentage: product.hasOffer ? 
-                    Math.round(((originalPrice - product.finalPrice) / originalPrice) * 100) : 0
-            };
+            try {
+                if (!product.variants?.[0]?.colorVariant?.[0]?.price) {
+                    console.warn(`Product ${product._id} has invalid price structure`);
+                    return {
+                        ...product,
+                        isInWishlist: userWishlist.includes(product._id.toString()),
+                        hasOffer: false,
+                        finalPrice: 0,
+                        discountPercentage: 0
+                    };
+                }
+    
+                const originalPrice = product.variants[0].colorVariant[0].price;
+                const hasOffer = product.hasOffer || false;
+                const finalPrice = product.finalPrice || originalPrice;
+                
+                return {
+                    ...product,
+                    isInWishlist: userWishlist.includes(product._id.toString()),
+                    hasOffer,
+                    finalPrice,
+                    discountPercentage: hasOffer && originalPrice > 0 ? 
+                        Math.round(((originalPrice - finalPrice) / originalPrice) * 100) : 0
+                };
+            } catch (err) {
+                console.error(`Error processing product ${product._id}:`, err);
+                return {
+                    ...product,
+                    isInWishlist: false,
+                    hasOffer: false,
+                    finalPrice: 0,
+                    discountPercentage: 0
+                };
+            }
+        });
+
+        // Get total count for pagination
+        const totalProducts = await Product.aggregate([
+            ...pipeline.slice(0, -2),
+            { $count: 'total' }
+        ]);
+
+        const total = totalProducts[0]?.total || 0;
+        const totalPages = Math.ceil(total / limit);
+
+        // Get unique colors
+        const allColors = [...new Set(products.flatMap(product => 
+            product.variants.map(variant => JSON.stringify({
+                colorName: variant.colorName,
+                colorValue: variant.colorValue
+            }))
+        ))].map(color => JSON.parse(color));
+
+        // Get price range
+        const priceStats = await Product.aggregate([
+            { $match: { category: womenCategory._id, isListed: true } },
+            { $unwind: '$variants' },
+            { $unwind: '$variants.colorVariant' },
+            {
+                $group: {
+                    _id: null,
+                    minPrice: { $min: '$variants.colorVariant.price' },
+                    maxPrice: { $max: '$variants.colorVariant.price' }
+                }
+            }
+        ]);
+
+        // Get wishlist count if user is logged in
+        let wishlistCount = 0;
+        if (req.user) {
+            const wishlistDoc = await Wishlist.findOne({ userId: req.user._id });
+            wishlistCount = wishlistDoc ? wishlistDoc.products.length : 0;
+        }
+
+        // Render response
+        res.render('categoryMenwear', {
+            title: "MEN",
+            category: womenCategory,
+            products,
+            colors: allColors,
+            currentFilters: req.query,
+            priceRange: priceStats[0] || { minPrice: 0, maxPrice: 10000 },
+            pagination: {
+                currentPage: page,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPreviousPage: page > 1,
+                nextPage: page + 1,
+                previousPage: page - 1,
+                totalProducts: total
+            },
+            categoryOffer,
+            wishlistCount, // Add wishlist count to the response
+            isAuthenticated: true
+        });
+
+    } catch (error) {
+        console.error('Error in getMensFashion:', error);
+        res.status(500).render('error', {
+            message: 'Something went wrong while fetching products',
+            error: process.env.NODE_ENV === 'development' ? error : {}
+        });
+    }
+};
+const getWomensFashion = async (req, res) => {
+    try {
+        // Pagination setup
+        const page = parseInt(req.query.page) || 1;
+        const limit = 12;
+        const skip = (page - 1) * limit;
+
+        // Get the women's category
+        const womenCategory = await Category.findOne({
+            isListed: true,
+            name: 'WOMEN'
+        });
+
+        if (!womenCategory) {
+            return res.status(404).render('error', {
+                message: 'Women\'s category not found',
+                error: { status: 404 }
+            });
+        }
+
+
+        // Get active category offer
+        const currentDate = new Date();
+        const categoryOffer = await Offer.findOne({
+            offerType: 'category',
+            category: womenCategory._id,
+            isActive: true,
+            startDate: { $lte: currentDate },
+            endDate: { $gte: currentDate }
+        });
+
+        // Get user's wishlist if user is logged in
+     
+        let userWishlist = [];
+        if (req.user) {
+            const wishlistDoc = await Wishlist.findOne({ user: req.user._id });
+            if (wishlistDoc) {
+                userWishlist = wishlistDoc.items.map(item => item.product.toString());
+            }
+        }
+
+        // Build pipeline stages for aggregation
+        const pipeline = [
+            // Match base criteria
+            {
+                $match: {
+                    isListed: true,
+                    category: womenCategory._id
+                }
+            },{
+                $lookup: {
+                    from: 'offers',
+                    let: { productId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$offerType', 'product'] },
+                                        { $eq: ['$product', '$$productId'] },
+                                        { $eq: ['$isActive', true] },
+                                        { $lte: ['$startDate', currentDate] },
+                                        { $gte: ['$endDate', currentDate] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'productOffer'
+                }
+            },
+            // Unwind variants array
+            { $unwind: '$variants' },
+            // Unwind colorVariant array
+            { $unwind: '$variants.colorVariant' },{
+                $addFields: {
+                    basePrice: '$variants.colorVariant.price',
+                    productOfferDiscount: {
+                        $cond: {
+                            if: { $gt: [{ $size: '$productOffer' }, 0] },
+                            then: {
+                                $multiply: [
+                                    '$variants.colorVariant.price',
+                                    { $divide: [{ $arrayElemAt: ['$productOffer.discountPercentage', 0] }, 100] }
+                                ]
+                            },
+                            else: 0
+                        }
+                    },
+                    categoryOfferDiscount: {
+                        $cond: {
+                            if: { $and: [
+                                { $ne: [categoryOffer, null] },
+                                { $ne: [categoryOffer?.discountPercentage, null] }
+                            ]},
+                            then: {
+                                $multiply: [
+                                    '$variants.colorVariant.price',
+                                    { $divide: [(categoryOffer?.discountPercentage || 0), 100] }
+                                ]
+                            },
+                            else: 0
+                        }
+                    }
+                }
+            },
+            // Calculate final price
+            {
+                $addFields: {
+                    maxDiscount: {
+                        $max: ['$productOfferDiscount', '$categoryOfferDiscount']
+                    },
+                    finalPrice: {
+                        $subtract: [
+                            '$basePrice',
+                            {
+                                $max: ['$productOfferDiscount', '$categoryOfferDiscount']
+                            }
+                        ]
+                    },
+                    appliedOfferType: {
+                        $cond: {
+                            if: { $gt: ['$productOfferDiscount', '$categoryOfferDiscount'] },
+                            then: 'product',
+                            else: 'category'
+                        }
+                    },
+                    hasOffer: {
+                        $gt: [
+                            { $max: ['$productOfferDiscount', '$categoryOfferDiscount'] },
+                            0
+                        ]
+                    }
+                }
+            }
+        ];
+
+        // Price filter
+        if (req.query.maxPrice) {
+            const maxPrice = parseFloat(req.query.maxPrice);
+            if (!isNaN(maxPrice) && maxPrice > 0) {
+                pipeline.push({
+                    $match: {
+                        'variants.colorVariant.price': { $lte: maxPrice }
+                    }
+                });
+            }
+        }
+
+        // Size filter
+        if (req.query.sizes) {
+            const validSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+            const sizes = Array.isArray(req.query.sizes) 
+                ? req.query.sizes 
+                : req.query.sizes.split(',');
+            
+            const filteredSizes = sizes.filter(size => 
+                validSizes.includes(size.toUpperCase())
+            );
+            
+            if (filteredSizes.length > 0) {
+                pipeline.push({
+                    $match: {
+                        'variants.colorVariant.size': {
+                            $in: filteredSizes.map(size => size.toUpperCase())
+                        }
+                    }
+                });
+            }
+        }
+
+        // Color filter
+        if (req.query.colors) {
+            const colors = Array.isArray(req.query.colors)
+                ? req.query.colors
+                : req.query.colors.split(',');
+            
+            const validColors = colors.filter(color => color.trim());
+            if (validColors.length > 0) {
+                pipeline.push({
+                    $match: {
+                        'variants.colorName': {
+                            $in: validColors.map(color => 
+                                new RegExp(color.trim(), 'i')
+                            )
+                        }
+                    }
+                });
+            }
+        }
+
+        // Group back with all previous fields
+        pipeline.push({
+            $group: {
+                _id: '$_id',
+                productName: { $first: '$productName' },
+                productOffer: { $first: '$productOffer' },
+                createdAt: { $first: '$createdAt' },
+                viewCount: { $first: '$viewCount' },
+                basePrice: { $first: '$basePrice' },
+                finalPrice: { $first: '$finalPrice' },
+                hasOffer: { $first: '$hasOffer' },
+                appliedOfferType: { $first: '$appliedOfferType' },
+                maxDiscount: { $first: '$maxDiscount' },
+                variants: {
+                    $first: {
+                        $map: {
+                            input: ['$variants'],
+                            as: 'variant',
+                            in: {
+                                colorName: '$$variant.colorName',
+                                colorValue: '$$variant.colorValue',
+                                productImage: '$$variant.productImage',
+                                colorVariant: {
+                                    $map: {
+                                        input: ['$variants.colorVariant'],
+                                        as: 'cv',
+                                        in: {
+                                            size: '$$cv.size',
+                                            price: '$$cv.price',
+                                            stock: '$$cv.stock'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Add sorting
+        let sortStage = {};
+        switch (req.query.sort) {
+            case 'popularity':
+                sortStage = { viewCount: -1, createdAt: -1 };
+                break;
+            case 'price_asc':
+                sortStage = { 'variants.colorVariant.price': 1 };
+                break;
+            case 'price_desc':
+                sortStage = { 'variants.colorVariant.price': -1 };
+                break;
+            case 'newest':
+                sortStage = { createdAt: -1 };
+                break;
+            case 'name_asc':
+                sortStage = { productName: 1 };
+                break;
+            case 'name_desc':
+                sortStage = { productName: -1 };
+                break;
+            default:
+                sortStage = { productOffer: -1, createdAt: -1 };
+        }
+
+        pipeline.push({ $sort: sortStage });
+        pipeline.push({ $skip: skip });
+        pipeline.push({ $limit: limit });
+
+        // Execute the aggregation
+        let products = await Product.aggregate(pipeline);
+
+        // Add isInWishlist field to products
+       
+        products = products.map(product => {
+            try {
+                if (!product.variants?.[0]?.colorVariant?.[0]?.price) {
+                    console.warn(`Product ${product._id} has invalid price structure`);
+                    return {
+                        ...product,
+                        isInWishlist: userWishlist.includes(product._id.toString()),
+                        hasOffer: false,
+                        finalPrice: 0,
+                        discountPercentage: 0
+                    };
+                }
+    
+                const originalPrice = product.variants[0].colorVariant[0].price;
+                const hasOffer = product.hasOffer || false;
+                const finalPrice = product.finalPrice || originalPrice;
+                
+                return {
+                    ...product,
+                    isInWishlist: userWishlist.includes(product._id.toString()),
+                    hasOffer,
+                    finalPrice,
+                    discountPercentage: hasOffer && originalPrice > 0 ? 
+                        Math.round(((originalPrice - finalPrice) / originalPrice) * 100) : 0
+                };
+            } catch (err) {
+                console.error(`Error processing product ${product._id}:`, err);
+                return {
+                    ...product,
+                    isInWishlist: false,
+                    hasOffer: false,
+                    finalPrice: 0,
+                    discountPercentage: 0
+                };
+            }
         });
 
         // Get total count for pagination

@@ -314,15 +314,9 @@
             <a class="nav-link" href="/womens">WOMEN</a>
         </div>
 
-        <% if (locals.isProductListPage) { %>
-            <div class="search-container">
-                <input type="text" class="search-bar" id="searchInput" placeholder="Search for products...">
-                <button type="button" class="search-button">
-                    <i class="bi bi-search"></i>
-                </button>
-                <div class="search-results" id="searchResults"></div>
-            </div>
-        <% } %>
+       
+           
+      
         
         <div class="icons">
             <% if (locals.user) { %>
@@ -356,3 +350,37 @@
             <% } %>
         </div>
     </nav>
+
+
+    <script>
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Profile dropdown functionality
+        function toggleDropdown() {
+            const dropdown = document.getElementById('dropdown');
+            if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('dropdown');
+            const profileIcon = document.querySelector('.bi-person-circle');
+            
+            if (dropdown && !event.target.closest('.icons') && event.target !== profileIcon) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+     
+    </script>

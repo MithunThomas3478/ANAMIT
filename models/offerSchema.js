@@ -34,6 +34,9 @@ const offerSchema = new Schema({
         required: [true, 'Start date is required'],
         validate: {
             validator: function(value) {
+                // Skip validation during status toggle
+                if (this.bypassStartDateValidation) return true;
+                
                 // Normalize dates for comparison
                 const startDate = new Date(value);
                 startDate.setHours(0, 0, 0, 0);

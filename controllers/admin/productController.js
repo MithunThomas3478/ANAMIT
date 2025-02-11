@@ -150,7 +150,7 @@ const loadAddCategory = async (req, res) => {
                 product: newProduct
             });
 
-        } catch (error) {
+        } catch (error) { 
             console.error("Error while adding product:", error);
             
             // Send appropriate error response based on error type

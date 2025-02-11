@@ -14,28 +14,36 @@
             --warning-color: #f59e0b;
             --danger-color: #ef4444;
             --border-radius: 0.5rem;
-            --sidebar-width: 250px;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --transition: all 0.3s ease;
         }
 
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #f3f4f6;
+            min-height: 100vh;
         }
 
         .main-content {
-            margin-left: var(--sidebar-width);
             padding: 2rem;
-            transition: margin-left 0.3s ease;
         }
 
-        .dashboard-title {
-            font-size: 1.8rem;
-            font-weight: 700;
+        .page-header {
+            background: #fff;
+            padding: 1.5rem 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
             color: var(--primary-color);
-            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
         }
 
-        .stats-container {
+        .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 1.5rem;
@@ -43,10 +51,46 @@
         }
 
         .stat-card {
-            background: white;
+            background: #fff;
             padding: 1.5rem;
             border-radius: var(--border-radius);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .stat-revenue .stat-icon {
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--primary-color);
+        }
+
+        .stat-orders .stat-icon {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+
+        .stat-average .stat-icon {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+        }
+
+        .stat-products .stat-icon {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
         }
 
         .stat-label {
@@ -58,93 +102,145 @@
         .stat-value {
             font-size: 1.5rem;
             font-weight: 600;
-            color: var(--primary-color);
+            color: #111827;
         }
 
-        .report-nav {
-            background: white;
-            padding: 1rem;
+        .filter-card {
+            background: #fff;
+            padding: 1.5rem;
             border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
             margin-bottom: 2rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
-        .report-nav .nav-link {
+        .date-navigation {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .date-nav-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: #f3f4f6;
+            border-radius: var(--border-radius);
             color: #6b7280;
-            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .date-nav-btn:hover {
+            background: #e5e7eb;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .download-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             padding: 0.75rem 1.5rem;
             border-radius: var(--border-radius);
-            transition: all 0.2s ease;
+            font-weight: 500;
+            transition: var(--transition);
         }
 
-        .report-nav .nav-link.active {
-            background-color: var(--primary-color);
+        .download-btn.pdf {
+            background-color: #ef4444;
             color: white;
         }
 
-        .report-card {
-            background: white;
+        .download-btn.excel {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow);
+        }
+
+        .table-card {
+            background: #fff;
             border-radius: var(--border-radius);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            margin-bottom: 2rem;
-        }
-
-        .report-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .report-body {
-            padding: 1.5rem;
-        }
-
-        .chart-container {
-            height: 400px;
-            margin-bottom: 2rem;
-        }
-
-        .custom-date-form {
-            background: white;
-            padding: 1.5rem;
-            border-radius: var(--border-radius);
-            margin-bottom: 2rem;
-        }
-
-        .date-input {
-            border: 1px solid #e5e7eb;
-            border-radius: 0.375rem;
-            padding: 0.5rem;
-            width: 100%;
-        }
-
-        .export-buttons {
-            margin-bottom: 1.5rem;
-        }
-
-        .export-btn {
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-            transition: transform 0.2s ease;
-        }
-
-        .export-btn:hover {
-            transform: translateY(-1px);
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
         }
 
         .table-header {
             background: var(--primary-color);
             color: white;
+            font-weight: 500;
+        }
+
+        .table > :not(caption) > * > * {
+            padding: 1rem;
+        }
+
+        .table tbody tr {
+            transition: var(--transition);
+        }
+
+        .table tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .period-tabs {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: #f3f4f6;
+            border-radius: var(--border-radius);
+            margin-bottom: 1.5rem;
+        }
+
+        .period-tab {
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            color: #6b7280;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .period-tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .custom-date-form {
+            display: none;
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin-top: 1rem;
+        }
+
+        .custom-date-form.active {
+            display: block;
         }
 
         @media (max-width: 768px) {
-            .main-content {
-                margin-left: 0;
-                padding: 1rem;
+            .stats-grid {
+                grid-template-columns: 1fr;
             }
 
-            .stats-container {
-                grid-template-columns: 1fr;
+            .report-actions {
+                flex-direction: column;
+            }
+
+            .period-tabs {
+                flex-wrap: wrap;
+            }
+
+            .period-tab {
+                flex: 1 1 calc(50% - 0.5rem);
+                text-align: center;
             }
         }
     </style>
@@ -153,251 +249,391 @@
     <%- include('../partials/admin/adminHeader') %>
 
     <main class="main-content">
-        <h1 class="dashboard-title">Sales Report</h1>
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <h1 class="page-title">Sales Report</h1>
+            <div class="report-actions">
+                <button class="download-btn pdf" onclick="downloadReport('pdf')">
+                    <i class="fas fa-file-pdf"></i> Download PDF
+                </button>
+                <button class="download-btn excel" onclick="downloadReport('excel')">
+                    <i class="fas fa-file-excel"></i> Download Excel
+                </button>
+            </div>
+        </div>
 
-        <!-- Summary Stats -->
-        <div class="stats-container">
-            <div class="stat-card">
+        <div class="stats-grid">
+            <div class="stat-card stat-revenue">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
                 <div class="stat-label">Total Revenue</div>
                 <div class="stat-value">₹<%= totalRevenue.toFixed(2) %></div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card stat-orders">
+                <div class="stat-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
                 <div class="stat-label">Total Orders</div>
                 <div class="stat-value"><%= totalOrders %></div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card stat-average">
+                <div class="stat-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
                 <div class="stat-label">Average Order Value</div>
                 <div class="stat-value">₹<%= averageOrderValue.toFixed(2) %></div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Total Products Sold</div>
+            <div class="stat-card stat-products">
+                <div class="stat-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="stat-label">Products Sold</div>
                 <div class="stat-value"><%= totalProductsSold %></div>
             </div>
         </div>
 
-        <!-- Report Navigation -->
-        <ul class="nav nav-pills report-nav">
-            <li class="nav-item">
-                <a class="nav-link <%= reportType === 'daily' ? 'active' : '' %>" 
-                   href="/admin/sales-report/daily">Daily</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <%= reportType === 'weekly' ? 'active' : '' %>" 
-                   href="/admin/sales-report/weekly">Weekly</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <%= reportType === 'yearly' ? 'active' : '' %>" 
-                   href="/admin/sales-report/yearly">Yearly</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <%= reportType === 'custom' ? 'active' : '' %>" 
-                   href="/admin/sales-report/custom">Custom Date</a>
-            </li>
-        </ul>
+        <div class="filter-card">
+            <div class="period-tabs">
+                <a href="/admin/sales-report/today" 
+                   class="period-tab <%= reportType === 'today' ? 'active' : '' %>">
+                   Today
+                </a>
+                <a href="/admin/sales-report/weekly" 
+                   class="period-tab <%= reportType === 'weekly' ? 'active' : '' %>">
+                   Weekly
+                </a>
+                <a href="/admin/sales-report/monthly" 
+                   class="period-tab <%= reportType === 'monthly' ? 'active' : '' %>">
+                   Monthly
+                </a>
+                <a href="/admin/sales-report/yearly" 
+                   class="period-tab <%= reportType === 'yearly' ? 'active' : '' %>">
+                   Yearly
+                </a>
+                <a href="/admin/sales-report/custom" 
+                   class="period-tab <%= reportType === 'custom' ? 'active' : '' %>">
+                   Custom
+                </a>
+            </div>
 
-        <!-- Export Buttons -->
-        <div class="export-buttons">
-            <button class="btn btn-secondary export-btn me-2" onclick="exportReport('pdf')">
-                <i class="fas fa-file-pdf"></i> Export PDF
-            </button>
-            <button class="btn btn-success export-btn" onclick="exportReport('excel')">
-                <i class="fas fa-file-excel"></i> Export Excel
-            </button>
+            <% if (reportType === 'custom') { %>
+            <form class="custom-date-form active" id="customDateForm">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" class="form-control" name="startDate" 
+                               value="<%= startDate %>" required>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">End Date</label>
+                        <input type="date" class="form-control" name="endDate" 
+                               value="<%= endDate %>" required>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            Apply Filter
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <% } %>
         </div>
 
-        <!-- Custom Date Form (shown only for custom report type) -->
-        <% if (reportType === 'custom') { %>
-        <form class="custom-date-form" id="customDateForm">
-            <div class="row g-3">
-                <div class="col-md-5">
-                    <label class="form-label">Start Date</label>
-                    <input type="date" class="date-input" name="startDate" 
-                           value="<%= startDate %>" required>
-                </div>
-                <div class="col-md-5">
-                    <label class="form-label">End Date</label>
-                    <input type="date" class="date-input" name="endDate" 
-                           value="<%= endDate %>" required>
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
-                        Apply Filter
-                    </button>
-                </div>
-            </div>
-        </form>
-        <% } %>
-
-        <div class="report-card">
-            <div class="report-header">
-                <h5 class="mb-0">Revenue Trend</h5>
-            </div>
-            <div class="report-body">
-                <div class="chart-container">
-                    <canvas id="salesChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sales Data Table -->
-        <div class="report-card">
-            <div class="report-header">
-                <h5 class="mb-0">Detailed Sales Data</h5>
-            </div>
-            <div class="report-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead class="table-header">
-                            <tr>
-                                <th>Date</th>
-                                <th>Orders</th>
-                                <th>Products Sold</th>
-                                <th>Revenue</th>
-                                <th>Average Order Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+        <div class="table-card">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-header">
+                        <tr>
+                            <th>Date</th>
+                            <th class="text-center">Orders</th>
+                            <th class="text-center">Products Sold</th>
+                            <th class="text-end">Revenue</th>
+                            <th class="text-end">Average Order Value</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (salesData && salesData.length > 0) { %>
                             <% salesData.forEach(data => { %>
                             <tr>
                                 <td><%= formatDate(data.date) %></td>
-                                <td><%= data.orderCount %></td>
-                                <td><%= data.productsSold %></td>
-                                <td>₹<%= data.revenue.toFixed(2) %></td>
-                                <td>₹<%= data.averageOrderValue.toFixed(2) %></td>
+                                <td class="text-center"><%= data.orderCount %></td>
+                                <td class="text-center"><%= data.productsSold %></td>
+                                <td class="text-end">₹<%= data.revenue.toFixed(2) %></td>
+                                <td class="text-end">₹<%= data.averageOrderValue.toFixed(2) %></td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-primary" 
+                                            onclick="downloadDayReport('<%= data.date %>', 'pdf')">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </td>
                             </tr>
                             <% }); %>
-                        </tbody>
-                    </table>
-                </div>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        No sales data available for this period
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr class="fw-bold">
+                            <td>Total</td>
+                            <td class="text-center"><%= totalOrders %></td>
+                            <td class="text-center"><%= totalProductsSold %></td>
+                            <td class="text-end">₹<%= totalRevenue.toFixed(2) %></td>
+                            <td class="text-end">₹<%= averageOrderValue.toFixed(2) %></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
         </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Initialize sales chart
-        const ctx = document.getElementById('salesChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: <%- JSON.stringify(salesData.map(data => formatDate(data.date))) %>,
-                datasets: [{
-                    label: 'Revenue',
-                    data: <%- JSON.stringify(salesData.map(data => data.revenue)) %>,
-                    borderColor: '#4f46e5',
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: value => '₹' + value
-                        }
-                    }
-                }
-            }
-        });
-
-        // Handle custom date form submission
-        const customDateForm = document.getElementById('customDateForm');
-        if (customDateForm) {
-            customDateForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const startDate = this.startDate.value;
-                const endDate = this.endDate.value;
-                window.location.href = `/admin/sales-report/custom?startDate=${startDate}&endDate=${endDate}`;
-            });
-        }
-
-        // Export function
-        function exportReport(format) {
+        // Download report function
+        function downloadReport(format) {
             const reportType = '<%= reportType %>';
             let url = `/admin/sales-report/export/${format}/${reportType}`;
             
             if (reportType === 'custom') {
                 const startDate = document.querySelector('input[name="startDate"]').value;
                 const endDate = document.querySelector('input[name="endDate"]').value;
-                url += `?startDate=${startDate}&endDate=${endDate}`;
+                
+                if (!validateDateRange(startDate, endDate)) {
+                    return;
+                }
+                
+                url += `?startDate=${startDate}&endDate=${endDate}`;}
+            
+            // Show loading state
+            const loadingBtn = format === 'pdf' ? 
+                document.querySelector('.download-btn.pdf') : 
+                document.querySelector('.download-btn.excel');
+            
+            const originalText = loadingBtn.innerHTML;
+            loadingBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Downloading...`;
+            loadingBtn.disabled = true;
+
+            // Download the file
+            fetch(url)
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `sales-report-${reportType}-${new Date().toISOString().split('T')[0]}.${format}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    
+                    // Show success message
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Download Complete',
+                        text: `Sales report has been downloaded successfully`,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                })
+                .catch(error => {
+                    console.error('Error downloading report:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Download Failed',
+                        text: 'There was an error downloading the report. Please try again.'
+                    });
+                })
+                .finally(() => {
+                    // Reset button state
+                    loadingBtn.innerHTML = originalText;
+                    loadingBtn.disabled = false;
+                });
+        }
+
+        // Download individual day report
+        function downloadDayReport(date, format) {
+            const formattedDate = new Date(date).toISOString().split('T')[0];
+            const url = `/admin/sales-report/export/${format}/custom?startDate=${formattedDate}&endDate=${formattedDate}`;
+            
+            // Show loading state
+            Swal.fire({
+                title: 'Downloading...',
+                text: 'Please wait while we prepare your report',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            fetch(url)
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `sales-report-${formattedDate}.${format}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Download Complete',
+                        text: `Report for ${formattedDate} has been downloaded`,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                })
+                .catch(error => {
+                    console.error('Error downloading day report:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Download Failed',
+                        text: 'There was an error downloading the report. Please try again.'
+                    });
+                });
+        }
+
+        // Validate date range
+        function validateDateRange(startDate, endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Dates',
+                    text: 'Please select valid dates'
+                });
+                return false;
             }
             
-            window.open(url, '_blank');
+            if (start > end) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Date Range',
+                    text: 'Start date cannot be after end date'
+                });
+                return false;
+            }
+            
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays > 365) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Date Range Too Large',
+                    text: 'Date range cannot exceed 1 year'
+                });
+                return false;
+            }
+            
+            return true;
         }
 
-        // Date formatter function
-        function formatDate(dateString) {
-            const options = { 
-                year: 'numeric', 
-                month: 'short', 
-                day: 'numeric' 
-            };
-            return new Date(dateString).toLocaleDateString('en-US', options);
-        }
+        // Handle custom date form
+        const customDateForm = document.getElementById('customDateForm');
+        if (customDateForm) {
+            customDateForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const startDate = this.startDate.value;
+                const endDate = this.endDate.value;
 
-        const initializeChart = () => {
-    try {
-        const ctx = document.getElementById('salesChart');
-        if (!ctx) {
-            console.error('Sales chart canvas not found');
-            return;
-        }
-
-        const chartData = {
-            labels: salesData.map(data => formatDate(data.date)),
-            datasets: [{
-                label: 'Revenue',
-                data: salesData.map(data => data.revenue),
-                borderColor: '#4f46e5',
-                tension: 0.4,
-                fill: false
-            }]
-        };
-
-        const chartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'top',
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return '₹' + context.raw.toFixed(2);
-                        }
-                    }
+                if (!validateDateRange(startDate, endDate)) {
+                    return;
                 }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: value => '₹' + value
-                    }
+
+                window.location.href = `/admin/sales-report/custom?startDate=${startDate}&endDate=${endDate}`;
+            });
+        }
+
+        // Print function
+        function printReport() {
+            window.print();
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        // Date navigation
+        function navigateDate(direction) {
+            const reportType = '<%= reportType %>';
+            let currentStartDate = new Date('<%= startDate %>');
+            let currentEndDate = new Date('<%= endDate %>');
+            let newStartDate, newEndDate;
+
+            switch(reportType) {
+                case 'today':
+                    newStartDate = new Date(currentStartDate);
+                    newStartDate.setDate(newStartDate.getDate() + direction);
+                    newEndDate = new Date(newStartDate);
+                    break;
+                    
+                case 'weekly':
+                    newStartDate = new Date(currentStartDate);
+                    newStartDate.setDate(newStartDate.getDate() + (direction * 7));
+                    newEndDate = new Date(newStartDate);
+                    newEndDate.setDate(newEndDate.getDate() + 6);
+                    break;
+                    
+                case 'monthly':
+                    newStartDate = new Date(currentStartDate);
+                    newStartDate.setMonth(newStartDate.getMonth() + direction);
+                    newEndDate = new Date(newStartDate.getFullYear(), newStartDate.getMonth() + 1, 0);
+                    break;
+                    
+                case 'yearly':
+                    newStartDate = new Date(currentStartDate);
+                    newStartDate.setFullYear(newStartDate.getFullYear() + direction);
+                    newEndDate = new Date(newStartDate.getFullYear(), 11, 31);
+                    break;
+                    
+                default:
+                    return;
+            }
+
+            window.location.href = `/admin/sales-report/${reportType}?startDate=${newStartDate.toISOString().split('T')[0]}&endDate=${newEndDate.toISOString().split('T')[0]}`;
+        }
+
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Handle responsive view
+        function handleResponsiveView() {
+            if (window.innerWidth <= 768) {
+                document.body.classList.add('sidebar-collapsed');
+                const mainContent = document.querySelector('.main-content');
+                if (mainContent) {
+                    mainContent.style.marginLeft = '0';
                 }
             }
-        };
+        }
 
-        new Chart(ctx, {
-            type: 'line',
-            data: chartData,
-            options: chartOptions
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            handleResponsiveView();
+            window.addEventListener('resize', handleResponsiveView);
         });
-    } catch (error) {
-        console.error('Error initializing chart:', error);
-    }
-};
-
-// Call the function after page load
-document.addEventListener('DOMContentLoaded', initializeChart);
     </script>
 </body>
 </html>

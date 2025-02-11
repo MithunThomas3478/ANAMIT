@@ -235,28 +235,53 @@
                                         <%= new Date(order.createdAt).toLocaleTimeString() %>
                                     </small>
                                 </td>
-                                <td class="order-cell">₹<%= order.totalAmount.toFixed(2) %></td>
                                 <td class="order-cell">
-                                    <select class="form-select form-select-sm status-select"
-                                            onchange="updateOrderStatus('<%= order._id %>', this.value)"
-                                            <%= ['delivered', 'cancelled'].includes(order.orderStatus) ? 'disabled' : '' %>>
-                                        <option value="pending" <%= order.orderStatus === 'pending' ? 'selected' : '' %>>
-                                            Pending
-                                        </option>
-                                        <option value="confirmed" <%= order.orderStatus === 'confirmed' ? 'selected' : '' %>>
-                                            Confirmed
-                                        </option>
-                                        <option value="processing" <%= order.orderStatus === 'processing' ? 'selected' : '' %>>
-                                            Processing
-                                        </option>
-                                        <option value="shipped" <%= order.orderStatus === 'shipped' ? 'selected' : '' %>>
-                                            Shipped
-                                        </option>
-                                        <option value="delivered" <%= order.orderStatus === 'delivered' ? 'selected' : '' %>>
-                                            Delivered
-                                        </option>
+                                    <% 
+                                        // Calculate total amount based on active items
+                                        const activeItems = order.items.filter(item => item.status === 'active');
+                                        const activeItemsTotal = activeItems.reduce((total, item) => total + item.itemTotal, 0);
                                         
-                                    </select>
+                                        // Calculate proportional discount if applicable
+                                        let totalDiscount = 0;
+                                        if (order.totalDiscount && order.totalDiscount > 0) {
+                                            const totalOrderAmount = order.items.reduce((total, item) => total + item.itemTotal, 0);
+                                            const activeItemRatio = activeItemsTotal / totalOrderAmount;
+                                            totalDiscount = order.totalDiscount * activeItemRatio;
+                                        }
+                                        
+                                        // Calculate final amount
+                                        const finalAmount = activeItemsTotal - totalDiscount + 
+                                            (activeItems.length === order.items.length ? order.shippingFee : 0);
+                                    %>
+                                    ₹<%= finalAmount.toFixed(2) %>
+                                </td>                                <td class="order-cell">
+                                    <% if (order.orderStatus === 'cancelled') { %>
+                                        <span class="badge bg-danger">Cancelled</span>
+                                    <% } else if (order.orderStatus === 'returned' || order.orderStatus === 'partially_returned') { %>
+                                        <span class="badge bg-secondary">
+                                            <%= order.orderStatus === 'returned' ? 'Returned' : 'Partially Returned' %>
+                                        </span>
+                                    <% } else { %>
+                                        <select class="form-select form-select-sm status-select"
+                                                onchange="updateOrderStatus('<%= order._id %>', this.value)"
+                                                <%= ['delivered', 'cancelled', 'returned', 'partially_returned'].includes(order.orderStatus) ? 'disabled' : '' %>>
+                                            <option value="pending" <%= order.orderStatus === 'pending' ? 'selected' : '' %>>
+                                                Pending
+                                            </option>
+                                            <option value="confirmed" <%= order.orderStatus === 'confirmed' ? 'selected' : '' %>>
+                                                Confirmed
+                                            </option>
+                                            <option value="processing" <%= order.orderStatus === 'processing' ? 'selected' : '' %>>
+                                                Processing
+                                            </option>
+                                            <option value="shipped" <%= order.orderStatus === 'shipped' ? 'selected' : '' %>>
+                                                Shipped
+                                            </option>
+                                            <option value="delivered" <%= order.orderStatus === 'delivered' ? 'selected' : '' %>>
+                                                Delivered
+                                            </option>
+                                        </select>
+                                    <% } %>
                                 </td>
                                 <td class="order-cell">
                                     <span class="badge <%= order.paymentStatus === 'completed' ? 'bg-success' : 'bg-warning' %>">

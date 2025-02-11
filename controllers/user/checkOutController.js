@@ -16,6 +16,21 @@ const razorpay = new Razorpay({
     key_secret: process.env.RAZORPAY_KEY_SECRET
 });
 
+const calculateItemTotals = (item, productOffer = 0, categoryOffer = 0) => {
+    const originalPrice = item.price;
+    const bestDiscountPercent = Math.max(productOffer, categoryOffer);
+    const discountedPrice = originalPrice * (1 - bestDiscountPercent / 100);
+    const itemTotal = discountedPrice * item.quantity;
+
+    return {
+        originalPrice,
+        discountedPrice: Number(discountedPrice.toFixed(2)),
+        discountPercent: bestDiscountPercent,
+        itemTotal: Number(itemTotal.toFixed(2))
+    };
+};
+
+
 const getCheckout = async (req, res) => {
     try {
         const currentDate = new Date();
@@ -55,12 +70,11 @@ const getCheckout = async (req, res) => {
                 offer.category?.toString() === item.product.category.toString()
             );
 
-            // Calculate best discount
+            // Calculate best discount - take only the highest offer
             const productDiscountPercent = productOffer?.discountPercentage || 0;
             const categoryDiscountPercent = categoryOffer?.discountPercentage || 0;
             const bestDiscountPercent = Math.max(productDiscountPercent, categoryDiscountPercent);
 
-            // Get variant and its image
             const variant = item.product.variants.find(v => 
                 v.colorName === item.selectedColor.colorName
             );
@@ -86,19 +100,17 @@ const getCheckout = async (req, res) => {
             };
         }));
 
-        // Calculate initial totals
+        // Calculate totals consistently
         const subtotal = processedItems.reduce((sum, item) => 
             sum + (item.price * item.quantity), 0);
             
         const totalDiscount = processedItems.reduce((sum, item) => 
             sum + ((item.price * item.quantity) - item.itemTotal), 0);
 
-        // Handle coupon discount
         let couponDiscount = 0;
         let appliedCoupon = null;
         
         if (req.session.appliedCoupon) {
-            // Verify coupon is still valid
             const coupon = await Coupon.findOne({
                 _id: req.session.appliedCoupon._id,
                 isActive: true,
@@ -107,17 +119,15 @@ const getCheckout = async (req, res) => {
             });
 
             if (coupon) {
-                // Recalculate coupon discount based on current cart
                 if (coupon.discountType === 'percentage') {
-                    couponDiscount = (subtotal * coupon.discountValue) / 100;
-                    if (coupon.maxDiscountAmount) {
-                        couponDiscount = Math.min(couponDiscount, coupon.maxDiscountAmount);
-                    }
+                    couponDiscount = Math.min(
+                        (subtotal * coupon.discountValue) / 100,
+                        coupon.maxDiscountAmount || Infinity
+                    );
                 } else {
-                    couponDiscount = coupon.discountValue;
+                    couponDiscount = Math.min(coupon.discountValue, subtotal);
                 }
 
-                // Verify minimum purchase requirement
                 if (!coupon.minPurchaseAmount || subtotal >= coupon.minPurchaseAmount) {
                     appliedCoupon = {
                         code: coupon.code,
@@ -126,20 +136,13 @@ const getCheckout = async (req, res) => {
                         calculatedDiscount: couponDiscount,
                         _id: coupon._id
                     };
-                } else {
-                    // Remove coupon if minimum purchase is not met
-                    delete req.session.appliedCoupon;
                 }
-            } else {
-                // Remove invalid coupon
-                delete req.session.appliedCoupon;
             }
         }
 
-        const shippingFee = 128; // You might want to make this configurable
+        const shippingFee = 128;
         const finalAmount = subtotal - totalDiscount - couponDiscount + shippingFee;
 
-        // Prepare checkout data
         const checkoutData = {
             items: processedItems,
             subtotal,
@@ -148,16 +151,6 @@ const getCheckout = async (req, res) => {
             shippingFee,
             finalAmount
         };
-
-        // Debug logging
-        console.log('Checkout Summary:', {
-            subtotal,
-            totalDiscount,
-            couponDiscount,
-            shippingFee,
-            finalAmount,
-            appliedCoupon
-        });
 
         res.render('checkout', {
             checkoutData,
@@ -485,76 +478,71 @@ const placeOrder = async (req, res) => {
         const { addressId, items, paymentMethod, paymentDetails } = req.body;
         const userId = req.user._id;
 
-        // Validate input
+        // Validate required fields
         if (!addressId || !items || !paymentMethod) {
             throw new Error('Missing required order information');
         }
 
-        // Get address
+        // Validate address
         const address = await Address.findById(addressId);
         if (!address || address.userId.toString() !== userId.toString()) {
             throw new Error('Invalid delivery address');
         }
 
-        // Update product stock and validate availability
+        // Validate products and stock
+        const invalidItems = [];
+        const productsToUpdate = [];
+
         for (const item of items) {
             const product = await Product.findById(item.productId);
             if (!product) {
-                throw new Error(`Product ${item.productName} not found`);
+                invalidItems.push(`Product ${item.productName} not found`);
+                continue;
             }
 
-            // Find the specific variant and size
             const variant = product.variants.find(v => 
                 v.colorName === item.selectedColor.colorName
             );
             if (!variant) {
-                throw new Error(`Color variant not found for ${item.productName}`);
+                invalidItems.push(`Color variant not found for ${item.productName}`);
+                continue;
             }
 
             const sizeVariant = variant.colorVariant.find(sv => 
                 sv.size === item.selectedSize
             );
             if (!sizeVariant) {
-                throw new Error(`Size variant not found for ${item.productName}`);
+                invalidItems.push(`Size variant not found for ${item.productName}`);
+                continue;
             }
 
-            // Check if enough stock is available
             if (sizeVariant.stock < item.quantity) {
-                throw new Error(`Insufficient stock for ${item.productName}`);
+                invalidItems.push(`Insufficient stock for ${item.productName}`);
+                continue;
             }
 
-            // Update stock using findOneAndUpdate to avoid validation issues
-            await Product.findOneAndUpdate(
-                {
-                    _id: item.productId,
-                    'variants.colorName': item.selectedColor.colorName,
-                    'variants.colorVariant.size': item.selectedSize
-                },
-                {
-                    $inc: {
-                        'variants.$.colorVariant.$[size].stock': -item.quantity,
-                        totalSales: item.quantity
-                    }
-                },
-                {
-                    arrayFilters: [{ 'size.size': item.selectedSize }],
-                    new: true,
-                    runValidators: false
-                }
-            );
+            productsToUpdate.push({
+                product,
+                variant,
+                sizeVariant,
+                quantity: item.quantity,
+                item
+            });
         }
 
-        // Calculate totals
+        if (invalidItems.length > 0) {
+            throw new Error(`Validation failed: ${invalidItems.join(', ')}`);
+        }
+
+        // Calculate order totals consistently
         const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const totalDiscount = items.reduce((sum, item) => 
             sum + ((item.price * item.quantity) - item.itemTotal), 0);
-        
-        // Generate order identifiers
-        const orderId = await Order.generateOrderId();
-        const orderNumber = await Order.generateOrderNumber();
 
-        // Handle coupon from session
+        // Handle coupon application
+        let couponDiscount = 0;
         let couponData = null;
+
         if (req.session.appliedCoupon) {
             const coupon = await Coupon.findOne({
                 _id: req.session.appliedCoupon._id,
@@ -564,13 +552,18 @@ const placeOrder = async (req, res) => {
             });
 
             if (coupon) {
+                if (coupon.minPurchaseAmount && subtotal < coupon.minPurchaseAmount) {
+                    throw new Error(`Minimum purchase amount of ₹${coupon.minPurchaseAmount} required for coupon`);
+                }
+
+                couponDiscount = Number(req.session.appliedCoupon.calculatedDiscount);
                 couponData = {
                     code: coupon.code,
-                    discountAmount: req.session.appliedCoupon.calculatedDiscount,
+                    discountAmount: couponDiscount,
                     discountType: coupon.discountType
                 };
 
-                // Update coupon usage count
+                // Update coupon usage
                 await Coupon.findByIdAndUpdate(coupon._id, {
                     $inc: { usageCount: 1 }
                 });
@@ -578,17 +571,23 @@ const placeOrder = async (req, res) => {
         }
 
         const shippingFee = 128;
-        const totalAmount = subtotal - totalDiscount - (couponData?.discountAmount || 0);
+        const finalAmount = Number((subtotal - totalDiscount - couponDiscount + shippingFee).toFixed(2));
 
-        // Check wallet balance if payment method is wallet
+        // Validate wallet balance if using wallet payment
         if (paymentMethod === 'wallet') {
             const wallet = await Wallet.findOne({ user: userId });
-            if (!wallet || wallet.balance < totalAmount) {
+            if (!wallet || wallet.balance < finalAmount) {
                 throw new Error('Insufficient wallet balance');
             }
         }
 
-        // Create order first
+        // Generate order identifiers
+        const [orderId, orderNumber] = await Promise.all([
+            Order.generateOrderId(),
+            Order.generateOrderNumber()
+        ]);
+
+        // Create order with consistent data
         const order = new Order({
             orderId,
             orderNumber,
@@ -617,13 +616,15 @@ const placeOrder = async (req, res) => {
                 pincode: address.pincode,
                 phoneNumber: address.phoneNumber
             },
-            totalAmount,
+            totalAmount: subtotal,
             totalDiscount,
             shippingFee,
+            finalAmount,
             paymentMethod,
             paymentStatus: paymentMethod === 'cod' ? 'pending' : 'completed',
             orderStatus: paymentMethod === 'cod' ? 'pending' : 'confirmed',
             coupon: couponData,
+            estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
             statusHistory: [{
                 status: paymentMethod === 'cod' ? 'pending' : 'confirmed',
                 timestamp: new Date(),
@@ -631,51 +632,80 @@ const placeOrder = async (req, res) => {
             }]
         });
 
-        // Save order to get MongoDB _id
-        await order.save();
-
-        // Handle wallet payment after order creation
-        if (paymentMethod === 'wallet') {
-            const wallet = await Wallet.findOne({ user: userId });
-            // Debit wallet using order._id instead of orderId
-            await wallet.debit(
-                totalAmount,
-                `Order payment for #${orderNumber}`,
-                order._id, // Using MongoDB _id instead of orderId string
-                { reason: 'order_payment' }
-            );
-
-            // Update order with wallet details
-            order.walletDetails = {
-                transactionId: wallet.transactions[wallet.transactions.length - 1]._id,
-                debitedAmount: totalAmount,
-                debitedAt: new Date()
-            };
-            await order.save();
-        }
-
-        // Handle Razorpay payment details
+        // Set payment specific details
         if (paymentMethod === 'razorpay' && paymentDetails) {
             order.paymentDetails = {
                 razorpayOrderId: paymentDetails.razorpay_order_id,
                 razorpayPaymentId: paymentDetails.razorpay_payment_id,
                 razorpaySignature: paymentDetails.razorpay_signature,
-                paidAmount: totalAmount,
+                paidAmount: finalAmount,
                 paidAt: new Date()
+            };
+        }
+
+        // Save order first to ensure we have the order document
+        await order.save();
+
+        // Update product stock
+        for (const { product, variant, sizeVariant, quantity } of productsToUpdate) {
+            await Product.findOneAndUpdate(
+                {
+                    _id: product._id,
+                    'variants.colorName': variant.colorName,
+                    'variants.colorVariant.size': sizeVariant.size
+                },
+                {
+                    $inc: {
+                        'variants.$.colorVariant.$[size].stock': -quantity,
+                        totalSales: quantity
+                    }
+                },
+                {
+                    arrayFilters: [{ 'size.size': sizeVariant.size }]
+                }
+            );
+        }
+
+        // Handle wallet payment
+        if (paymentMethod === 'wallet') {
+            const wallet = await Wallet.findOne({ user: userId });
+            const debitTransaction = await wallet.debit(
+                finalAmount,
+                `Order payment for #${orderNumber}`,
+                order._id,
+                { reason: 'order_payment' }
+            );
+
+            order.walletDetails = {
+                transactionId: debitTransaction._id,
+                debitedAmount: finalAmount,
+                debitedAt: new Date()
             };
             await order.save();
         }
 
-        // Update cart status
+        // Mark cart as inactive
         await Cart.findOneAndUpdate(
             { user: userId, active: true },
-            { active: false, lastActive: new Date() }
+            { 
+                active: false, 
+                lastActive: new Date() 
+            }
         );
 
-        // Clear applied coupon from session
+        // Clear coupon from session
         if (req.session.appliedCoupon) {
             delete req.session.appliedCoupon;
         }
+
+        // Log order totals for debugging
+        console.log('Order Placed Totals:', {
+            orderId: order._id,
+            subtotal,
+            totalDiscount,
+            couponDiscount,
+            finalAmount
+        });
 
         res.status(200).json({
             success: true,
@@ -695,41 +725,108 @@ const placeOrder = async (req, res) => {
 
 const orderSuccess = async (req, res) => {
     try {
-        // Find latest order if orderId is not provided
-        let order;
-        if (req.params.orderId) {
-            order = await Order.findById(req.params.orderId)
-                .select('orderNumber totalAmount paymentMethod paymentStatus orderStatus items shippingAddress user')
-                .populate('user');
-        } else {
-            // If no orderId provided, find the latest order for the user
-            order = await Order.findOne({ user: req.user._id })
-                .sort({ createdAt: -1 })
-                .select('orderNumber totalAmount paymentMethod paymentStatus orderStatus items shippingAddress user')
-                .populate('user');
-        }
+        const select = `
+            orderNumber totalAmount paymentMethod paymentStatus orderStatus 
+            items shippingAddress user createdAt estimatedDelivery coupon 
+            totalDiscount shippingFee finalAmount trackingDetails
+        `;
+
+        const order = await Order.findById(req.params.orderId)
+            .select(select)
+            .populate('items.product')
+            .populate('user');
 
         if (!order) {
             throw new Error('Order not found');
         }
 
-        // Check if the order belongs to the logged-in user
+        // Verify order belongs to logged-in user
         if (order.user._id.toString() !== req.user._id.toString()) {
             throw new Error('Unauthorized access');
         }
 
+        // Ensure all required values exist with default values if undefined
+        const orderTotals = {
+            // Calculate items total with safe checks
+            itemsTotal: order.items.reduce((sum, item) => {
+                const price = Number(item.price) || 0;
+                const quantity = Number(item.quantity) || 0;
+                return sum + (price * quantity);
+            }, 0),
+
+            // Calculate offer savings with safe checks
+            offerSavings: order.items.reduce((acc, item) => {
+                const price = Number(item.price) || 0;
+                const quantity = Number(item.quantity) || 0;
+                const originalPrice = price * quantity;
+                const itemTotal = Number(item.itemTotal) || 0;
+                return acc + (originalPrice - itemTotal);
+            }, 0),
+
+            // Get coupon discount with safe check
+            couponDiscount: order.coupon && typeof order.coupon.discountAmount === 'number' 
+                ? order.coupon.discountAmount 
+                : 0,
+
+            // Get shipping fee with safe check
+            shippingFee: Number(order.shippingFee) || 0
+        };
+
+        // Calculate final totals with safe Number conversion
+        const totals = {
+            totalItemsPrice: Number((orderTotals.itemsTotal || 0).toFixed(2)),
+            offerSavings: Number((orderTotals.offerSavings || 0).toFixed(2)),
+            couponDiscount: Number((orderTotals.couponDiscount || 0).toFixed(2)),
+            shippingFee: Number((orderTotals.shippingFee || 0).toFixed(2))
+        };
+
+        // Calculate final amount
+        totals.finalAmount = Number((
+            totals.totalItemsPrice - 
+            totals.offerSavings - 
+            totals.couponDiscount + 
+            totals.shippingFee
+        ).toFixed(2));
+
+        // Debug log
+        console.log('Order Success Totals:', {
+            orderTotals,
+            totals,
+            storedValues: {
+                totalAmount: order.totalAmount,
+                totalDiscount: order.totalDiscount,
+                finalAmount: order.finalAmount
+            }
+        });
+
+        // Format currency helper
+        const formatAmount = (amount) => {
+            // Ensure amount is a number and not undefined
+            const safeAmount = Number(amount) || 0;
+            return safeAmount.toLocaleString('en-IN', {
+                maximumFractionDigits: 2,
+                minimumFractionDigits: 2
+            });
+        };
+
         res.render('orderSuccess', {
             order,
-            storeName: process.env.STORE_NAME || 'Your Store Name'
+            totals,
+            storeName: process.env.STORE_NAME || 'Your Store Name',
+            formatAmount,
+            moment: require('moment')
         });
+
     } catch (error) {
         console.error('Order success page error:', error);
         res.status(error.message === 'Unauthorized access' ? 403 : 500)
             .render('error', { 
-                message: error.message || 'Something went wrong'
+                message: error.message || 'Something went wrong',
+                error: process.env.NODE_ENV === 'development' ? error : {}
             });
     }
 };
+
 // Helper Functions
 function getPaymentDetails(paymentMethod, paymentDetails, totalAmount) {
     switch(paymentMethod) {

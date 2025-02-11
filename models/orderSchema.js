@@ -226,18 +226,26 @@ orderItemSchema.methods.canBeReturned = function() {
 };
 
 orderItemSchema.methods.calculateRefundAmount = function() {
-    let refundAmount = this.itemTotal;
     const order = this.parent();
     
+    // Calculate the proportion of this item in the total order
+    const itemRatio = this.itemTotal / order.totalAmount;
+    
+    // Calculate refund amount including proportional shipping fee
+    let refundAmount = this.itemTotal;
+    
+    // Proportionally add shipping fee
+    const proportionalShippingFee = order.shippingFee * itemRatio;
+    refundAmount += proportionalShippingFee;
+    
+    // Subtract proportional coupon discount if applicable
     if (order.coupon && order.coupon.discountAmount) {
-        const itemRatio = this.itemTotal / order.totalAmount;
         const itemDiscount = order.coupon.discountAmount * itemRatio;
         refundAmount -= itemDiscount;
     }
 
     return Math.max(0, refundAmount);
 };
-
 // Order Methods
 orderSchema.methods.getActiveItems = function() {
     return this.items.filter(item => item.status === 'active');
@@ -288,7 +296,10 @@ orderSchema.virtual('finalAmount').get(function() {
     const activeItemsRatio = activeItemsTotal / this.totalAmount;
     const applicableDiscount = this.totalDiscount * activeItemsRatio;
     
-    return activeItemsTotal - applicableDiscount + this.shippingFee;
+    // Only add shipping if all items are active
+    const shipping = this.items.every(item => item.status === 'active') ? this.shippingFee : 0;
+    
+    return activeItemsTotal - applicableDiscount + shipping;
 });
 
 // Pre-save middleware

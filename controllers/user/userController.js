@@ -1,11 +1,13 @@
 const User = require("../../models/userSchema");
 const Offer = require("../../models/offerSchema");
-const wishlist = require("../../models/wishlistSchema");
+const Wishlist = require("../../models/wishlistSchema");
 const nodemailer = require("nodemailer");
 const env = require("dotenv").config();
 const bcrypt = require("bcrypt");
 const Product = require("../../models/productSchema");
 const Category = require("../../models/categorySchema");
+const Wallet = require('../../models/walletSchema');
+const mongoose = require('mongoose')
 
 const pageNotFound = async (req, res) => {
   try {
@@ -21,10 +23,28 @@ const loadHomepage = async (req, res) => {
       // Get user from session
       const user = req.session.user;
       let userData = null;
-      if (user) {
-          userData = await User.findOne({ _id: user }).lean();
-      }
+      let isNewUser = false;
 
+      if (user) {
+        userData = await User.findOne({ _id: user }).lean();
+        // Check if this is a new user (no referral code and recently registered)
+        isNewUser = !userData.referredBy && !userData.referralCode && 
+                   (new Date() - new Date(userData.createdAt)) < 24 * 60 * 60 * 1000; // 24 hours
+        
+        console.log('User details:', {
+            userId: userData._id,
+            hasReferralCode: !!userData.referralCode,
+            hasReferredBy: !!userData.referredBy,
+            createdAt: userData.createdAt,
+            isNewUser: isNewUser
+        });
+    
+        // If user has seen the modal, update their record
+        if (isNewUser && req.session.hasSeenReferralModal) {
+            isNewUser = false;
+        }
+        req.session.hasSeenReferralModal = true;
+    }
       // Fetch all active offers
       const activeOffers = await Offer.find({
           isActive: true,
@@ -116,7 +136,7 @@ const loadHomepage = async (req, res) => {
           .slice(0, 8); // Get top 8 products with best offers
 
       res.render("home", {
-          user: userData,
+          user: { ...userData, isNewUser },
           categories,
           featuredProducts,
           offers: [
@@ -147,6 +167,139 @@ const loadHomepage = async (req, res) => {
   }
 };
 
+
+const applyReferral = async (req, res) => {
+  try {
+      const { referralCode } = req.body;
+      const userId = req.session.user;
+
+      console.log('Starting referral process:', { referralCode, userId });
+
+      // Basic validation
+      if (!referralCode || !userId) {
+          return res.json({ 
+              success: false, 
+              message: 'Invalid request. Please login and try again.'
+          });
+      }
+
+      // Find the referrer user
+      const referrer = await User.findOne({ referralCode });
+      console.log('Referrer found:', referrer ? referrer._id : 'Not found');
+      
+      if (!referrer) {
+          return res.json({ 
+              success: false, 
+              message: 'Invalid referral code. Please check and try again.'
+          });
+      }
+
+      // Check if user has already applied a referral code
+      const newUser = await User.findById(userId);
+      console.log('New user found:', newUser ? newUser._id : 'Not found');
+
+      if (!newUser) {
+          return res.json({ 
+              success: false, 
+              message: 'User not found. Please login and try again.'
+          });
+      }
+
+      if (newUser.referredBy) {
+          return res.json({ 
+              success: false, 
+              message: 'You have already used a referral code.'
+          });
+      }
+
+      // Prevent self-referral
+      if (newUser._id.toString() === referrer._id.toString()) {
+          return res.json({ 
+              success: false, 
+              message: 'You cannot use your own referral code.'
+          });
+      }
+
+      try {
+          // Update user and handle wallet operations
+          await User.findByIdAndUpdate(userId, {
+              $set: { referredBy: referrer._id }
+          });
+
+          // Get or create wallet for new user
+          let newUserWallet = await Wallet.findOne({ user: userId });
+          if (!newUserWallet) {
+              newUserWallet = new Wallet({ 
+                  user: userId,
+                  balance: 0,
+                  transactions: []
+              });
+              await newUserWallet.save();
+          }
+
+          // Get or create wallet for referrer
+          let referrerWallet = await Wallet.findOne({ user: referrer._id });
+          if (!referrerWallet) {
+              referrerWallet = new Wallet({ 
+                  user: referrer._id,
+                  balance: 0,
+                  transactions: []
+              });
+              await referrerWallet.save();
+          }
+
+          // Add bonuses to wallets
+          await newUserWallet.credit(1000, 'Referral bonus for using referral code', {
+              reason: 'referral_bonus',
+              metadata: {
+                  referralCode: referralCode,
+                  referrerId: referrer._id
+              }
+          });
+
+          await referrerWallet.credit(500, 'Referral bonus for referral code usage', {
+              reason: 'referral_reward',
+              metadata: {
+                  referredUserId: userId,
+                  referralCode: referralCode
+              }
+          });
+
+          return res.json({ 
+              success: true, 
+              message: 'Referral code applied successfully! ₹1000 has been added to your wallet.'
+          });
+
+      } catch (error) {
+          console.error('Wallet operation error:', error);
+          
+          // Rollback the referral if wallet operations fail
+          await User.findByIdAndUpdate(userId, {
+              $unset: { referredBy: "" }
+          });
+
+          return res.json({ 
+              success: false, 
+              message: 'Failed to process wallet transaction. Please try again.',
+              error: error.message
+          });
+      }
+
+  } catch (error) {
+      console.error('Referral error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+      });
+      
+      return res.json({ 
+          success: false, 
+          message: 'Something went wrong. Please try again later.',
+          error: error.message
+      });
+  }
+};
+
 const loadSignUp = async (req, res) => {
   try {
     return res.render("signup");
@@ -159,6 +312,13 @@ const loadSignUp = async (req, res) => {
 function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
+
+const generateReferralCode = (firstName) => {
+  const timestamp = Date.now().toString().slice(-4);
+  const prefix = firstName.slice(0, 3).toUpperCase();
+  const randomStr = Math.random().toString(36).substring(2, 5).toUpperCase();
+  return `${prefix}${randomStr}${timestamp}`;
+};
 
 async function sendVerificationEmail(email, otp) {
 
@@ -431,10 +591,341 @@ const logout = async (req, res) => {
   }
 };
 
+const search = async (req, res) => {
+  try {
+      // Check if user is authenticated
+      if (!req.session.user) {
+          return res.status(401).json({
+              success: false,
+              message: 'Please login to continue'
+          });
+      }
 
+      // Destructure query parameters with defaults
+      const { 
+          query, 
+          category, 
+          sort = 'newest', 
+          page = 1, 
+          maxPrice, 
+          sizes, 
+          colors 
+      } = req.query;
 
+      // Pagination settings
+      const limit = 12;
+      const skip = (parseInt(page) - 1) * limit;
 
+      // Find the category document
+      const categoryDoc = await Category.findOne({ 
+          name: { $regex: new RegExp(category, 'i') },
+          isListed: true
+      });
 
+      if (!categoryDoc) {
+          return res.status(400).json({ 
+              success: false, 
+              message: 'Invalid category' 
+          });
+      }
+
+      const currentDate = new Date();
+
+      // Get active category offer
+      const categoryOffer = await Offer.findOne({
+          offerType: 'category',
+          category: categoryDoc._id,
+          isActive: true,
+          startDate: { $lte: currentDate },
+          endDate: { $gte: currentDate }
+      });
+
+      // Get user's wishlist
+      let userWishlist = [];
+      if (req.session.user) {
+          const wishlistDoc = await Wishlist.findOne({ user: req.session.user._id });
+          if (wishlistDoc) {
+              userWishlist = wishlistDoc.items.map(item => item.product.toString());
+          }
+      }
+
+      // Initialize aggregation pipeline
+      const pipeline = [];
+
+      // Base match stage
+      pipeline.push({
+          $match: {
+              isListed: true,
+              category: categoryDoc._id
+          }
+      });
+
+      // Search query handling
+      if (query && query.trim()) {
+          pipeline.push({
+              $match: {
+                  $or: [
+                      { productName: { $regex: query, $options: 'i' } },
+                      { searchKeywords: { $regex: query, $options: 'i' } },
+                      { tags: { $regex: query, $options: 'i' } }
+                  ]
+              }
+          });
+      }
+
+      // Product offer lookup
+      pipeline.push({
+          $lookup: {
+              from: 'offers',
+              let: { productId: '$_id' },
+              pipeline: [
+                  {
+                      $match: {
+                          $expr: {
+                              $and: [
+                                  { $eq: ['$offerType', 'product'] },
+                                  { $eq: ['$product', '$$productId'] },
+                                  { $eq: ['$isActive', true] },
+                                  { $lte: ['$startDate', currentDate] },
+                                  { $gte: ['$endDate', currentDate] }
+                              ]
+                          }
+                      }
+                  }
+              ],
+              as: 'productOffer'
+          }
+      });
+
+      // Unwind variants for filtering
+      pipeline.push({ $unwind: '$variants' });
+      pipeline.push({ $unwind: '$variants.colorVariant' });
+
+      // Price filter
+      if (maxPrice && !isNaN(parseFloat(maxPrice))) {
+          pipeline.push({
+              $match: {
+                  'variants.colorVariant.price': { 
+                      $lte: parseFloat(maxPrice) 
+                  }
+              }
+          });
+      }
+
+      // Size filter
+      if (sizes && sizes.length > 0) {
+          const validSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+          const sizeArray = sizes.split(',')
+              .map(size => size.trim().toUpperCase())
+              .filter(size => validSizes.includes(size));
+          
+          if (sizeArray.length > 0) {
+              pipeline.push({
+                  $match: {
+                      'variants.colorVariant.size': { 
+                          $in: sizeArray 
+                      }
+                  }
+              });
+          }
+      }
+
+      // Color filter
+      if (colors && colors.length > 0) {
+          const colorArray = colors.split(',')
+              .map(color => color.trim())
+              .filter(Boolean);
+
+          if (colorArray.length > 0) {
+              pipeline.push({
+                  $match: {
+                      'variants.colorName': {
+                          $in: colorArray.map(color => 
+                              new RegExp(color, 'i')
+                          )
+                      }
+                  }
+              });
+          }
+      }
+
+      // Add price calculation fields
+      pipeline.push({
+          $addFields: {
+              basePrice: '$variants.colorVariant.price',
+              productOfferDiscount: {
+                  $cond: {
+                      if: { $gt: [{ $size: '$productOffer' }, 0] },
+                      then: {
+                          $multiply: [
+                              '$variants.colorVariant.price',
+                              { $divide: [{ $arrayElemAt: ['$productOffer.discountPercentage', 0] }, 100] }
+                          ]
+                      },
+                      else: 0
+                  }
+              },
+              categoryOfferDiscount: {
+                  $cond: {
+                      if: { $and: [
+                          { $ne: [categoryOffer, null] },
+                          { $ne: [categoryOffer?.discountPercentage, null] }
+                      ]},
+                      then: {
+                          $multiply: [
+                              '$variants.colorVariant.price',
+                              { $divide: [(categoryOffer?.discountPercentage || 0), 100] }
+                          ]
+                      },
+                      else: 0
+                  }
+              }
+          }
+      });
+
+      // Calculate final price and offer details
+      pipeline.push({
+        $addFields: {
+            basePrice: '$variants.colorVariant.price',
+            finalPrice: {
+                $subtract: [
+                    '$variants.colorVariant.price',
+                    {
+                        $max: [
+                            {
+                                $cond: {
+                                    if: { $gt: [{ $size: '$productOffer' }, 0] },
+                                    then: {
+                                        $multiply: [
+                                            '$variants.colorVariant.price',
+                                            { $divide: [{ $arrayElemAt: ['$productOffer.discountPercentage', 0] }, 100] }
+                                        ]
+                                    },
+                                    else: 0
+                                }
+                            },
+                            {
+                                $cond: {
+                                    if: { $and: [
+                                        { $ne: ['$categoryOffer', null] },
+                                        { $ne: ['$categoryOffer.discountPercentage', null] }
+                                    ]},
+                                    then: {
+                                        $multiply: [
+                                            '$variants.colorVariant.price',
+                                            { $divide: ['$categoryOffer.discountPercentage', 100] }
+                                        ]
+                                    },
+                                    else: 0
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    });
+
+      // Sort configuration
+      let sortStage = { createdAt: -1 }; // Default sort
+      switch(sort) {
+          case 'featured':
+              sortStage = { 'productOffer': -1, createdAt: -1 };
+              break;
+          case 'popularity':
+              sortStage = { viewCount: -1, createdAt: -1 };
+              break;
+          case 'price_asc':
+              sortStage = { finalPrice: 1 };
+              break;
+          case 'price_desc':
+              sortStage = { finalPrice: -1 };
+              break;
+          case 'name_asc':
+              sortStage = { productName: 1 };
+              break;
+          case 'name_desc':
+              sortStage = { productName: -1 };
+              break;
+      }
+      pipeline.push({ $sort: sortStage });
+
+      // Group products to maintain structure
+      pipeline.push({
+          $group: {
+              _id: '$_id',
+              productName: { $first: '$productName' },
+              variants: { $first: '$variants' },
+              finalPrice: { $first: '$finalPrice' },
+              basePrice: { $first: '$basePrice' },
+              hasOffer: { $first: '$hasOffer' },
+              discountPercentage: { $first: '$discountPercentage' },
+              appliedOfferType: { $first: '$appliedOfferType' },
+              createdAt: { $first: '$createdAt' },
+              viewCount: { $first: '$viewCount' }
+          }
+      });
+
+      // Add pagination stages
+      const paginatedPipeline = [
+          ...pipeline,
+          { $skip: skip },
+          { $limit: limit }
+      ];
+
+      // Execute the aggregation
+      const products = await Product.aggregate(paginatedPipeline);
+
+      // Get total count for pagination
+      const totalPipeline = [
+          ...pipeline,
+          { $count: 'total' }
+      ];
+      const totalResult = await Product.aggregate(totalPipeline);
+      const total = totalResult[0]?.total || 0;
+
+      // Format products for response
+     // In your search controller, update the formattedProducts mapping:
+     const formattedProducts = products.map(product => ({
+      _id: product._id,
+      productName: product.productName,
+      image: product.variants?.productImage?.[0] || product.variants?.[0]?.productImage?.[0],
+      originalPrice: product.basePrice,
+      finalPrice: product.finalPrice,
+      hasOffer: product.hasOffer,
+      productOffer: product.discountPercentage || 0,
+      discountPercentage: Math.round(product.discountPercentage || 0),
+      appliedOfferType: product.appliedOfferType,
+      isInWishlist: userWishlist.includes(product._id.toString())
+  }));
+      // Send response
+      res.json({
+          success: true,
+          products: formattedProducts,
+          pagination: {
+              currentPage: parseInt(page),
+              totalPages: Math.ceil(total / limit),
+              totalProducts: total,
+              hasNextPage: skip + limit < total,
+              hasPreviousPage: page > 1,
+              nextPage: parseInt(page) + 1,
+              previousPage: parseInt(page) - 1
+          },
+          categoryOffer: categoryOffer ? {
+              name: categoryOffer.name,
+              discountPercentage: categoryOffer.discountPercentage
+          } : null
+      });
+
+  } catch (error) {
+      console.error('Search error:', error);
+      res.status(500).json({ 
+          success: false, 
+          message: 'Internal server error',
+          error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+  }
+};
 const loadUserProfile = async (req,res) => {
   
     try {
@@ -453,6 +944,11 @@ const loadUserProfile = async (req,res) => {
             message: 'User not found'
         });
     }
+
+    if (!user.referralCode) {
+      user.referralCode = generateReferralCode(user.name);
+      await user.save();
+  }
 
     res.render('userProfile', { 
       user: user,  // This sends the user data to your template
@@ -750,93 +1246,7 @@ const resendForgotPasswordOtp = async (req, res) => {
 };
 
 
-const searchProducts = async (req, res) => {
-  try {
-      const query = req.query.q;
-      
-      // Basic validation
-      if (!query || query.length < 2) {
-          return res.json({ 
-              success: true, 
-              products: [], 
-              categories: [] 
-          });
-      }
 
-      console.log('Search query:', query); // Debug log
-
-      // Basic product search
-      const products = await Product.find({
-          $or: [
-              { productName: { $regex: query, $options: 'i' } },
-              { brand: { $regex: query, $options: 'i' } },
-              { 'variants.colorName': { $regex: query, $options: 'i' } }
-          ],
-          isListed: true
-      })
-      .populate('category')
-      .limit(8)
-      .lean();
-
-      console.log('Found products:', products.length); // Debug log
-
-      // Basic category search
-      const categories = await Category.find({
-          name: { $regex: query, $options: 'i' },
-          isListed: true
-      })
-      .limit(4)
-      .lean();
-
-      console.log('Found categories:', categories.length); // Debug log
-
-      // Process products for response
-      const processedProducts = products.map(product => {
-          // Get minimum price from variants
-          let minPrice = Infinity;
-          
-          product.variants.forEach(variant => {
-              variant.colorVariant.forEach(cv => {
-                  if (cv.price < minPrice) {
-                      minPrice = cv.price;
-                  }
-              });
-          });
-
-          // Calculate final price with offer
-          const basePrice = minPrice === Infinity ? 0 : minPrice;
-          const finalPrice = product.productOffer > 0 
-              ? basePrice * (1 - product.productOffer / 100)
-              : basePrice;
-
-          return {
-              _id: product._id,
-              productName: product.productName,
-              category: product.category,
-              price: finalPrice,
-              originalPrice: basePrice,
-              productOffer: product.productOffer,
-              imageUrl: product.variants[0]?.productImage[0] || '/placeholder.jpg'
-          };
-      });
-
-      console.log('Processed products:', processedProducts.length); // Debug log
-
-      res.json({
-          success: true,
-          products: processedProducts,
-          categories
-      });
-
-  } catch (error) {
-      console.error('Search error:', error);
-      res.status(500).json({
-          success: false,
-          error: 'Internal server error',
-          details: error.message
-      });
-  }
-};
 
 
 
@@ -863,5 +1273,6 @@ module.exports = {
   verifyForgotPasswordOtp,
   resetPassword,
   resendForgotPasswordOtp,
-  searchProducts
+  applyReferral,
+  search
 };

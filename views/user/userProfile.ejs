@@ -64,21 +64,20 @@
             color: #999;
         }
 
-         .edit-btn {
-            display: flex; /* Enables flexbox */
-            justify-content: center; /* Centers horizontally */
-            align-items: center; /* Centers vertically */
-            margin: auto; /* Ensures centering within its container */
+        .edit-btn {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: auto;
             background-color: #ff8800;
             border-radius: 8px;
             border: none;
             color: #ffffff;
             font-size: 16px;
-            height: 40px; /* Optional: Set a height for better centering */
-            width: 150px; /* Optional: Set a width for better centering */
-           text-decoration: none;
+            height: 40px;
+            width: 150px;
+            text-decoration: none;
         }
-        
 
         .menu-item {
             display: flex;
@@ -170,74 +169,11 @@
             font-size: 16px;
         }
 
-      
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.75rem;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background: #f5f5f5;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #ff8800;
-        }
-
-        .form-actions {
+        .button-container {
             display: flex;
             justify-content: flex-end;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .btn {
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .btn-cancel {
-            background: #eee;
-            border: none;
-            color: #333;
-        }
-
-        .btn-cancel:hover {
-            background: #e0e0e0;
-        }
-
-        .btn-save {
-            background: #ff8800;
-            border: none;
-            color: white;
-        }
-        .button-container {
-            display: flex; /* Enables flexbox on the container */
-            justify-content: flex-end; /* Aligns items to the right */
-            align-items: center; /* Centers items vertically */
-            width: 100%; /* Ensures the container spans full width */
+            align-items: center;
+            width: 100%;
         }
 
         .btn-back {
@@ -248,15 +184,29 @@
             font-size: 16px;
             height: 40px;
             width: 250px;
-            cursor: pointer; /* Optional: Adds a pointer cursor */
+            cursor: pointer;
         }
 
+        .copy-button {
+            background: #ff8800;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 1rem;
+            transition: background-color 0.3s;
+        }
 
-        .btn-save:hover {
+        .copy-button:hover {
             background: #ff7700;
         }
-        
-        
+
+        .copy-success {
+            background: #4CAF50;
+        }
+
         @media (max-width: 1200px) {
             .container {
                 width: 95%;
@@ -282,10 +232,6 @@
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 0.5rem;
-            }
-
-            .edit-icon {
-                top: 1.5rem;
             }
         }
     </style>
@@ -323,15 +269,13 @@
                     <i class="fas fa-lock"></i>
                     Manage Password
                 </a>
-               
-                
-               <a href="/logout"><button class="logout-btn">LOG OUT</button></a> 
+                <a href="/logout"><button class="logout-btn">LOG OUT</button></a> 
             </div>
 
             <!-- Profile Content -->
             <div class="profile-content">
                 <div class="button-container">
-                  <a href="/"><button class="btn-back">Back to Home</button></a>  
+                    <a href="/"><button class="btn-back">Back to Home</button></a>  
                 </div>
                 
                 <h2 class="profile-title">Account Overview</h2>
@@ -340,73 +284,57 @@
                     <div class="info-field">
                         <span class="field-label">Name</span>
                         <span class="field-value"><%= user.name %></span>
-                       
                     </div>
                 
                     <div class="info-field">
                         <span class="field-label">Email</span>
                         <span class="field-value"><%= user.email %></span>
-                       
                     </div>
                 
                     <div class="info-field">
                         <span class="field-label">Phone</span>
                         <span class="field-value"><%= user.phone || 'Not provided' %></span>
-                        
+                    </div>
+
+                    <div class="info-field">
+                        <span class="field-label">Referral Code</span>
+                        <div style="display: flex; align-items: center;">
+                            <span class="field-value" id="referralCode"><%= user.referralCode || 'Not generated' %></span>
+                            <button class="copy-button" onclick="copyReferralCode()">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
                     </div>
                 </div>
-                
             </div>
-            
         </div>
-        
     </div>
     <%- include('../partials/user/footer')%>
     <script>
-        // Show/Hide edit form
-        function showEditForm() {
-            document.querySelector('.profile-info').style.display = 'none';
-            document.querySelector('.edit-form').style.display = 'block';
-        }
-
-        function hideEditForm() {
-            document.querySelector('.profile-info').style.display = 'grid';
-            document.querySelector('.edit-form').style.display = 'none';
-        }
-
-        // Add click handlers to edit icons
-        document.querySelectorAll('.edit-icon').forEach(icon => {
-            icon.addEventListener('click', showEditForm);
-        });
-
-        // Handle form submission
-        document.querySelector('.edit-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            // Here you would typically send the data to a server
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
-            const phone = document.getElementById('phone').value;
-
-            // Update displayed values
-            document.querySelectorAll('.field-value')[0].textContent = name;
-            document.querySelectorAll('.field-value')[1].textContent = email;
-            document.querySelectorAll('.field-value')[2].textContent = phone;
-
-            hideEditForm();
-        });
-
         // Menu item click handler
         document.querySelectorAll('.menu-item').forEach(item => {
             item.addEventListener('click', (e) => {
-                e.preventDefault();
                 document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
             });
         });
 
-       
-
-    
+        // Copy referral code functionality
+        function copyReferralCode() {
+            const referralCode = document.getElementById('referralCode').textContent;
+            navigator.clipboard.writeText(referralCode).then(() => {
+                const copyButton = document.querySelector('.copy-button');
+                copyButton.classList.add('copy-success');
+                copyButton.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                
+                setTimeout(() => {
+                    copyButton.classList.remove('copy-success');
+                    copyButton.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
     </script>
 </body>
 </html>

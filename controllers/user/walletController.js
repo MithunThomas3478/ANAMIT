@@ -13,7 +13,7 @@ const razorpay = new Razorpay({
  const getWalletPage = async (req, res) => {
         try {
             const page = parseInt(req.query.page) || 1;
-            const limit = 10; // Items per page
+            const limit = 6; // Items per page
             
             // Find or create wallet for user
             let wallet = await Wallet.findOne({ user: req.user._id });
@@ -47,7 +47,8 @@ const razorpay = new Razorpay({
                 currentPage: page,
                 totalPages,
                 startIndex,
-                endIndex
+                endIndex,
+                totalTransactions
             });
 
         } catch (error) {
