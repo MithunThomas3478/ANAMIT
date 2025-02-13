@@ -8,7 +8,7 @@ const offerController = require('../controllers/admin/offerController');
 const couponController = require('../controllers/admin/couponController');
 const salesController = require('../controllers/admin/salesReportController')
 const multer = require('multer')
-const upload = multer();
+
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const router = express.Router();
@@ -39,7 +39,6 @@ const newUploads = multer({
     }
 }).any();
 
-
 router.get("/login", adminController.loadLogin);
 router.post("/login", adminController.adminLogin);
 router.use(adminAuthMiddleware)
@@ -64,7 +63,8 @@ router.get('/category/edit/:id',categoryController.loadEditPage);
 router.put('/category/update/:id',categoryController.updateCategory);
 router.patch('/category/:id/toggle-status', categoryController.toggleStatus);
 router.delete('/category/:id/delete',categoryController.deleteCategory);
-
+router.get('/category/add-subcategory/:parentId', categoryController.addSubcategory);
+router.post('/category/add-subcategory/:parentId', categoryController.addSubcategory);
 
 router.get('/addProduct',productController.loadAddCategory);
 router.post('/addProduct',newUploads,productController.addProducts);

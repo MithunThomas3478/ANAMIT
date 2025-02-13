@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/admin/catergoryManagement.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
 </head>
 <body>
     <%- include('../partials/admin/adminHeader') %>
@@ -28,66 +29,231 @@
 <% } %>
 
 <div class="table-responsive">
-    <table class="table table-hover mb-0" style="width: 100%; border-collapse: separate; border-spacing: 0;">
-        <thead style="background-color: #4f46e5; color: white;">
-            <tr>
-                <th style="width: 10%; padding: 1rem; border-top-left-radius: 0.5rem;">S.No</th>
-                <th style="width: 25%; padding: 1rem;">Name</th>
-                <th style="width: 35%; padding: 1rem;">Description</th>
-                <th style="width: 15%; padding: 1rem;">Status</th>
-                <th style="width: 15%; padding: 1rem; border-top-right-radius: 0.5rem;" class="text-end">Actions</th>
-            </tr>
-        </thead>
-        <tbody id="category-data">
-            <% if (categories && categories.length > 0) { %>
-                <% categories.forEach((category, index) => { %>
-                    <tr style="transition: background-color 0.3s ease;">
-                        <td style="padding: 1rem;"><%= (currentPage - 1) * pageSize + index + 1 %></td>
-                        <td style="padding: 1rem;" class="text-capitalize"><%= category.name || 'N/A' %></td>
-                        <td style="padding: 1rem;"><%= category.description || 'No description available' %></td>
+    <!-- Men's Categories -->
+    <div class="category-section mb-4">
+        <h3 class="text-lg font-semibold mb-3" style="color: #4f46e5;">Men's Categories</h3>
+        <table class="table table-hover mb-0" style="width: 100%; border-collapse: separate; border-spacing: 0;">
+            <thead style="background-color: #4f46e5; color: white;">
+                <tr>
+                    <th style="width: 10%; padding: 1rem; border-top-left-radius: 0.5rem;">S.No</th>
+                    <th style="width: 25%; padding: 1rem;">Name</th>
+                    <th style="width: 35%; padding: 1rem;">Description</th>
+                    <th style="width: 15%; padding: 1rem;">Status</th>
+                    <th style="width: 15%; padding: 1rem; border-top-right-radius: 0.5rem;" class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (menCategory) { %>
+                    <!-- Main men's category -->
+                    <tr>
+                        <td style="padding: 1rem;">1</td>
+                        <td style="padding: 1rem;" class="text-capitalize">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-folder-fill me-2" style="color: #6d28d9;"></i>
+                                <%= menCategory.name %>
+                            </div>
+                        </td>
+                        <td style="padding: 1rem;"><%= menCategory.description %></td>
                         <td style="padding: 1rem;">
+                            <!-- Status toggle switch -->
                             <div class="form-check form-switch">
                                 <input 
                                     class="form-check-input" 
                                     type="checkbox" 
-                                    id="status<%= category._id %>"
-                                    <%= category.isListed ? 'checked' : '' %>
-                                    onchange="toggleStatus('<%= category._id %>', this.checked)"
+                                    id="status<%= menCategory._id %>"
+                                    <%= menCategory.isListed ? 'checked' : '' %>
+                                    onchange="toggleStatus('<%= menCategory._id %>', this.checked)"
                                     style="cursor: pointer;"
                                 >
-                                <label class="form-check-label" for="status<%= category._id %>" 
-                                    style="margin-left: 0.5rem; color: <%= category.isListed ? '#10b981' : '#f59e0b' %>;">
-                                    <%= category.isListed ? 'Listed' : 'Unlisted' %>
+                                <label class="form-check-label" for="status<%= menCategory._id %>" 
+                                    style="margin-left: 0.5rem; color: <%= menCategory.isListed ? '#10b981' : '#f59e0b' %>;">
+                                    <%= menCategory.isListed ? 'Listed' : 'Unlisted' %>
                                 </label>
                             </div>
                         </td>
                         <td class="text-end" style="padding: 1rem;">
+                            <!-- Action buttons -->
                             <div class="btn-group">
-                                <a href="/admin/category/edit/<%= category._id %>" 
+                                <a href="/admin/category/edit/<%= menCategory._id %>" 
                                    class="btn btn-sm btn-primary me-2"
                                    style="background-color: #8b5cf6; border: none;">
                                     <i class="bi bi-pencil-square"></i> Edit
                                 </a>
-                                
+                                <a href="/admin/category/add-subcategory/<%= menCategory._id %>"
+                                   class="btn btn-sm btn-success me-2"
+                                   style="background-color: #059669; border: none;">
+                                    <i class="bi bi-plus-circle"></i> Add Sub
+                                </a>
                             </div>
                         </td>
                     </tr>
-                <% }); %>
-            <% } else { %>
-                <tr>
-                    <td colspan="5" class="text-center py-4">
-                        <div class="alert alert-info mb-0">
-                            No categories found. Click "Add New Category" to create one.
-                        </div>
-                    </td>
-                </tr>
-            <% } %>
-        </tbody>
-    </table>
+
+                    <!-- Men's subcategories -->
+                    <% menCategory.subcategories.forEach((subcategory, index) => { %>
+                        <tr style="background-color: #f8f9fa;">
+                            <td style="padding: 1rem;"></td>
+                            <td style="padding: 1rem;" class="text-capitalize">
+                                <div class="d-flex align-items-center" style="margin-left: 2rem;">
+                                    <i class="bi bi-arrow-return-right me-2"></i>
+                                    <%= subcategory.name %>
+                                </div>
+                            </td>
+                            <td style="padding: 1rem;"><%= subcategory.description %></td>
+                            <td style="padding: 1rem;">
+                                <!-- Subcategory status toggle -->
+                                <div class="form-check form-switch">
+                                    <input 
+                                        class="form-check-input" 
+                                        type="checkbox" 
+                                        id="status<%= subcategory._id %>"
+                                        <%= subcategory.isListed ? 'checked' : '' %>
+                                        onchange="toggleStatus('<%= subcategory._id %>', this.checked)"
+                                        style="cursor: pointer;"
+                                    >
+                                    <label class="form-check-label" for="status<%= subcategory._id %>" 
+                                        style="margin-left: 0.5rem; color: <%= subcategory.isListed ? '#10b981' : '#f59e0b' %>;">
+                                        <%= subcategory.isListed ? 'Listed' : 'Unlisted' %>
+                                    </label>
+                                </div>
+                            </td>
+                            <td class="text-end" style="padding: 1rem;">
+                                <div class="btn-group">
+                                    <a href="/admin/category/edit/<%= subcategory._id %>" 
+                                       class="btn btn-sm btn-primary me-2"
+                                       style="background-color: #8b5cf6; border: none;">
+                                        <i class="bi bi-pencil-square"></i> Edit
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <div class="alert alert-info mb-0">No men's categories found.</div>
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Women's Categories Section -->
+    <div class="category-section">
+        <h3 class="mb-4" style="color: #4f46e5; font-weight: 600; padding-bottom: 0.5rem; border-bottom: 2px solid #4f46e5;">
+            Women's Categories
+        </h3>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                <thead style="background-color: #4f46e5; color: white;">
+                    <tr>
+                        <th style="width: 10%; padding: 1rem; border-top-left-radius: 0.5rem;">S.No</th>
+                        <th style="width: 25%; padding: 1rem;">Name</th>
+                        <th style="width: 35%; padding: 1rem;">Description</th>
+                        <th style="width: 15%; padding: 1rem;">Status</th>
+                        <th style="width: 15%; padding: 1rem; border-top-right-radius: 0.5rem;" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (womenCategory) { %>
+                        <!-- Main women's category -->
+                        <tr>
+                            <td style="padding: 1rem;">1</td>
+                            <td style="padding: 1rem;" class="text-capitalize">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-folder-fill me-2" style="color: #6d28d9;"></i>
+                                    <%= womenCategory.name %>
+                                </div>
+                            </td>
+                            <td style="padding: 1rem;"><%= womenCategory.description %></td>
+                            <td style="padding: 1rem;">
+                                <div class="form-check form-switch">
+                                    <input 
+                                        class="form-check-input" 
+                                        type="checkbox" 
+                                        id="status<%= womenCategory._id %>"
+                                        <%= womenCategory.isListed ? 'checked' : '' %>
+                                        onchange="toggleStatus('<%= womenCategory._id %>', this.checked)"
+                                        style="cursor: pointer;"
+                                    >
+                                    <label class="form-check-label" for="status<%= womenCategory._id %>" 
+                                        style="margin-left: 0.5rem; color: <%= womenCategory.isListed ? '#10b981' : '#f59e0b' %>;">
+                                        <%= womenCategory.isListed ? 'Listed' : 'Unlisted' %>
+                                    </label>
+                                </div>
+                            </td>
+                            <td class="text-end" style="padding: 1rem;">
+                                <div class="btn-group">
+                                    <a href="/admin/category/edit/<%= womenCategory._id %>" 
+                                       class="btn btn-sm btn-primary me-2"
+                                       style="background-color: #8b5cf6; border: none;">
+                                        <i class="bi bi-pencil-square"></i> Edit
+                                    </a>
+                                    <a href="/admin/category/add-subcategory/<%= womenCategory._id %>"
+                                       class="btn btn-sm btn-success"
+                                       style="background-color: #059669; border: none;">
+                                        <i class="bi bi-plus-circle"></i> Add Sub
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Women's subcategories -->
+                        <% if (womenCategory.subcategories && womenCategory.subcategories.length > 0) { %>
+                            <% womenCategory.subcategories.forEach((subcategory, index) => { %>
+                                <tr style="background-color: #f8f9fa;">
+                                    <td style="padding: 1rem;"></td>
+                                    <td style="padding: 1rem;" class="text-capitalize">
+                                        <div class="d-flex align-items-center" style="margin-left: 2rem;">
+                                            <i class="bi bi-arrow-return-right me-2"></i>
+                                            <%= subcategory.name %>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;"><%= subcategory.description %></td>
+                                    <td style="padding: 1rem;">
+                                        <div class="form-check form-switch">
+                                            <input 
+                                                class="form-check-input" 
+                                                type="checkbox" 
+                                                id="status<%= subcategory._id %>"
+                                                <%= subcategory.isListed ? 'checked' : '' %>
+                                                onchange="toggleStatus('<%= subcategory._id %>', this.checked)"
+                                                style="cursor: pointer;"
+                                            >
+                                            <label class="form-check-label" for="status<%= subcategory._id %>" 
+                                                style="margin-left: 0.5rem; color: <%= subcategory.isListed ? '#10b981' : '#f59e0b' %>;">
+                                                <%= subcategory.isListed ? 'Listed' : 'Unlisted' %>
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td class="text-end" style="padding: 1rem;">
+                                        <div class="btn-group">
+                                            <a href="/admin/category/edit/<%= subcategory._id %>" 
+                                               class="btn btn-sm btn-primary"
+                                               style="background-color: #8b5cf6; border: none;">
+                                                <i class="bi bi-pencil-square"></i> Edit
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="5" class="text-center py-4">
+                                <div class="alert alert-info mb-0">No women's categories found.</div>
+                            </td>
+                        </tr>  
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Update pagination section with error handling -->
-<% if (!error && categories && categories.length > 0) { %>
+<% if (!error && (menCategory || womenCategory)) { %>
     <nav aria-label="Page navigation" style="margin-top: 1.5rem;">
         <ul class="pagination justify-content-center mb-0">
             <!-- Previous button -->
@@ -120,9 +286,9 @@
         </ul>
     </nav>
 <% } %>
-            </div>
-        </div>
-    </main>
+</main>
+
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <%- include('../partials/admin/adminFooter') %>

@@ -45,6 +45,27 @@ body {
 tr:hover {
     background-color: #f3f4f6;
 }
+.subcategory-row {
+    background-color: #f8f9fa;
+}
+
+.category-icon {
+    width: 20px;
+    text-align: center;
+    margin-right: 8px;
+}
+
+.subcategory-indent {
+    margin-left: 2rem;
+}
+
+.btn-group .btn {
+    transition: transform 0.2s;
+}
+
+.btn-group .btn:hover {
+    transform: translateY(-2px);
+}
 
 @media (max-width: 768px) {
     :root {

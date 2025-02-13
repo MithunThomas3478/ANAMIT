@@ -17,299 +17,401 @@
             padding: 2rem;
         }
 
-        .add-product-btn:hover {
-            background-color: #5b21b6 !important;
+        .table-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
 
-        .edit-btn:hover {
-            background-color: #7c3aed !important;
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            background-color: #4f46e5;
+            z-index: 1000;
         }
-     
-    
-        .form-check-input:checked {
-            background-color: #ef4444 !important;
-            border-color: #ef4444 !important;
+
+        .product-card {
+            transition: transform 0.2s;
         }
-        
-        .form-check-input {
-            background-color: #10b981 !important;
-            border-color: #10b981 !important;
+
+        .product-card:hover {
+            transform: translateY(-2px);
         }
-        
-        .form-check-input:focus {
-            box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.25) !important;
+
+        .product-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            transition: transform 0.2s;
         }
-        
-        .status-text {
-            font-size: 0.875rem;
+
+        .product-image:hover {
+            transform: scale(1.1);
+        }
+
+        .badge-custom {
+            font-size: 0.8rem;
+            padding: 0.35em 0.65em;
             font-weight: 500;
-            margin-left: 0.5rem;
         }
 
-
-        .delete-btn:hover {
-            background-color: #dc2626 !important;
+        .variant-pill {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 1rem;
+            background-color: #f3f4f6;
+            margin: 0.25rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
         }
 
-        .variants-summary {
-        max-height: 100px;
-        overflow-y: auto;
-        scrollbar-width: thin;
-    }
-
-    .variants-summary::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .variants-summary::-webkit-scrollbar-track {
-        background: #f1f1f1;
-    }
-
-    .variants-summary::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 3px;
-    }
-
-    .variant-item:not(:last-child) {
-        border-bottom: 1px solid #e5e7eb;
-        padding-bottom: 0.25rem;
-    }
-
-    .product-img {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .product-img:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .badge {
-        font-weight: 500;
-        padding: 0.35em 0.65em;
-    }
-
-        .table tr:hover {
-            background-color: #f9fafb;
+        .color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
         }
 
-        .page-link:focus {
-            box-shadow: 0 0 0 0.25rem rgba(109, 40, 217, 0.25);
+        .stats-badge {
+            background-color: #f3f4f6;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: #374151;
         }
 
-        /* Custom SweetAlert Styles */
-        .swal2-popup {
-            font-family: 'Poppins', sans-serif;
+        .rating-stars {
+            color: #fbbf24;
         }
 
-        .swal2-title {
-            color: #1F2937 !important;
-            font-size: 1.5rem !important;
-            font-weight: 600 !important;
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
         }
 
-        .swal2-html-container {
-            color: #4B5563 !important;
-            font-size: 1rem !important;
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
         }
 
-        .swal2-confirm {
-            background-color: #ef4444 !important;
-            padding: 0.75rem 1.5rem !important;
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ef4444;
+            transition: .4s;
+            border-radius: 24px;
         }
 
-        .swal2-cancel {
-            background-color: #6B7280 !important;
-            padding: 0.75rem 1.5rem !important;
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
         }
+
+        input:checked + .toggle-slider {
+            background-color: #10b981;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .filters-container {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-input {
+            max-width: 300px;
+        }
+
+        .pagination-info {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .actions-dropdown .dropdown-item:hover {
+            background-color: #f3f4f6;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
     </style>
 </head>
 <body>
     <%- include('../partials/admin/adminHeader')%>
+    
     <main class="main-content">
-        <div class="container">
-            <h1 class="mb-4">Product Management</h1>
-            
-            <div class="d-flex justify-content-end mb-4">
-                <a href="/admin/addproduct" class="add-product-btn" style="background-color: #6d28d9; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; text-decoration: none; font-weight: 500; transition: background-color 0.3s ease;">
-                    ➕ ADD NEW PRODUCT
+        <div class="container-fluid">
+            <!-- Header Section -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">Product Management</h1>
+                <a href="/admin/addproduct" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Add New Product
                 </a>
             </div>
 
-            <div class="table-responsive bg-white rounded" style="box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                <table class="table mb-0">
-                    <thead style="background-color: #4f46e5; color: white;">
-                        <tr>
-                            <th style="padding: 1rem;">Image</th>
-                            <th style="padding: 1rem;">Product Name</th>
-                            <th style="padding: 1rem;">Category</th>
-                            <th style="padding: 1rem;">Variants</th>
-                            <th style="padding: 1rem;">Price Range</th>
-                            <th style="padding: 1rem;">Total Stock</th>
-                            <th style="padding: 1rem;">Offer</th>
-                            <th style="padding: 1rem;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% products.slice(startIndex, endIndex).forEach(product => { %>
+            <!-- Stats Overview -->
+            <div class="stats-container mb-4">
+                <div class="stat-card">
+                    <h6 class="text-muted mb-2">Total Products</h6>
+                    <h3><%= totalProducts %></h3>
+                </div>
+                <div class="stat-card">
+                    <h6 class="text-muted mb-2">Active Products</h6>
+                    <h3><%= activeProducts %></h3>
+                </div>
+                <div class="stat-card">
+                    <h6 class="text-muted mb-2">Low Stock</h6>
+                    <h3><%= lowStockProducts %></h3>
+                </div>
+                <div class="stat-card">
+                    <h6 class="text-muted mb-2">Top Rated</h6>
+                    <h3><%= topRatedProducts %></h3>
+                </div>
+            </div>
+
+           
+
+            <!-- Products Table -->
+            <div class="table-card">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="sticky-header text-white">
                             <tr>
-                                <!-- Image Column -->
-                                <td style="padding: 1rem;">
-                                    <div class="variant-images">
-                                        <% if (product.variants && product.variants.length > 0 && product.variants[0].productImage.length > 0) { %>
+                                <th style="width: 80px;">Image</th>
+                                <th>Product Details</th>
+                                <th>Category</th>
+                                <th>Variants</th>
+                                <th>Stock & Price</th>
+                                <th>Performance</th>
+                                <th>Status</th>
+                                <th style="width: 100px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% products.forEach(product => { %>
+                                <tr class="product-card">
+                                    <!-- Product Image -->
+                                    <td>
+                                        <% if (product.variants?.[0]?.productImage?.[0]) { %>
                                             <img src="<%= product.variants[0].productImage[0] %>" 
-                                                 alt="<%= product.productName %>" 
-                                                 class="product-img" 
-                                                 style="width: 50px; height: 50px; object-fit: cover; border-radius: 0.25rem;"
-                                                 data-bs-toggle="tooltip" 
-                                                 data-bs-placement="top" 
-                                                 title="Click to view all images">
+                                                 alt="<%= product.productName %>"
+                                                 class="product-image"
+                                                 data-bs-toggle="modal"
+                                                 data-bs-target="#imageModal<%= product._id %>">
                                         <% } else { %>
-                                            <span class="badge bg-secondary">No image</span>
+                                            <div class="placeholder-image">
+                                                <i class="fas fa-image text-muted"></i>
+                                            </div>
                                         <% } %>
-                                    </div>
-                                </td>
-            
-                                <!-- Product Name Column -->
-                                <td style="padding: 1rem;">
-                                    <div class="d-flex flex-column">
-                                        <span class="fw-medium"><%= product.productName %></span>
-                                        <small class="text-muted" style="font-size: 0.75rem;">
-                                            ID: <%= product._id.toString().slice(-6) %>
-                                        </small>
-                                    </div>
-                                </td>
-            
-                                <!-- Category Column -->
-                                <td style="padding: 1rem;">
-                                    <span class="badge" style="background-color: #8b5cf6;">
-                                        <%= product.category ? product.category.name : 'No Category' %>
-                                    </span>
-                                </td>
-            
-                                <!-- Variants Column -->
-                                <td style="padding: 1rem;">
-                                    <div class="variants-summary">
-                                        <% product.variants.forEach(variant => { %>
-                                            <div class="variant-item mb-1">
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <div style="width: 15px; height: 15px; border-radius: 50%; background-color: <%= variant.colorValue %>"></div>
-                                                    <small><%= variant.colorName %></small>
-                                                    <small class="text-muted">
-                                                        (<%= variant.colorVariant.length %> sizes)
-                                                    </small>
+                                    </td>
+
+                                    <!-- Product Details -->
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <h6 class="mb-1"><%= product.productName %></h6>
+                                            <small class="text-muted">ID: <%= product._id.toString().slice(-6) %></small>
+                                            <small class="text-muted">Added: <%= new Date(product.createdOn).toLocaleDateString() %></small>
+                                            <% if (product.shortDescription) { %>
+                                                <small class="text-muted"><%= product.shortDescription %></small>
+                                            <% } %>
+                                        </div>
+                                    </td>
+
+                                    <!-- Category -->
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <span class="badge badge-custom bg-primary">
+                                                <%= product.category?.name || 'Uncategorized' %>
+                                            </span>
+                                            <% if (product.subcategory) { %>
+                                                <small class="text-muted mt-1">
+                                                    <%= product.subcategory.name %>
+                                                </small>
+                                            <% } %>
+                                        </div>
+                                    </td>
+
+                                    <!-- Variants -->
+                                    <td>
+                                        <div class="variants-container">
+                                            <% product.variants.forEach(variant => { %>
+                                                <div class="variant-pill">
+                                                    <span class="color-dot" 
+                                                          style="background-color: <%= variant.colorValue %>">
+                                                    </span>
+                                                    <%= variant.colorName %>
+                                                    <small>(<%= variant.colorVariant.length %> sizes)</small>
+                                                </div>
+                                            <% }); %>
+                                        </div>
+                                    </td>
+
+                                    <!-- Stock & Price -->
+                                    <td style="padding: 1rem;">
+                                        <div class="d-flex flex-column">
+                                            <div class="stats-badge mb-1">
+                                                <i class="fas fa-box me-1"></i>
+                                                Stock: <%= product.totalStock || 0 %>
+                                            </div>
+                                            <div class="stats-badge">
+                                                <i class="fas fa-tag me-1"></i>
+                                                <% if (product.priceRange && product.priceRange.min !== undefined) { %>
+                                                    ₹<%= product.priceRange.min.toFixed(2) %>
+                                                    <% if (product.priceRange.min !== product.priceRange.max) { %>
+                                                        - ₹<%= product.priceRange.max.toFixed(2) %>
+                                                    <% } %>
+                                                <% } else { %>
+                                                    Price not set
+                                                <% } %>
+                                            </div>
+                                            <% if (product.productOffer > 0) { %>
+                                                <span class="badge bg-warning text-dark mt-1">
+                                                    <%= product.productOffer %>% OFF
+                                                </span>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                    <!-- Performance -->
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <div class="stats-badge mb-1">
+                                                <i class="fas fa-star me-1 text-warning"></i>
+                                                <%= product.ratings.average.toFixed(1) %>
+                                                <small>(<%= product.ratings.count %>)</small>
+                                            </div>
+                                            <div class="stats-badge">
+                                                <i class="fas fa-shopping-cart me-1"></i>
+                                                <%= product.totalSales %> sold
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <!-- Status -->
+                                    <td>
+                                        <div class="d-flex flex-column align-items-start">
+                                            <label class="toggle-switch mb-2">
+                                                <input type="checkbox" 
+                                                       <%= product.isListed ? 'checked' : '' %>
+                                                       onchange="toggleStatus('<%= product._id %>', this.checked)">
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                            <small class="status-text">
+                                                <%= product.isListed ? 'Listed' : 'Unlisted' %>
+                                            </small>
+                                        </div>
+                                    </td>
+
+                                    <!-- Actions -->
+                                    <td>
+                                        <a href="/admin/editProduct?id=<%= product._id %>" 
+                                        class="btn btn-sm"
+                                        style="background-color: #8b5cf6; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; text-decoration: none; transition: background-color 0.3s ease;">
+                                            <i class="fas fa-edit me-2"></i>Edit
+                                        </a>
+                                    </td>
+                                                                    </tr>
+
+                                <!-- Image Modal for each product -->
+                                <div class="modal fade" id="imageModal<%= product._id %>" tabindex="-1">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title"><%= product.productName %> - Images</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row g-3">
+                                                    <% product.variants.forEach(variant => { %>
+                                                        <div class="col-12 mb-3">
+                                                            <h6 class="mb-2">
+                                                                <span class="color-dot" style="background-color: <%= variant.colorValue %>"></span>
+                                                                <%= variant.colorName %>
+                                                            </h6>
+                                                            <div class="row g-2">
+                                                                <% variant.productImage.forEach(image => { %>
+                                                                    <div class="col-md-3">
+                                                                        <img src="<%= image %>" 
+                                                                             class="img-fluid rounded" 
+                                                                             alt="Product variant">
+                                                                    </div>
+                                                                <% }); %>
+                                                            </div>
+                                                        </div>
+                                                    <% }); %>
                                                 </div>
                                             </div>
-                                        <% }); %>
-                                    </div>
-                                </td>
-            
-                                <!-- Price Range Column -->
-                                <td style="padding: 1rem;">
-                                    <% 
-                                        let minPrice = Infinity;
-                                        let maxPrice = 0;
-                                        product.variants.forEach(variant => {
-                                            variant.colorVariant.forEach(size => {
-                                                minPrice = Math.min(minPrice, size.price);
-                                                maxPrice = Math.max(maxPrice, size.price);
-                                            });
-                                        });
-                                    %>
-                                    <% if (minPrice !== Infinity && maxPrice !== 0) { %>
-                                        <% if (minPrice === maxPrice) { %>
-                                            ₹<%= minPrice.toFixed(2) %>
-                                        <% } else { %>
-                                            ₹<%= minPrice.toFixed(2) %> - ₹<%= maxPrice.toFixed(2) %>
-                                        <% } %>
-                                    <% } else { %>
-                                        <span class="text-muted">No price set</span>
-                                    <% } %>
-                                </td>
-            
-                                <!-- Total Stock Column -->
-                                <td style="padding: 1rem;">
-                                    <% 
-                                        let totalStock = 0;
-                                        product.variants.forEach(variant => {
-                                            variant.colorVariant.forEach(size => {
-                                                totalStock += size.stock;
-                                            });
-                                        });
-                                    %>
-                                    <span class="badge <%= totalStock > 0 ? 'bg-success' : 'bg-danger' %>">
-                                        <%= totalStock %>
-                                    </span>
-                                </td>
-            
-                                <!-- Offer Column -->
-                                <td style="padding: 1rem;">
-                                    <% if (product.productOffer > 0) { %>
-                                        <span class="badge bg-warning text-dark">
-                                            <%= product.productOffer %>% OFF
-                                        </span>
-                                    <% } else { %>
-                                        <span class="text-muted">-</span>
-                                    <% } %>
-                                </td>
-            
-                                <!-- Action Column -->
-                             <!-- Replace the existing toggle button in the Action Column -->
-                                <td style="padding: 1rem;">
-                                    <div class="d-flex gap-2">
-                                        <button class="edit-btn" 
-                                                data-id="<%= product._id %>" 
-                                                onclick="window.location.href='/admin/editProduct?id=<%= product._id %>'" 
-                                                style="background-color: #8b5cf6; color: white; border: none; padding: 0.5rem; border-radius: 0.25rem; cursor: pointer;"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-placement="top" 
-                                                title="Edit Product">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
-                                            </svg>
-                                        </button>
-                                        
-                                        <div class="form-check form-switch">
-                                            <input 
-                                            class="form-check-input" 
-                                            type="checkbox" 
-                                            id="status<%= product._id %>"
-                                            <%= product.isListed ? 'checked' : '' %>
-                                            onchange="toggleStatus('<%= product._id %>', this.checked)"
-                                            style="cursor: pointer;"
-                                        >
-                                        <label class="form-check-label" for="status<%= product._id %>" 
-                                            style="margin-left: 0.5rem; color: <%= product.isListed ? '#10b981' : '#f59e0b' %>;">
-                                            <%= product.isListed ? 'Listed' : 'Unlisted' %>
-                                        </label>
                                         </div>
                                     </div>
-                                </td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
-                </table>
+                                </div>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
 
                 <!-- Pagination -->
-                <div class="d-flex justify-content-between align-items-center p-3 border-top" style="background-color: #f9fafb;">
-                    <div class="text-muted">
-                        Showing <%= startIndex + 1 %> to <%= Math.min(endIndex, products.length) %> of <%= products.length %> products
+                <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                    <div class="pagination-info">
+                        Showing <%= startIndex + 1 %> to <%= Math.min(endIndex, totalProducts) %> of <%= totalProducts %> products
                     </div>
-                    <nav aria-label="Product navigation">
+                    <nav aria-label="Product pagination">
                         <ul class="pagination mb-0">
-                            <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                                <a class="page-link" href="?page=<%= currentPage - 1 %>" style="color: #6d28d9; border-color: #6d28d9;">Previous</a>
-                            </li>
-                            
-                            <% for(let i = 1; i <= totalPages; i++) { %>
-                                <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                                    <a class="page-link" href="?page=<%= i %>" style="color: #6d28d9; border-color: #6d28d9; <%= currentPage === i ? 'background-color: #6d28d9; color: white;' : '' %>"><%= i %></a>
+                            <% if (currentPage > 1) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=<%= currentPage - 1 %><%= searchParams %>">Previous</a>
+                                </li>
+                            <% } else { %>
+                                <li class="page-item disabled">
+                                    <span class="page-link">Previous</span>
                                 </li>
                             <% } %>
                             
-                            <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                                <a class="page-link" href="?page=<%= currentPage + 1 %>" style="color: #6d28d9; border-color: #6d28d9;">Next</a>
-                            </li>
+                            <% for(let i = 1; i <= totalPages; i++) { %>
+                                <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                    <a class="page-link" href="?page=<%= i %><%= searchParams %>"><%= i %></a>
+                                </li>
+                            <% } %>
+                            
+                            <% if (currentPage < totalPages) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=<%= currentPage + 1 %><%= searchParams %>">Next</a>
+                                </li>
+                            <% } else { %>
+                                <li class="page-item disabled">
+                                    <span class="page-link">Next</span>
+                                </li>
+                            <% } %>
                         </ul>
                     </nav>
                 </div>
@@ -319,83 +421,163 @@
 
     <%- include('../partials/admin/adminFooter')%>
 
+    <!-- Required Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://kit.fontawesome.com/your-font-awesome-kit.js"></script>
     
     <script>
-
-
-           document.addEventListener('DOMContentLoaded', function() {
-    async function toggleStatus(productId, isListed) {
-        try {
-            const statusLabel = document.querySelector(`label[for="status${productId}"]`);
-            const originalText = statusLabel.textContent;
-            statusLabel.textContent = 'Updating...';
-
-            const result = await Swal.fire({
-                title: `Confirm ${isListed ? 'List' : 'Unlist'}?`,
-                text: `Are you sure you want to ${isListed ? 'list' : 'unlist'} this product?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: isListed ? '#10b981' : '#f59e0b',
-                cancelButtonColor: '#6B7280',
-                confirmButtonText: `Yes, ${isListed ? 'list' : 'unlist'} it!`,
-                cancelButtonText: 'Cancel'
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
             });
 
-            if (!result.isConfirmed) {
-                statusLabel.textContent = originalText;
-                document.getElementById(`status${productId}`).checked = !isListed;
-                return;
-            }
+            // Initialize filters
+            setupFilters();
+        });
 
-            const response = await fetch(`/admin/product/${productId}/toggle-status`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ isListed })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                statusLabel.textContent = isListed ? 'Listed' : 'Unlisted';
-                statusLabel.style.color = isListed ? '#10b981' : '#f59e0b';
-                
-                Swal.fire({
-                    title: 'Success!',
-                    text: data.message,
-                    icon: 'success',
-                    timer: 1500,
-                    showConfirmButton: false
+        // Toggle product status
+        async function toggleStatus(productId, isListed) {
+            try {
+                const result = await Swal.fire({
+                    title: `Confirm ${isListed ? 'List' : 'Unlist'}?`,
+                    text: `Are you sure you want to ${isListed ? 'list' : 'unlist'} this product?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: isListed ? '#10b981' : '#ef4444',
+                    cancelButtonColor: '#6B7280',
+                    confirmButtonText: `Yes, ${isListed ? 'list' : 'unlist'} it!`
                 });
-            } else {
-                throw new Error(data.message);
-            }
-        } catch (error) {
-            statusLabel.textContent = originalText;
-            document.getElementById(`status${productId}`).checked = !isListed;
-            Swal.fire({
-                title: 'Error!',
-                text: error.message || 'Failed to update status',
-                icon: 'error'
-            });
-        }
-    }
 
-    // Make toggleStatus available globally
-    window.toggleStatus = toggleStatus;
-});
-            // Error handling function
-            function handleError(error, action) {
+                if (result.isConfirmed) {
+                    const response = await fetch(`/admin/product/${productId}/toggle-status`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ isListed })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: data.message,
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        throw new Error(data.message);
+                    }
+                }
+            } catch (error) {
                 console.error('Error:', error);
                 Swal.fire({
-                    icon: 'error',
-                    title: 'Operation Failed',
-                    text: `Failed to ${action} product: ${error.message}`,
+                    title: 'Error!',
+                    text: error.message || 'Failed to update status',
+                    icon: 'error'
                 });
             }
+        }
+
+        // Confirm delete
+        function confirmDelete(productId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This action cannot be undone!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    deleteProduct(productId);
+                }
+            });
+        }
+
+        // Delete product
+        async function deleteProduct(productId) {
+            try {
+                const response = await fetch(`/admin/product/${productId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    Swal.fire({
+                        title: 'Deleted!',
+                        text: data.message,
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: error.message || 'Failed to delete product',
+                    icon: 'error'
+                });
+            }
+        }
+
+        // Setup filters
+        function setupFilters() {
+            const searchInput = document.getElementById('searchInput');
+            const categoryFilter = document.getElementById('categoryFilter');
+            const stockFilter = document.getElementById('stockFilter');
+            const sortBy = document.getElementById('sortBy');
+
+            // Debounce function
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            // Apply filters
+            const applyFilters = debounce(() => {
+                const params = new URLSearchParams(window.location.search);
+                
+                if (searchInput.value) params.set('search', searchInput.value);
+                if (categoryFilter.value) params.set('category', categoryFilter.value);
+                if (stockFilter.value) params.set('stock', stockFilter.value);
+                if (sortBy.value) params.set('sort', sortBy.value);
+                
+                window.location.search = params.toString();
+            }, 500);
+
+            // Event listeners
+            searchInput.addEventListener('input', applyFilters);
+            categoryFilter.addEventListener('change', applyFilters);
+            stockFilter.addEventListener('change', applyFilters);
+            sortBy.addEventListener('change', applyFilters);
+
+            // Set initial values from URL params
+            const params = new URLSearchParams(window.location.search);
+            searchInput.value = params.get('search') || '';
+            categoryFilter.value = params.get('category') || '';
+            stockFilter.value = params.get('stock') || '';
+            sortBy.value = params.get('sort') || 'newest';
+        }
     </script>
 </body>
 </html>

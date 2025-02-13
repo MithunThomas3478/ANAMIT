@@ -3,987 +3,829 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANAMIT - Add product</title>
+    <title>Add New Product</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
-
+    
     <style>
-        /* Base Styles */
-        .error-message {
-            color: #ef4444;
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0 20px rgba(0,0,0,0.08);
+            border-radius: 12px;
+        }
+
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #344767;
+        }
+
+        .variant-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .image-upload-zone {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .image-upload-zone:hover {
+            border-color: #6c757d;
+            background-color: #f8f9fa;
+        }
+
+        .preview-image-container {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .preview-image-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+        }
+
+        .preview-image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .remove-image {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .error-feedback {
+            color: #dc3545;
             font-size: 0.875rem;
             margin-top: 0.25rem;
         }
 
-        /* Image Upload Styles */
-        .variant-image-upload {
-            border: 2px dashed #ccc;
+        .size-variant {
+            background-color: white;
+            padding: 1rem;
             border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            background-color: #f8f9fa;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-height: 150px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
+            margin-bottom: 1rem;
         }
 
-        .variant-image-upload:hover {
-            border-color: #0d6efd;
-            background-color: #f1f8ff;
-        }
-
-        .variant-image-upload.border-primary {
-            border-color: #0d6efd;
-            background-color: #f1f8ff;
-        }
-
-        /* Preview Container Styles */
-        .variant-image-preview-container {
-            margin-top: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .variant-image-container {
-            position: relative;
-            display: inline-block;
-        }
-
-        .variant-image-preview {
-            width: 150px;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-
-        .remove-variant-image {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            background-color: #dc3545;
-            color: white;
+        .btn-add-variant {
+            background-color: #eef2ff;
+            color: #4f46e5;
             border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            line-height: 24px;
-            text-align: center;
-            cursor: pointer;
-            padding: 0;
+            transition: all 0.3s ease;
         }
 
-        /* Cropper Styles */
-            #cropperContainer {
+        .btn-add-variant:hover {
+            background-color: #4f46e5;
+            color: white;
+        }
+
+        .cropper-modal {
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: rgba(0, 0, 0, 0.75);
+            background-color: rgba(0,0,0,0.5);
             z-index: 1050;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .cropper-wrapper {
-            width: 100%;
-            max-width: 800px;
-            max-height: 90vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .cropper-content {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .cropper-header {
-            padding: 1rem;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .cropper-title {
-            margin: 0;
-            font-size: 1.25rem;
-            font-weight: 500;
-        }
-
-        .cropper-body {
-            position: relative;
-            padding: 1rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 400px;
-            max-height: calc(90vh - 140px);
-            overflow: hidden;
-        }
-
-        .cropper-body img {
-            max-width: 100%;
-            max-height: 100%;
-        }
-
-        .cropper-footer {
-            padding: 1rem;
-            border-top: 1px solid #dee2e6;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-
-        /* Ensure cropper maintains aspect ratio */
-        .cropper-container {
-            max-width: 100% !important;
-        }
-
-        /* Button Styles */
-        .cropper-footer .btn {
-            min-width: 100px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.5rem 1rem;
-            font-weight: 500;
-            border-radius: 4px;
-            transition: all 0.2s ease;
-        }
-
-        .cropper-footer .btn-primary {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-            color: white;
-        }
-
-        .cropper-footer .btn-primary:hover {
-            background-color: #0b5ed7;
-            border-color: #0a58ca;
-        }
-
-        .cropper-footer .btn-secondary {
-            background-color: #6c757d;
-            border-color: #6c757d;
-            color: white;
-        }
-
-        .cropper-footer .btn-secondary:hover {
-            background-color: #5c636a;
-            border-color: #565e64;
-        }
-
-        /* Variant Item Styles */
-        .variant-item {
-            background-color: #fff;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            padding: 1.5rem;
-        }
-
-        .size-variant-item {
-            border-left: 3px solid #0d6efd;
-            padding-left: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        /* Button Styles */
-        .btn-remove-size {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-        }
-
-        /* Form Layout */
-        .main-content {
             padding: 2rem;
         }
 
-        .card {
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        .cropper-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 800px;
+            margin: 0 auto;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cropper-area {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
         }
     </style>
 </head>
 <body>
-    <%- include('../partials/admin/adminHeader')%>
-   
-    <main class="main-content">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-lg-10">
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">Add New Product</h2>
-                        </div>
-                        <div class="card-body">
-                            <form id="addProductForm" method="post" action="/admin/addproduct" enctype="multipart/form-data">
-                                <!-- Basic Product Information -->
-                                <div class="mb-4">
-                                    <label for="product_name" class="form-label">Product Name</label>
-                                    <input type="text" placeholder="Enter product name" name="productName" class="form-control" id="product_name">
-                                    <div id="productName-error" class="error-message"></div>
-                                </div>
+    <!-- Header Template Include -->
+    <%- include('../partials/admin/adminHeader') %>
 
-                                <div class="mb-4">
-                                    <label class="form-label">Description</label>
-                                    <textarea placeholder="Enter product description" id="descriptionid" name="description" class="form-control" rows="4"></textarea>
-                                    <div id="description-error" class="error-message"></div>
-                                </div>
+    <div class="main-container">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="h4 mb-0">Add New Product</h2>
+            </div>
+            <div class="card-body">
+                <form id="addProductForm" method="post" enctype="multipart/form-data">
+                    <!-- Basic Information -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">Basic Information</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="productName" class="form-label">Product Name*</label>
+                                <input type="text" class="form-control" id="productName" name="productName" required>
+                                <div class="error-feedback" id="productName-error"></div>
+                            </div>
 
-                                <div class="mb-4">
-                                    <label class="form-label">Category</label>
-                                    <select class="form-select" name="category">
-                                        <option value="">Select a category</option>
-                                        <% locals.cat.forEach(element => { %>
-                                            <% if (element.isListed == true){%>
-                                            <option value="<%= element._id %>"><%= element.name %></option>
-                                            <%}%>
-                                        <% }) %>
-                                    </select>
-                                    <div id="category-error" class="error-message"></div>
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label">Category*</label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Select Category</option>
+                                </select>
+                                <div class="error-feedback" id="category-error"></div>
+                            </div>
 
-                                <div class="mb-4">
-                                    <label class="form-label">Product Offer (%)</label>
-                                    <input type="number" name="productOffer" class="form-control" min="0" max="100" value="0">
-                                    <div id="productOffer-error" class="error-message"></div>
-                                </div>
-
-                                <!-- Variants Section -->
-                                <div class="mb-4">
-                                    <label class="form-label">Product Variants</label>
-                                    <div id="variantsContainer">
-                                        <!-- Initial Variant -->
-                                        <div class="variant-item">
-                                            <!-- Color Information -->
-                                            <div class="row mb-3">
-                                                <div class="col-md-4">
-                                                    <label class="form-label">Color Value</label>
-                                                    <input type="color" name="variants[0][colorValue]" class="form-control" required>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label">Color Name</label>
-                                                    <input type="text" name="variants[0][colorName]" class="form-control" placeholder="e.g., Navy Blue" required>
-                                                </div>
-                                                <div class="col-md-4 d-flex align-items-end">
-                                                    <button type="button" class="btn btn-danger remove-variant" style="display: none;">Remove Color Variant</button>
-                                                </div>
-                                            </div>
-
-                                            <!-- Size Variants -->
-                                            <div class="size-variants-container">
-                                                <h6>Size Variants</h6>
-                                                <div class="size-variant-item">
-                                                    <div class="row">
-                                                        <div class="col-md-2">
-                                                            <label class="form-label">Size</label>
-                                                            <select name="variants[0][colorVariant][0][size]" class="form-control" required>
-                                                                <option value="">Select Size</option>
-                                                                <option value="XS">XS</option>
-                                                                <option value="S">S</option>
-                                                                <option value="M">M</option>
-                                                                <option value="L">L</option>
-                                                                <option value="XL">XL</option>
-                                                                <option value="XXL">XXL</option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="col-md-2">
-                                                            <label class="form-label">Stock</label>
-                                                            <input type="number" name="variants[0][colorVariant][0][stock]" class="form-control" min="0" required>
-                                                        </div>
-                                                        <div class="col-md-3">
-                                                            <label class="form-label">Price</label>
-                                                            <input type="number" step="0.01" name="variants[0][colorVariant][0][price]" class="form-control" min="0" required>
-                                                        </div>
-                                                        <div class="col-md-3">
-                                                            <label class="form-label">Status</label>
-                                                            <select name="variants[0][colorVariant][0][status]" class="form-control" required>
-                                                                <option value="available">Available</option>
-                                                                <option value="out of stock">Out of Stock</option>
-                                                                <option value="discontinued">Discontinued</option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="col-md-2 d-flex align-items-end">
-                                                            <button type="button" class="btn btn-outline-danger btn-sm remove-size" style="display: none;">Remove Size</button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <button type="button" class="btn btn-outline-primary btn-sm add-size-variant mt-2">Add Size Variant</button>
-                                            </div>
-
-                                            <!-- Image Upload -->
-                                            <div class="mt-3">
-                                                <div class="variant-image-upload" data-variant-index="0">
-                                                    <p>Drag & drop images here or click to select</p>
-                                                    <input type="file" class="variant-file-input" accept="image/*" multiple style="display: none;">
-                                                </div>
-                                                <div class="variant-image-preview-container"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button type="button" id="addVariant" class="btn btn-secondary mt-2">Add Color Variant</button>
-                                    <div id="variants-error" class="error-message"></div>
-                                </div>
-
-                                <div class="text-end mt-4">
-                                    <button class="btn btn-primary" type="submit">Publish Product</button>
-                                </div>
-                            </form>
+                            <div class="col-md-6 mb-3">
+                                <label for="subcategory" class="form-label">Subcategory*</label>
+                                <select class="form-select" id="subcategory" name="subcategory" required disabled>
+                                    <option value="">Select Subcategory</option>
+                                </select>
+                                <div class="error-feedback" id="subcategory-error"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
+
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">Product Description</h5>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Full Description*</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                            <div class="error-feedback" id="description-error"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="shortDescription" class="form-label">Short Description</label>
+                            <textarea class="form-control" id="shortDescription" name="shortDescription" rows="2"></textarea>
+                            <div class="error-feedback" id="shortDescription-error"></div>
+                        </div>
+                    </div>
+
+                    <!-- Product Variants -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">Product Variants</h5>
+                        <div id="variantsContainer">
+                            <!-- Variants will be added here -->
+                        </div>
+                        <button type="button" class="btn btn-add-variant" id="addVariantBtn">
+                            <i class="bi bi-plus-circle me-2"></i>Add Color Variant
+                        </button>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="text-end mt-4">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            Publish Product
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
+    </div>
 
-        <!-- Cropper Modal -->
-        <div id="cropperContainer" style="display: none;">
-            <div class="cropper-wrapper">
-                <div class="cropper-content">
-                    <div class="cropper-header">
-                        <h5 class="cropper-title">Crop Image</h5>
-                    </div>
-                    <div class="cropper-body">
-                        <img id="cropperImage">
-                    </div>
-                    <div class="cropper-footer">
-                        <button id="cropButton" class="btn btn-primary">Crop & Save</button>
-                        <button id="cancelCropButton" class="btn btn-secondary">Cancel</button>
-                    </div>
-                </div>
+    <!-- Cropper Modal -->
+    <div id="cropperModal" class="cropper-modal">
+        <div class="cropper-content">
+            <div class="p-3 border-bottom">
+                <h5 class="mb-0">Crop Image</h5>
+            </div>
+            <div class="cropper-area">
+                <img id="cropperImage" style="max-width: 100%;">
+            </div>
+            <div class="p-3 border-top d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" id="cancelCrop">Cancel</button>
+                <button type="button" class="btn btn-primary" id="applyCrop">Apply</button>
             </div>
         </div>
-        
-    </main>
+    </div>
 
-    <%- include('../partials/admin/adminFooter')%>
+    <!-- Footer Template Include -->
+    <%- include('../partials/admin/adminFooter') %>
 
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+    <!-- Initialize Categories Data -->
     <script>
+        window.categoriesData = <%- JSON.stringify(categories) %>;
+    </script>
+
+    <!-- Main Script -->
+    <script>
+        // Global Variables
+        let currentVariantIndex = 0;
+        let cropper = null;
+        const variantImages = new Map();
+
+        // Initialize when document is ready
         document.addEventListener('DOMContentLoaded', function() {
-            const variantsContainer = document.getElementById('variantsContainer');
-            const addVariantButton = document.getElementById('addVariant');
-            const cropperContainer = document.getElementById('cropperContainer');
-            const cropperImage = document.getElementById('cropperImage');
-            const cropButton = document.getElementById('cropButton');
-            const cancelCropButton = document.getElementById('cancelCropButton');
-            let variantCount = 1;
-            let cropper;
-            let currentVariantIndex;
-            let currentFileInput;
-            const variantImages = new Map(); // Store images for each variant
-        
-            // Initialize first variant's image upload
-            initializeImageUpload(0);
-        
-            // Image Upload Functions
-            function initializeImageUpload(variantIndex) {
-                const uploadZone = document.querySelector(`[data-variant-index="${variantIndex}"]`);
-                if (!uploadZone) return;
+            initializeCategoryHandling();
+            initializeVariantHandling();
+            initializeFormValidation();
+            populateInitialVariant();
+        });
+
+        // Category Handling
+        function initializeCategoryHandling() {
+            const categorySelect = document.getElementById('category');
+            const subcategorySelect = document.getElementById('subcategory');
+
+            // Populate categories
+            window.categoriesData.forEach(category => {
+                const option = new Option(category.name, category._id);
+                categorySelect.add(option);
+            });
+
+            // Handle category change
+            categorySelect.addEventListener('change', function() {
+                // Reset subcategory select
+                subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+                subcategorySelect.disabled = true;
+
+                const selectedCategory = window.categoriesData.find(c => c._id === this.value);
                 
-                const fileInput = uploadZone.querySelector('.variant-file-input');
-                const previewContainer = uploadZone.parentElement.querySelector('.variant-image-preview-container');
-        
-                // Initialize variant's image array
-                if (!variantImages.has(variantIndex)) {
-                    variantImages.set(variantIndex, []);
-                }
-        
-                function preventDefaults(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }
-        
-                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                    uploadZone.addEventListener(eventName, preventDefaults);
-                });
-        
-                ['dragenter', 'dragover'].forEach(eventName => {
-                    uploadZone.addEventListener(eventName, () => {
-                        uploadZone.classList.add('border-primary');
-                    });
-                });
-        
-                ['dragleave', 'drop'].forEach(eventName => {
-                    uploadZone.addEventListener(eventName, () => {
-                        uploadZone.classList.remove('border-primary');
-                    });
-                });
-        
-                uploadZone.addEventListener('drop', (e) => {
-                    const dt = e.dataTransfer;
-                    const files = Array.from(dt.files);
-                    files.forEach(file => {
-                        if (file.type.startsWith('image/')) {
-                            handleVariantFile(file, variantIndex, fileInput);
-                        }
-                    });
-                });
-        
-                uploadZone.addEventListener('click', () => {
-                    fileInput.click();
-                });
-        
-                fileInput.addEventListener('change', (e) => {
-                    const files = Array.from(e.target.files);
-                    files.forEach(file => {
-                        if (file.type.startsWith('image/')) {
-                            handleVariantFile(file, variantIndex, fileInput);
-                        }
-                    });
-                });
-            }
-        
-            function handleVariantFile(file, variantIndex, fileInput) {
-                if (!file || !file.type.startsWith('image/')) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Invalid file type',
-                        text: 'Please upload an image file'
-                    });
-                    return;
-                }
-        
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    currentFileInput = fileInput;
-                    showVariantCropper(e.target.result, variantIndex);
-                };
-                reader.readAsDataURL(file);
-            }
-        
-    // Cropper Functions
-    function showVariantCropper(imageSrc, variantIndex) {
-    if (cropper) {
-        cropper.destroy();
-        cropper = null;
-    }
-
-    cropperContainer.style.display = 'flex';
-    cropperImage.style.maxHeight = '100%';
-    cropperImage.style.maxWidth = '100%';
-    cropperImage.src = imageSrc;
-    currentVariantIndex = variantIndex;
-
-    cropperImage.onload = function() {
-        cropper = new Cropper(cropperImage, {
-            aspectRatio: 1,
-            viewMode: 2,
-            dragMode: 'move',
-            autoCropArea: 1,
-            restore: false,
-            modal: true,
-            guides: true,
-            highlight: true,
-            cropBoxMovable: true,
-            cropBoxResizable: true,
-            toggleDragModeOnDblclick: false,
-            responsive: true,
-            ready() {
-                // Set initial crop box size
-                const containerData = cropper.getContainerData();
-                const minSize = Math.min(containerData.width, containerData.height, 400);
-                
-                cropper.setCropBoxData({
-                    width: minSize,
-                    height: minSize,
-                    left: (containerData.width - minSize) / 2,
-                    top: (containerData.height - minSize) / 2
-                });
-
-                // Ensure the cropper is centered
-                const cropperContent = document.querySelector('.cropper-content');
-                if (cropperContent) {
-                    cropperContent.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center'
+                if (selectedCategory?.subcategories?.length) {
+                    subcategorySelect.disabled = false;
+                    selectedCategory.subcategories.forEach(sub => {
+                        subcategorySelect.add(new Option(sub.name, sub._id));
                     });
                 }
-            }
-        });
-    };
-}
+            });
+        }
 
-function closeCropper() {
-    cropperContainer.style.display = 'none';
-    if (cropper) {
-        cropper.destroy();
-        cropper = null;
-    }
-    if (currentFileInput) {
-        currentFileInput.value = '';
-    }
-}
+        // Variant Handling
+        function initializeVariantHandling() {
+            document.getElementById('addVariantBtn').addEventListener('click', addNewVariant);
+        }
 
-// Update the event listeners
-cropButton.addEventListener('click', async () => {
-    if (!cropper) return;
-    
-    try {
-        const croppedCanvas = cropper.getCroppedCanvas({
-            width: 800,
-            height: 800,
-            fillColor: '#fff',
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high'
-        });
+        function populateInitialVariant() {
+            addNewVariant();
+        }
 
-        const croppedImageData = croppedCanvas.toDataURL('image/jpeg', 0.9);
-        const images = variantImages.get(currentVariantIndex) || [];
-        images.push(croppedImageData);
-        variantImages.set(currentVariantIndex, images);
-        updateVariantImagePreview(currentVariantIndex);
-        closeCropper();
+        function addNewVariant() {
+            const variantHtml = createVariantHTML(currentVariantIndex);
+            document.getElementById('variantsContainer').insertAdjacentHTML('beforeend', variantHtml);
+            initializeImageUpload(currentVariantIndex);
+            updateRemoveButtons();
+            currentVariantIndex++;
+        }
 
-        // Show success message
-        Swal.fire({
-            icon: 'success',
-            title: 'Image cropped successfully',
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 1500
-        });
-    } catch (error) {
-        console.error('Cropping error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Failed to crop image. Please try again.',
-        });
-    }
-});
-
-cancelCropButton.addEventListener('click', closeCropper);
-
-// Handle ESC key to close cropper
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && cropperContainer.style.display === 'flex') {
-        closeCropper();
-    }
-});
-        
-            // Variant Management Functions
-            function createVariantHTML(index) {
-                return `
-                    <div class="variant-item">
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label class="form-label">Color Value</label>
-                                <input type="color" name="variants[${index}][colorValue]" class="form-control" required>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Color Name</label>
-                                <input type="text" name="variants[${index}][colorName]" class="form-control" placeholder="e.g., Navy Blue" required>
-                            </div>
-                            <div class="col-md-4 d-flex align-items-end">
-                                <button type="button" class="btn btn-danger remove-variant">Remove Color Variant</button>
-                            </div>
+        function createVariantHTML(index) {
+            return `
+                <div class="variant-section" data-variant-index="${index}">
+                    <div class="row mb-3">
+                        <div class="col-md-5">
+                            <label class="form-label">Color Value*</label>
+                            <input type="color" class="form-control" name="variants[${index}][colorValue]" required>
                         </div>
-        
-                        <div class="size-variants-container">
-                            <h6>Size Variants</h6>
-                            <div class="size-variant-item">
-                                ${createSizeVariantHTML(index, 0)}
-                            </div>
-                            <button type="button" class="btn btn-outline-primary btn-sm add-size-variant mt-2">Add Size Variant</button>
-                        </div>
-        
-                        <div class="mt-3">
-                            <div class="variant-image-upload" data-variant-index="${index}">
-                                <p>Drag & drop images here or click to select</p>
-                                <input type="file" class="variant-file-input" accept="image/*" multiple style="display: none;">
-                            </div>
-                            <div class="variant-image-preview-container"></div>
-                        </div>
-                    </div>
-                `;
-            }
-        
-            function createSizeVariantHTML(variantIndex, sizeIndex) {
-                return `
-                    <div class="row">
-                        <div class="col-md-2">
-                            <label class="form-label">Size</label>
-                            <select name="variants[${variantIndex}][colorVariant][${sizeIndex}][size]" class="form-control" required>
-                                <option value="">Select Size</option>
-                                <option value="XS">XS</option>
-                                <option value="S">S</option>
-                                <option value="M">M</option>
-                                <option value="L">L</option>
-                                <option value="XL">XL</option>
-                                <option value="XXL">XXL</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Stock</label>
-                            <input type="number" name="variants[${variantIndex}][colorVariant][${sizeIndex}][stock]" class="form-control" min="0" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Price</label>
-                            <input type="number" step="0.01" name="variants[${variantIndex}][colorVariant][${sizeIndex}][price]" class="form-control" min="0" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Status</label>
-                            <select name="variants[${variantIndex}][colorVariant][${sizeIndex}][status]" class="form-control" required>
-                                <option value="available">Available</option>
-                                <option value="out of stock">Out of Stock</option>
-                                <option value="discontinued">Discontinued</option>
-                            </select>
+                        <div class="col-md-5">
+                            <label class="form-label">Color Name*</label>
+                            <input type="text" class="form-control" name="variants[${index}][colorName]" required>
                         </div>
                         <div class="col-md-2 d-flex align-items-end">
-                            <button type="button" class="btn btn-outline-danger btn-sm remove-size">Remove Size</button>
+                            <button type="button" class="btn btn-outline-danger remove-variant">Remove</button>
                         </div>
                     </div>
-                `;
-            }
-        
-            function updateVariantImagePreview(variantIndex) {
-                const variantItem = document.querySelector(`[data-variant-index="${variantIndex}"]`).parentElement;
-                const previewContainer = variantItem.querySelector('.variant-image-preview-container');
-                const images = variantImages.get(variantIndex) || [];
-        
-                previewContainer.innerHTML = images.map((imageSrc, imageIndex) => `
-                    <div class="variant-image-container">
-                        <img src="${imageSrc}" class="variant-image-preview" alt="Product variant image">
-                        <button type="button" class="remove-variant-image" data-image-index="${imageIndex}">&times;</button>
+
+                    <!-- Size Variants -->
+                    <div class="size-variants mb-3">
+                        <h6 class="mb-3">Size Variants</h6>
+                        <div class="size-variant mb-3">
+                            ${createSizeVariantHTML(index, 0)}
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm add-size">
+                            Add Size Variant
+                        </button>
                     </div>
-                `).join('');
-        
-                // Add event listeners for remove buttons
-                previewContainer.querySelectorAll('.remove-variant-image').forEach(button => {
-                    button.addEventListener('click', () => {
-                        const imageIndex = parseInt(button.getAttribute('data-image-index'));
-                        const images = variantImages.get(variantIndex);
-                        images.splice(imageIndex, 1);
-                        updateVariantImagePreview(variantIndex);
-                    });
-                });
+
+                    <!-- Image Upload -->
+                    <div class="image-upload-section">
+                        <h6 class="mb-3">Variant Images</h6>
+                        <div class="image-upload-zone">
+                            <i class="bi bi-cloud-upload mb-2" style="font-size: 2rem;"></i>
+                            <p class="mb-0">Drop images here or click to upload</p>
+                            <input type="file" class="variant-image-input" multiple accept="image/*" style="display: none;">
+                        </div>
+                        <div class="preview-image-container"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createSizeVariantHTML(variantIndex, sizeIndex) {
+            return `
+                <div class="row">
+                    <div class="col-md-2">
+                        <label class="form-label">Size*</label>
+                        <select class="form-select" name="variants[${variantIndex}][sizes][${sizeIndex}][size]" required>
+                            <option value="">Select</option>
+                            <option value="XS">XS</option>
+                            <option value="S">S</option>
+                            <option value="M">M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                            <option value="XXL">XXL</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Stock*</label>
+                        <input type="number" class="form-control" 
+                               name="variants[${variantIndex}][sizes][${sizeIndex}][stock]" 
+                               min="0" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Price*</label>
+                        <input type="number" class="form-control" 
+                               name="variants[${variantIndex}][sizes][${sizeIndex}][price]" 
+                               min="0" step="0.01" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Status*</label>
+                        <select class="form-select" name="variants[${variantIndex}][sizes][${sizeIndex}][status]" required>
+                            <option value="available">Available</option><option value="out of stock">Out of Stock</option>
+                            <option value="discontinued">Discontinued</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-danger btn-sm remove-size">Remove</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Image Handling
+        function initializeImageUpload(variantIndex) {
+            const variantSection = document.querySelector(`[data-variant-index="${variantIndex}"]`);
+            if (!variantSection) return;
+
+            const uploadZone = variantSection.querySelector('.image-upload-zone');
+            const fileInput = variantSection.querySelector('.variant-image-input');
+            const previewContainer = variantSection.querySelector('.preview-image-container');
+
+            if (!variantImages.has(variantIndex)) {
+                variantImages.set(variantIndex, []);
             }
-        
-            // Event Listeners
-            addVariantButton.addEventListener('click', function() {
-                const newVariant = createVariantHTML(variantCount);
-                variantsContainer.insertAdjacentHTML('beforeend', newVariant);
-                initializeImageUpload(variantCount);
-                variantCount++;
-                updateRemoveButtons();
+
+            // Drag and drop handlers
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, preventDefault);
             });
-        
-            document.addEventListener('click', function(e) {
-                if (e.target.classList.contains('add-size-variant')) {
-                    const variantItem = e.target.closest('.variant-item');
-                    const variantIndex = Array.from(variantsContainer.children).indexOf(variantItem);
-                    const sizeContainer = e.target.closest('.size-variants-container');
-                    const sizeCount = sizeContainer.querySelectorAll('.size-variant-item').length;
-                    
-                    const newSizeVariant = createSizeVariantHTML(variantIndex, sizeCount);
-                    const newSizeDiv = document.createElement('div');
-                    newSizeDiv.className = 'size-variant-item';
-                    newSizeDiv.innerHTML = newSizeVariant;
-                    e.target.insertAdjacentElement('beforebegin', newSizeDiv);
-                    updateRemoveSizeButtons(variantItem);
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, () => {
+                    uploadZone.classList.add('drag-active');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, () => {
+                    uploadZone.classList.remove('drag-active');
+                });
+            });
+
+            // Handle dropped files
+            uploadZone.addEventListener('drop', function(e) {
+                const files = Array.from(e.dataTransfer.files);
+                handleFiles(files, variantIndex);
+            });
+
+            // Handle clicked upload
+            uploadZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', function() {
+                handleFiles(Array.from(this.files), variantIndex);
+            });
+        }
+
+        function handleFiles(files, variantIndex) {
+            files.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    processImage(file, variantIndex);
                 }
             });
-        
-            variantsContainer.addEventListener('click', function(e) {
+        }
+
+        function processImage(file, variantIndex) {
+            if (!validateImageFile(file)) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentVariantIndex = variantIndex;
+                showCropper(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showCropper(imageSrc) {
+            const cropperModal = document.getElementById('cropperModal');
+            const cropperImage = document.getElementById('cropperImage');
+
+            cropperImage.src = imageSrc;
+            cropperModal.style.display = 'flex';
+
+            if (cropper) cropper.destroy();
+
+            cropper = new Cropper(cropperImage, {
+                aspectRatio: 1,
+                viewMode: 2,
+                dragMode: 'move',
+                autoCropArea: 1,
+                responsive: true,
+                restore: true,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false
+            });
+        }
+
+        // Form Validation and Submission
+        function initializeFormValidation() {
+            const form = document.getElementById('addProductForm');
+
+            // Event delegation for size and variant management
+            document.getElementById('variantsContainer').addEventListener('click', function(e) {
                 if (e.target.classList.contains('remove-variant')) {
-                    const variantItem = e.target.closest('.variant-item');
-                    const variantIndex = variantItem.querySelector('.variant-image-upload').getAttribute('data-variant-index');
-                    variantImages.delete(parseInt(variantIndex));
-                    variantItem.remove();
-                    updateRemoveButtons();
-                }
-                
-                if (e.target.classList.contains('remove-size')) {
-                    const sizeItem = e.target.closest('.size-variant-item');
-                    const variantItem = sizeItem.closest('.variant-item');
-                    sizeItem.remove();
-                    updateRemoveSizeButtons(variantItem);
+                    handleRemoveVariant(e);
+                } else if (e.target.classList.contains('add-size')) {
+                    handleAddSize(e);
+                } else if (e.target.classList.contains('remove-size')) {
+                    handleRemoveSize(e);
                 }
             });
-        
-            cropButton.addEventListener('click', () => {
-                if (!cropper) return;
-                
-                const croppedCanvas = cropper.getCroppedCanvas({
-                    width: 800,
-                    height: 800,
-                    imageSmoothingEnabled: true,
-                    imageSmoothingQuality: 'high'
-                });
-        
-                const croppedImageData = croppedCanvas.toDataURL('image/jpeg', 0.9);
-                const images = variantImages.get(currentVariantIndex) || [];
-                images.push(croppedImageData);
-                variantImages.set(currentVariantIndex, images);
-                updateVariantImagePreview(currentVariantIndex);
-                closeCropper();
-            });
-        
-            cancelCropButton.addEventListener('click', closeCropper);
-        
-            // Form Submission
-       // Form Submission
-const addProductForm = document.getElementById("addProductForm");
-addProductForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
 
+            // Form submission
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                if (!validateForm()) return;
+
+                try {
+                    const formData = await prepareFormData();
+                    await submitForm(formData);
+                } catch (error) {
+                    handleError(error);
+                }
+            });
+        }
+
+        async function prepareFormData() {
     const formData = new FormData();
-
-    // Add basic product information
-    formData.append("productName", document.getElementById("product_name").value);
-    formData.append("description", document.getElementById("descriptionid").value);
-    formData.append("category", document.querySelector('select[name="category"]').value);
-    formData.append("productOffer", document.querySelector('input[name="productOffer"]').value);
-
-    // Process variants
-    const processedVariants = [];
-    const processVariantPromises = [];
-
-    document.querySelectorAll(".variant-item").forEach((variantItem, variantIndex) => {
-        const variant = {
-            colorValue: variantItem.querySelector('input[name$="[colorValue]"]').value,
-            colorName: variantItem.querySelector('input[name$="[colorName]"]').value,
-            colorVariant: [],
-            productImage: [] // Will be handled separately
-        };
-
-        // Process size variants
-        variantItem.querySelectorAll('.size-variant-item').forEach((sizeItem) => {
-            variant.colorVariant.push({
-                size: sizeItem.querySelector('select[name$="[size]"]').value,
-                stock: parseInt(sizeItem.querySelector('input[name$="[stock]"]').value),
-                price: parseFloat(sizeItem.querySelector('input[name$="[price]"]').value),
-                status: sizeItem.querySelector('select[name$="[status]"]').value
-            });
-        });
-
-        processedVariants.push(variant);
-
-        // Process images
-        const currentVariantImages = variantImages.get(variantIndex) || [];
-        currentVariantImages.forEach((imageData, imageIndex) => {
-            const processImagePromise = fetch(imageData)
-                .then(response => response.blob())
-                .then(blob => {
-                    formData.append(
-                        `variants[${variantIndex}][productImage][${imageIndex}]`, 
-                        blob, 
-                        `image-${variantIndex}-${imageIndex}.jpg`
-                    );
-                });
-            processVariantPromises.push(processImagePromise);
-        });
+    const basicFields = ['productName', 'description', 'shortDescription', 'category', 'subcategory'];
+    
+    // Add basic fields
+    basicFields.forEach(field => {
+        const value = document.getElementById(field).value;
+        if (value) {
+            formData.append(field, value);
+        }
     });
 
-    try {
-        // Wait for all image processing to complete
-        await Promise.all(processVariantPromises);
+    // Process variants
+    const variants = [];
+    const variantSections = document.querySelectorAll('.variant-section');
+    
+    for (let i = 0; i < variantSections.length; i++) {
+        const section = variantSections[i];
+        const variantIndex = section.dataset.variantIndex;
         
-        // Add processed variants to form data
-        formData.append("variants", JSON.stringify(processedVariants));
+        const variant = {
+            colorValue: section.querySelector('[name$="[colorValue]"]').value,
+            colorName: section.querySelector('[name$="[colorName]"]').value,
+            sizes: []
+        };
 
+        // Process sizes
+        const sizeRows = section.querySelectorAll('.size-variant .row');
+        sizeRows.forEach(row => {
+            variant.sizes.push({
+                size: row.querySelector('[name$="[size]"]').value,
+                stock: row.querySelector('[name$="[stock]"]').value,
+                price: row.querySelector('[name$="[price]"]').value,
+                status: row.querySelector('[name$="[status]"]').value
+            });
+        });
+
+        variants.push(variant);
+
+        // Add images
+        const variantImagesArray = variantImages.get(parseInt(variantIndex)) || [];
+        if (variantImagesArray.length === 0) {
+            throw new Error(`Please add at least one image for variant ${i + 1}`);
+        }
+
+        variantImagesArray.forEach((imageData, imageIndex) => {
+            // Convert base64 to blob
+            const blob = dataURLtoBlob(imageData);
+            // Use the correct field name format
+            formData.append(`variants[${i}][images][${imageIndex}]`, blob, `image-${i}-${imageIndex}.jpg`);
+        });
+    }
+
+    // Add variants data as JSON string
+    formData.append('variants', JSON.stringify(variants));
+
+    // Log the formData contents for debugging
+    for (let pair of formData.entries()) {
+        console.log(pair[0], pair[1]);
+    }
+
+    return formData;
+}
+
+        async function submitForm(formData) {
+    showLoading(true);
+    
+    try {
         const response = await fetch('/admin/addProduct', {
             method: 'POST',
             body: formData
         });
 
-        if (response.ok) {
-            Swal.fire({
-                icon: "success",
-                title: "Product added successfully",
+        const result = await response.json();
+
+        if (result.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Product added successfully',
                 timer: 1500
-            }).then(() => {
-                window.location.href = '/admin/product';
             });
+            window.location.href = '/admin/product';
         } else {
-            const errorData = await response.json();
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "hey"|| "Failed to add product"
-            });
+            throw new Error(result.message || 'Failed to add product');
         }
     } catch (error) {
-        console.error('Error:', error);
-        Swal.fire({
-            icon: "error",
-            title: "An error occurred",
-            text: "Failed to process your request. Please try again."
-        });
+        handleError(error);
+    } finally {
+        showLoading(false);
     }
-});
+}
+        // Utility Functions
+        function validateForm() {
+            clearErrors();
+            let isValid = true;
 
-    // Form Validation
-    function validateForm() {
-        let isValid = true;
-        clearValidationErrors();
+            // Basic fields validation
+            const requiredFields = {
+                productName: 'Product name is required',
+                category: 'Category is required',
+                subcategory: 'Subcategory is required',
+                description: 'Description is required'
+            };
 
-        // Basic product information validation
-        const productName = document.getElementById('product_name').value.trim();
-        if (!productName) {
-            showError('productName-error', 'Product name is required');
-            isValid = false;
-        } else if (productName.length < 2) {
-            showError('productName-error', 'Product name must be at least 2 characters');
-            isValid = false;
-        } else if (productName.length > 100) {
-            showError('productName-error', 'Product name cannot exceed 100 characters');
-            isValid = false;
+            for (const [fieldId, message] of Object.entries(requiredFields)) {
+                const field = document.getElementById(fieldId);
+                if (!field.value.trim()) {
+                    showError(fieldId, message);
+                    isValid = false;
+                }
+            }
+
+            // Variants validation
+            const variants = document.querySelectorAll('.variant-section');
+            if (variants.length === 0) {
+                showError('variants', 'At least one variant is required');
+                isValid = false;
+            }
+
+            variants.forEach((variant, index) => {
+                if (!validateVariant(variant, index)) {
+                    isValid = false;
+                }
+            });
+
+            return isValid;
         }
 
-        const description = document.getElementById('descriptionid').value.trim();
-        if (!description) {
-            showError('description-error', 'Description is required');
-            isValid = false;
-        } else if (description.length < 10) {
-            showError('description-error', 'Description must be at least 10 characters');
-            isValid = false;
-        } else if (description.length > 1000) {
-            showError('description-error', 'Description cannot exceed 1000 characters');
-            isValid = false;
-        }
+        function validateVariant(variant, index) {
+            let isValid = true;
 
-        const category = document.querySelector('select[name="category"]').value;
-        if (!category) {
-            showError('category-error', 'Please select a category');
-            isValid = false;
-        }
-
-        // Validate product offer
-        const productOffer = document.querySelector('input[name="productOffer"]').value;
-        if (productOffer < 0 || productOffer > 100) {
-            showError('productOffer-error', 'Product offer must be between 0 and 100');
-            isValid = false;
-        }
-
-        // Variants validation
-        const variants = document.querySelectorAll('.variant-item');
-        if (variants.length === 0) {
-            showError('variants-error', 'At least one variant is required');
-            isValid = false;
-        }
-
-        variants.forEach((variantItem, variantIndex) => {
             // Color validation
-            const colorName = variantItem.querySelector('input[name$="[colorName]"]').value.trim();
-            if (!colorName) {
-                showError(`variant-${variantIndex}-color-error`, 'Color name is required', variantItem);
+            const colorValue = variant.querySelector('[name$="[colorValue]"]').value;
+            const colorName = variant.querySelector('[name$="[colorName]"]').value;
+
+            if (!colorValue || !colorName) {
+                showError(`variant-${index}`, 'Color information is required');
                 isValid = false;
             }
 
-            // Size variants validation
-            const sizeVariants = variantItem.querySelectorAll('.size-variant-item');
-            if (sizeVariants.length === 0) {
-                showError(`variant-${variantIndex}-size-error`, 'At least one size variant is required', variantItem);
+            // Sizes validation
+            const sizes = variant.querySelectorAll('.size-variant .row');
+            if (sizes.length === 0) {
+                showError(`variant-${index}`, 'At least one size variant is required');
                 isValid = false;
             }
 
-            // Validate each size variant
-            sizeVariants.forEach((sizeItem, sizeIndex) => {
-                const size = sizeItem.querySelector('select[name$="[size]"]').value;
-                const stock = sizeItem.querySelector('input[name$="[stock]"]').value;
-                const price = sizeItem.querySelector('input[name$="[price]"]').value;
-                const status = sizeItem.querySelector('select[name$="[status]"]').value;
-
-                if (!size) {
-                    showError(`size-${variantIndex}-${sizeIndex}-error`, 'Size is required', sizeItem);
-                    isValid = false;
-                }
-
-                if (stock < 0) {
-                    showError(`stock-${variantIndex}-${sizeIndex}-error`, 'Stock cannot be negative', sizeItem);
-                    isValid = false;
-                }
-
-                if (!price || price <= 0) {
-                    showError(`price-${variantIndex}-${sizeIndex}-error`, 'Price must be greater than 0', sizeItem);
-                    isValid = false;
-                }
-
-                if (!status) {
-                    showError(`status-${variantIndex}-${sizeIndex}-error`, 'Status is required', sizeItem);
-                    isValid = false;
-                }
-            });
-
-            // Image validation
-            const variantImageCount = (variantImages.get(variantIndex) || []).length;
-            if (variantImageCount === 0) {
-                showError(`variant-${variantIndex}-image-error`, 'At least one image is required for each variant', variantItem);
+            // Images validation
+            const variantImagesArray = variantImages.get(index) || [];
+            if (variantImagesArray.length === 0) {
+                showError(`variant-${index}`, 'At least one image is required');
                 isValid = false;
             }
-        });
 
-        return isValid;
-    }
+            return isValid;
+        }
 
-    // Utility Functions
-    function clearValidationErrors() {
-        document.querySelectorAll('.error-message').forEach(error => {
-            error.textContent = '';
-        });
-        document.querySelectorAll('.validation-error').forEach(element => {
-            element.classList.remove('validation-error');
-        });
-    }
-
-    function showError(elementId, message, container = document) {
-        let errorElement = container.querySelector(`#${elementId}`);
-        if (!errorElement) {
-            errorElement = document.createElement('div');
-            errorElement.id = elementId;
-            errorElement.className = 'error-message mt-1';
-            const targetInput = container.querySelector(`[name$="${elementId.split('-')[0]}]"]`);
-            if (targetInput) {
-                targetInput.parentNode.appendChild(errorElement);
-                targetInput.classList.add('validation-error');
+        function showError(fieldId, message) {
+            const errorElement = document.getElementById(`${fieldId}-error`);
+            if (errorElement) {
+                errorElement.textContent = message;
             }
         }
-        errorElement.textContent = message;
-    }
 
-    function updateRemoveButtons() {
-        const removeButtons = document.querySelectorAll('.remove-variant');
-        removeButtons.forEach((button, index) => {
-            button.style.display = index === 0 && removeButtons.length === 1 ? 'none' : 'block';
-        });
-    }
-
-    function updateRemoveSizeButtons(variantItem) {
-        const removeSizeButtons = variantItem.querySelectorAll('.remove-size');
-        removeSizeButtons.forEach((button, index) => {
-            button.style.display = index === 0 && removeSizeButtons.length === 1 ? 'none' : 'block';
-        });
-    }
-
-    // Handle window resize for cropper
-    window.addEventListener('resize', function() {
-        if (cropper) {
-            const containerData = cropper.getContainerData();
-            const size = Math.min(containerData.width * 0.8, containerData.height * 0.8, 500);
-            cropper.setCropBoxData({
-                width: size,
-                height: size
+        function clearErrors() {
+            document.querySelectorAll('.error-feedback').forEach(error => {
+                error.textContent = '';
             });
         }
+
+        function preventDefault(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function validateImageFile(file) {
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSize) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'File Too Large',
+                    text: 'Please select an image less than 5MB'
+                });
+                return false;
+            }
+            return true;
+        }
+
+        function dataURLtoBlob(dataURL) {
+            const arr = dataURL.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new Blob([u8arr], { type: mime });
+        }
+
+        function showLoading(show = true) {
+            const submitBtn = document.getElementById('submitBtn');
+            if (show) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Publishing...';
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Publish Product';
+            }
+        }
+
+        function handleError(error) {
+    console.error('Error:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: Array.isArray(error.errors) 
+            ? error.errors.join('\n') 
+            : (error.message || 'An unexpected error occurred')
     });
-});
-</script>
+}
+        function updateRemoveButtons() {
+            const variants = document.querySelectorAll('.variant-section');
+            variants.forEach(variant => {
+                const removeBtn = variant.querySelector('.remove-variant');
+                removeBtn.style.display = variants.length === 1 ? 'none' : 'block';
+            });
+        }
+
+        function handleRemoveVariant(e) {
+            const variantSection = e.target.closest('.variant-section');
+            const variantIndex = parseInt(variantSection.dataset.variantIndex);
+            variantImages.delete(variantIndex);
+            variantSection.remove();
+            updateRemoveButtons();
+        }
+
+        function handleAddSize(e) {
+            const variantSection = e.target.closest('.variant-section');
+            const variantIndex = variantSection.dataset.variantIndex;
+            const sizeContainer = variantSection.querySelector('.size-variants');
+            const sizeCount = sizeContainer.querySelectorAll('.size-variant').length;
+            
+            const newSizeHtml = createSizeVariantHTML(variantIndex, sizeCount);
+            const newSizeDiv = document.createElement('div');
+            newSizeDiv.className = 'size-variant mb-3';
+            newSizeDiv.innerHTML = newSizeHtml;
+            
+            e.target.insertAdjacentElement('beforebegin', newSizeDiv);
+        }
+
+        function handleRemoveSize(e) {
+            const sizeVariant = e.target.closest('.size-variant');
+            const variantSection = e.target.closest('.variant-section');
+            const sizeVariants = variantSection.querySelectorAll('.size-variant');
+            
+            if (sizeVariants.length > 1) {
+                sizeVariant.remove();
+            }
+        }
+
+        // Initialize the page
+        document.getElementById('applyCrop').addEventListener('click', function() {
+            if (!cropper) return;
+
+            const croppedCanvas = cropper.getCroppedCanvas({
+                width: 800,
+                height: 800
+            });
+
+            const croppedImage = croppedCanvas.toDataURL('image/jpeg', 0.9);
+            const images = variantImages.get(currentVariantIndex) || [];
+            images.push(croppedImage);
+            variantImages.set(currentVariantIndex, images);
+
+            updateImagePreview(currentVariantIndex);
+            closeCropper();
+        });
+
+        document.getElementById('cancelCrop').addEventListener('click', closeCropper);
+
+        function closeCropper() {
+            const cropperModal = document.getElementById('cropperModal');
+            cropperModal.style.display = 'none';
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+        }
+
+        function updateImagePreview(variantIndex) {
+            const variantSection = document.querySelector(`[data-variant-index="${variantIndex}"]`);
+            const previewContainer = variantSection.querySelector('.preview-image-container');
+            const images = variantImages.get(variantIndex) || [];
+
+            previewContainer.innerHTML = images.map((image, index) => `
+                <div class="preview-image-item">
+                    <img src="${image}" alt="Product variant ${index + 1}">
+                    <div class="remove-image" data-index="${index}">&times;</div>
+                </div>
+            `).join('');
+
+            // Add remove image handlers
+            previewContainer.querySelectorAll('.remove-image').forEach(button => {
+                button.addEventListener('click', function() {
+                    const imageIndex = parseInt(this.dataset.index);
+                    images.splice(imageIndex, 1);
+                    variantImages.set(variantIndex, images);
+                    updateImagePreview(variantIndex);
+                });
+            });
+        }
+    </script>
+</body>
+</html>

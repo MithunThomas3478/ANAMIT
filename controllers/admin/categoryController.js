@@ -6,26 +6,60 @@ const loadCategory = async (req, res) => {
         const pageSize = 4;
         const skip = (page - 1) * pageSize;
 
-        // Enhanced query with explicit field selection and sorting
-        const [categories, totalCount] = await Promise.all([
-            Category.find({})
-                .select('name description isListed createdAt') // Explicitly select fields
-                .sort({ createdAt: -1 }) // Sort by creation date, newest first
-                .skip(skip)
-                .limit(pageSize)
-                .lean(), // Convert to plain JavaScript objects for better performance
-            Category.countDocuments()
+        // Get men's and women's categories separately
+        const [menCategories, womenCategories, totalCount] = await Promise.all([
+            // Get men's category and its subcategories
+            Category.findOne({ name: /^men$/i }) // Case-insensitive search for "men"
+                .select('name description isListed createdAt subcategories')
+                .populate({
+                    path: 'subcategories',
+                    select: 'name description isListed subcategories',
+                    populate: {
+                        path: 'subcategories',
+                        select: 'name description isListed'
+                    }
+                })
+                .lean(),
+
+            // Get women's category and its subcategories
+            Category.findOne({ name: /^women$/i }) // Case-insensitive search for "women"
+                .select('name description isListed createdAt subcategories')
+                .populate({
+                    path: 'subcategories',
+                    select: 'name description isListed subcategories',
+                    populate: {
+                        path: 'subcategories',
+                        select: 'name description isListed'
+                    }
+                })
+                .lean(),
+
+            Category.countDocuments({ parent: null })
         ]);
 
-        // Log categories for debugging
-        console.log('Fetched categories:', categories);
+        // Process categories to add hasSubcategories flag
+        const processCategories = (category) => {
+            if (!category) return null;
+            return {
+                ...category,
+                hasSubcategories: category.subcategories && category.subcategories.length > 0,
+                subcategories: category.subcategories.map(sub => ({
+                    ...sub,
+                    hasSubcategories: sub.subcategories && sub.subcategories.length > 0
+                }))
+            };
+        };
+
+        const processedMenCategory = processCategories(menCategories);
+        const processedWomenCategory = processCategories(womenCategories);
 
         const totalPages = Math.ceil(totalCount / pageSize);
         const startIndex = (page - 1) * pageSize;
         const endIndex = Math.min(startIndex + pageSize, totalCount);
 
         res.render('categoryManagement', {
-            categories,
+            menCategory: processedMenCategory,
+            womenCategory: processedWomenCategory,
             currentPage: page,
             totalPages,
             pageSize,
@@ -38,7 +72,8 @@ const loadCategory = async (req, res) => {
     } catch (error) {
         console.error('Error fetching categories:', error);
         res.render('categoryManagement', {
-            categories: [],
+            menCategory: null,
+            womenCategory: null,
             currentPage: 1,
             totalPages: 0,
             pageSize: 4,
@@ -241,7 +276,93 @@ const deleteCategory = async (req, res) => {
         }
     }
 
-
+    const addSubcategory = async (req, res) => {
+        try {
+            const parentId = req.params.parentId;
+            
+            // If it's a GET request, show the form
+            if (req.method === 'GET') {
+                const parentCategory = await Category.findById(parentId);
+                if (!parentCategory) {
+                    return res.redirect('/admin/category');
+                }
+                
+                return res.render('addSubcategory', {
+                    parentCategory,
+                    error: null,
+                    formData: null
+                });
+            }
+            
+            // If it's a POST request, handle the form submission
+            const { name, description, isListed } = req.body;
+            
+            // Find parent category
+            const parentCategory = await Category.findById(parentId);
+            if (!parentCategory) {
+                return res.render('addSubcategory', {
+                    parentCategory: null,
+                    error: 'Parent category not found',
+                    formData: req.body
+                });
+            }
+            
+            // Create new subcategory
+            const subcategory = new Category({
+                name,
+                description,
+                isListed: isListed === 'on',
+                parent: parentId,
+                level: parentCategory.level + 1
+            });
+            
+            // Save the subcategory
+            await subcategory.save();
+            
+            // Update parent category's subcategories array
+            await Category.findByIdAndUpdate(
+                parentId,
+                {
+                    $addToSet: { subcategories: subcategory._id } // Using $addToSet to prevent duplicates
+                },
+                { new: true }
+            );
+            
+            // Redirect to categories page
+            res.redirect('/admin/category');
+            
+        } catch (error) {
+            console.error('Error adding subcategory:', error);
+            
+            // Handle validation errors
+            if (error.name === 'ValidationError') {
+                const parentCategory = await Category.findById(req.params.parentId);
+                return res.render('addSubcategory', {
+                    parentCategory,
+                    error: Object.values(error.errors).map(err => err.message).join(', '),
+                    formData: req.body
+                });
+            }
+            
+            // Handle duplicate key errors
+            if (error.code === 11000) {
+                const parentCategory = await Category.findById(req.params.parentId);
+                return res.render('addSubcategory', {
+                    parentCategory,
+                    error: 'A category with this name already exists',
+                    formData: req.body
+                });
+            }
+            
+            // Handle other errors
+            const parentCategory = await Category.findById(req.params.parentId);
+            res.render('addSubcategory', {
+                parentCategory,
+                error: 'Failed to add subcategory. Please try again.',
+                formData: req.body
+            });
+        }
+    };
 
  module.exports = {
     loadCategory,
@@ -250,5 +371,6 @@ const deleteCategory = async (req, res) => {
     updateCategory,
     loadEditPage,
     toggleStatus,
-    deleteCategory
+    deleteCategory,
+    addSubcategory
  }
