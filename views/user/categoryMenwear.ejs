@@ -411,21 +411,9 @@
             transform: scale(1.05);
         }
 
-        .product-badges {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
+     
 
-        .sale-badge {
-            background-color: var(--primary-orange) !important;
-            padding: 5px 10px;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
+       
 
         .product-info {
             padding: 15px;
@@ -470,15 +458,7 @@
     }
 
     /* Update product badges section */
-    .product-badges {
-        position: absolute;
-        top: 10px;
-        left: 10px; /* Changed from right to left */
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        z-index: 1;
-    }
+   
 
     .discount-badge {
         background-color: var(--primary-orange) !important;
@@ -799,18 +779,7 @@
                             <% } %>
                         </div>
                     </div>
-                    <!-- Price Range -->
-                    <div class="mb-4">
-                        <h6>Price Range</h6>
-                        <input type="range" class="range-slider" id="priceRange" 
-                               min="<%= priceRange.minPrice %>" 
-                               max="<%= priceRange.maxPrice %>" 
-                               value="<%= currentFilters.maxPrice || priceRange.maxPrice %>">
-                        <div class="d-flex justify-content-between mt-2">
-                            <span>₹<%= priceRange.minPrice %></span>
-                            <span>₹<span id="priceValue"><%= currentFilters.maxPrice || priceRange.maxPrice %></span></span>
-                        </div>
-                    </div>
+                  
 
                     <!-- Size Filter -->
                     <div class="mb-4">
@@ -957,13 +926,7 @@
                                                  class="product-image" 
                                                  alt="<%= product.productName %>">
                                         </a>
-                                        <div class="product-badges">
-                                            <% if (product.productOffer > 0) { %>
-                                                <span class="badge sale-badge">
-                                                    <%= product.productOffer %>% OFF
-                                                </span>
-                                            <% } %>
-                                        </div>
+                                      
                                     </div>
                                     <div class="product-info">
                                         <a href="/productDetails/<%= product._id %>" class="text-decoration-none">
@@ -1224,13 +1187,7 @@
                                                      class="product-image" 
                                                      alt="${product.productName}">
                                             </a>
-                                            <div class="product-badges">
-                                                ${product.discountPercentage > 0 ? `
-                                                    <span class="badge sale-badge">
-                                                        ${product.discountPercentage}% OFF
-                                                    </span>
-                                                ` : ''}
-                                            </div>
+                                           
                                         </div>
                                         <div class="product-info">
                                             <a href="/productDetails/${product._id}" class="text-decoration-none">

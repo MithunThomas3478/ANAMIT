@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ANAMIT - <%= category.name %></title>
     <!-- Bootstrap CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
     <style>
@@ -97,7 +96,128 @@
             border-color: var(--primary-orange);
             color: white;
         }
+        .size-filter-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
 
+.size-checkbox {
+    position: relative;
+}
+
+.size-checkbox input {
+    display: none;
+}
+
+.size-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+    margin: 0;
+}
+
+.size-text {
+    font-size: 14px;
+    color: #212121;
+}
+
+.size-checkbox input:checked + .size-label {
+    border-color: var(--primary-orange);
+    background-color: #fff3f0;
+}
+
+.size-checkbox input:checked + .size-label .size-text {
+    color: var(--primary-orange);
+    font-weight: 500;
+}
+
+.size-label:hover {
+    border-color: var(--primary-orange);
+    background-color: #fff3f0;
+}
+
+/* Color Filter Styles */
+.color-filter-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.color-checkbox {
+    position: relative;
+}
+
+.color-checkbox input {
+    display: none;
+}
+
+.color-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    margin: 0;
+}
+
+.color-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.color-name {
+    font-size: 14px;
+    color: #212121;
+}
+
+.color-checkbox input:checked + .color-label {
+    background-color: #fff3f0;
+}
+
+.color-checkbox input:checked + .color-label .color-name {
+    color: var(--primary-orange);
+    font-weight: 500;
+}
+
+.color-label:hover {
+    background-color: #f5f5f5;
+}
+
+/* Custom scrollbar for color filter */
+.color-filter-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.color-filter-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.color-filter-container::-webkit-scrollbar-thumb {
+    background: var(--primary-orange);
+    border-radius: 4px;
+}
+
+.color-filter-container::-webkit-scrollbar-thumb:hover {
+    background: var(--hover-orange);
+}
         /* Color Options */
         .color-options {
             display: flex;
@@ -291,21 +411,9 @@
             transform: scale(1.05);
         }
 
-        .product-badges {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
+     
 
-        .sale-badge {
-            background-color: var(--primary-orange) !important;
-            padding: 5px 10px;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
+       
 
         .product-info {
             padding: 15px;
@@ -350,15 +458,7 @@
     }
 
     /* Update product badges section */
-    .product-badges {
-        position: absolute;
-        top: 10px;
-        left: 10px; /* Changed from right to left */
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        z-index: 1;
-    }
+   
 
     .discount-badge {
         background-color: var(--primary-orange) !important;
@@ -368,6 +468,57 @@
         font-weight: 500;
         border-radius: 4px;
     }
+    .subcategory-list {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.subcategory-item {
+    margin-bottom: 10px;
+}
+
+.subcategory-item .form-check {
+    margin-bottom: 8px;
+}
+
+.subcategory-item .form-check-label {
+    color: #333;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.product-count {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.form-check-input:checked + .form-check-label {
+    color: var(--primary-orange);
+    font-weight: 500;
+}
+
+/* Custom scrollbar for subcategory list */
+.subcategory-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.subcategory-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.subcategory-list::-webkit-scrollbar-thumb {
+    background: var(--primary-orange);
+    border-radius: 4px;
+}
+
+.subcategory-list::-webkit-scrollbar-thumb:hover {
+    background: var(--hover-orange);
+}
 
         /* Pagination */
         .pagination {
@@ -602,46 +753,70 @@
                             <i class="bi bi-x-lg"></i> Clear All
                         </button>
                     </div>
-
-                    <!-- Price Range -->
                     <div class="mb-4">
-                        <h6>Price Range</h6>
-                        <input type="range" class="range-slider" id="priceRange" 
-                               min="<%= priceRange.minPrice %>" 
-                               max="<%= priceRange.maxPrice %>" 
-                               value="<%= currentFilters.maxPrice || priceRange.maxPrice %>">
-                        <div class="d-flex justify-content-between mt-2">
-                            <span>₹<%= priceRange.minPrice %></span>
-                            <span>₹<span id="priceValue"><%= currentFilters.maxPrice || priceRange.maxPrice %></span></span>
+                        <h6>Categories</h6>
+                        <div class="subcategory-list">
+                            <% if (subcategories && subcategories.length > 0) { %>
+                                <% subcategories.forEach(function(subcat) { %>
+                                    <div class="subcategory-item">
+                                        <div class="form-check">
+                                            <input 
+                                                class="form-check-input subcategory-filter" 
+                                                type="checkbox" 
+                                                value="<%= subcat._id %>" 
+                                                id="subcat-<%= subcat._id %>"
+                                                <%= currentFilters.subcategories && currentFilters.subcategories.includes(subcat._id.toString()) ? 'checked' : '' %>
+                                            >
+                                            <label class="form-check-label" for="subcat-<%= subcat._id %>">
+                                                <%= subcat.name %>
+                                                
+                                            </label>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            <% } else { %>
+                                <p class="text-muted">No subcategories available</p>
+                            <% } %>
                         </div>
                     </div>
+                  
 
                     <!-- Size Filter -->
                     <div class="mb-4">
-                        <h6>Size</h6>
-                        <div class="btn-group" role="group">
+                        <h6>SIZE</h6>
+                        <div class="size-filter-container">
                             <% ['S', 'M', 'L', 'XL', 'XXL'].forEach(function(size) { %>
-                                <input type="checkbox" class="btn-check size-filter" 
-                                       id="size-<%= size.toLowerCase() %>" 
-                                       value="<%= size %>"
-                                       <%= currentFilters.sizes && currentFilters.sizes.includes(size) ? 'checked' : '' %>>
-                                <label class="btn btn-outline-secondary" 
-                                       for="size-<%= size.toLowerCase() %>"><%= size %></label>
+                                <div class="size-checkbox">
+                                    <input type="checkbox" 
+                                           class="size-filter" 
+                                           id="size-<%= size.toLowerCase() %>" 
+                                           value="<%= size %>"
+                                           <%= currentFilters.sizes && currentFilters.sizes.includes(size) ? 'checked' : '' %>>
+                                    <label for="size-<%= size.toLowerCase() %>" class="size-label">
+                                        <span class="size-text"><%= size %></span>
+                                    </label>
+                                </div>
                             <% }); %>
                         </div>
                     </div>
 
                     <!-- Color Filter -->
                     <div class="mb-4">
-                        <h6>Color</h6>
-                        <div class="color-options">
+                        <h6>COLOR</h6>
+                        <div class="color-filter-container">
                             <% if (colors && colors.length > 0) { %>
                                 <% colors.forEach(function(color) { %>
-                                    <span class="color-option color-filter 
-                                                <%= currentFilters.colors && currentFilters.colors.includes(color.colorName) ? 'selected' : '' %>"
-                                          data-color="<%= color.colorName %>" 
-                                          style="background-color: <%= color.colorValue %>;"
-                                          title="<%= color.colorName %>"></span>
+                                    <div class="color-checkbox">
+                                        <input type="checkbox" 
+                                               class="color-filter" 
+                                               id="color-<%= color.colorName.toLowerCase().replace(/\s+/g, '-') %>"
+                                               value="<%= color.colorName %>"
+                                               <%= currentFilters.colors && currentFilters.colors.includes(color.colorName) ? 'checked' : '' %>>
+                                        <label for="color-<%= color.colorName.toLowerCase().replace(/\s+/g, '-') %>" class="color-label">
+                                            <span class="color-swatch" style="background-color: <%= color.colorValue %>"></span>
+                                            <span class="color-name"><%= color.colorName %></span>
+                                        </label>
+                                    </div>
                                 <% }); %>
                             <% } %>
                         </div>
@@ -740,23 +915,18 @@
                                 <div class="product-card">
                                     <div class="product-image-wrapper">
                                         <button class="wishlist-btn" 
-                                                onclick="toggleWishlist('<%= product._id %>')"
-                                                data-wishlist-id="<%= product._id %>"
-                                                title="<%= product.isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist' %>">
-                                                <i class="<%= product.isInWishlist ? 'fa-solid' : 'fa-regular' %> fa-heart"></i>
-                                          </button>
+                                        onclick="toggleWishlist('<%= product._id %>')"
+                                        data-wishlist-id="<%= product._id %>"
+                                        title="<%= product.isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist' %>">
+                                        <i class="<%= product.isInWishlist ? 'fa-solid' : 'fa-regular' %> fa-heart"></i>
+                                  </button>
+                                    </button>
                                         <a href="/productDetails/<%= product._id %>">
                                             <img src="<%= product.variants[0].productImage[0] %>" 
                                                  class="product-image" 
                                                  alt="<%= product.productName %>">
                                         </a>
-                                        <div class="product-badges">
-                                            <% if (product.productOffer > 0) { %>
-                                                <span class="badge sale-badge">
-                                                    <%= product.productOffer %>% OFF
-                                                </span>
-                                            <% } %>
-                                        </div>
+                                      
                                     </div>
                                     <div class="product-info">
                                         <a href="/productDetails/<%= product._id %>" class="text-decoration-none">
@@ -849,8 +1019,7 @@
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
-
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 <script>
   document.addEventListener('DOMContentLoaded', function() {
         const productsWrapper = document.querySelector('.products-wrapper');
@@ -859,6 +1028,17 @@
         const loadingOverlay = document.querySelector('.loading-overlay');
         let searchTimeout;
 
+        document.querySelectorAll('.subcategory-filter').forEach(filter => {
+            filter.addEventListener('change', () => performSearch(1));
+        });
+
+        document.querySelectorAll('.size-filter').forEach(filter => {
+            filter.addEventListener('change', () => performSearch(1));
+        });
+
+        document.querySelectorAll('.color-filter').forEach(filter => {
+            filter.addEventListener('change', () => performSearch(1));
+        });
         // Function to show/hide loading state
         function showLoading() {
             if (loadingOverlay) loadingOverlay.style.display = 'flex';
@@ -881,10 +1061,13 @@
                 maxPrice: document.getElementById('priceRange')?.value,
                 sizes: Array.from(document.querySelectorAll('.size-filter:checked'))
                     .map(cb => cb.value).join(','),
-                colors: Array.from(document.querySelectorAll('.color-filter.selected'))
-                    .map(color => color.getAttribute('data-color')).join(',')
+                colors: Array.from(document.querySelectorAll('.color-filter:checked'))
+                    .map(cb => cb.value).join(','),
+                subcategories: Array.from(document.querySelectorAll('.subcategory-filter:checked'))
+                    .map(cb => cb.value).join(',')
             };
         }
+
 
         // Function to update URL parameters
         function updateURLParameters(params) {
@@ -1004,13 +1187,7 @@
                                                      class="product-image" 
                                                      alt="${product.productName}">
                                             </a>
-                                            <div class="product-badges">
-                                                ${product.discountPercentage > 0 ? `
-                                                    <span class="badge sale-badge">
-                                                        ${product.discountPercentage}% OFF
-                                                    </span>
-                                                ` : ''}
-                                            </div>
+                                           
                                         </div>
                                         <div class="product-info">
                                             <a href="/productDetails/${product._id}" class="text-decoration-none">
@@ -1112,15 +1289,18 @@
             if (searchInput) searchInput.value = '';
             if (sortSelect) sortSelect.value = 'newest';
             document.querySelectorAll('.size-filter').forEach(el => el.checked = false);
-            document.querySelectorAll('.color-filter').forEach(el => el.classList.remove('selected'));
-            if (document.getElementById('priceRange')) {
+            document.querySelectorAll('.color-filter').forEach(el => el.checked = false);            if (document.getElementById('priceRange')) {
                 const maxPrice = document.getElementById('priceRange').getAttribute('max');
                 document.getElementById('priceRange').value = maxPrice;
                 document.getElementById('priceValue').textContent = maxPrice;
+                
             }
+
+            document.querySelectorAll('.subcategory-filter').forEach(el => el.checked = false);
             performSearch(1);
         });
     });
+
     async function toggleWishlist(productId) {
             try {
                 const response = await fetch('/toggleWishlist', {
