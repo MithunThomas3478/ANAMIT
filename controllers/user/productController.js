@@ -321,32 +321,36 @@ const getMensFashion = async (req, res) => {
         const limit = 12;
         const skip = (page - 1) * limit;
 
-        // Get the women's category
-        const womenCategory = await Category.findOne({
+        // Get the men's category
+        const menCategory = await Category.findOne({
             isListed: true,
             name: 'MEN'
         });
 
-        if (!womenCategory) {
+        if (!menCategory) {
             return res.status(404).render('error', {
                 message: 'Men\'s category not found',
                 error: { status: 404 }
             });
         }
 
+        // Get subcategories
+        const subcategories = await Category.find({
+            parent: menCategory._id,
+            isListed: true
+        }).select('name productCount');
 
         // Get active category offer
         const currentDate = new Date();
         const categoryOffer = await Offer.findOne({
             offerType: 'category',
-            category: womenCategory._id,
+            category: menCategory._id,
             isActive: true,
             startDate: { $lte: currentDate },
             endDate: { $gte: currentDate }
         });
 
         // Get user's wishlist if user is logged in
-     
         let userWishlist = [];
         if (req.user) {
             const wishlistDoc = await Wishlist.findOne({ user: req.user._id });
@@ -361,95 +365,89 @@ const getMensFashion = async (req, res) => {
             {
                 $match: {
                     isListed: true,
-                    category: womenCategory._id
-                }
-            },{
-                $lookup: {
-                    from: 'offers',
-                    let: { productId: '$_id' },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ['$offerType', 'product'] },
-                                        { $eq: ['$product', '$$productId'] },
-                                        { $eq: ['$isActive', true] },
-                                        { $lte: ['$startDate', currentDate] },
-                                        { $gte: ['$endDate', currentDate] }
-                                    ]
-                                }
-                            }
-                        }
-                    ],
-                    as: 'productOffer'
-                }
-            },
-            // Unwind variants array
-            { $unwind: '$variants' },
-            // Unwind colorVariant array
-            { $unwind: '$variants.colorVariant' },{
-                $addFields: {
-                    basePrice: '$variants.colorVariant.price',
-                    productOfferDiscount: {
-                        $cond: {
-                            if: { $gt: [{ $size: '$productOffer' }, 0] },
-                            then: {
-                                $multiply: [
-                                    '$variants.colorVariant.price',
-                                    { $divide: [{ $arrayElemAt: ['$productOffer.discountPercentage', 0] }, 100] }
-                                ]
-                            },
-                            else: 0
-                        }
-                    },
-                    categoryOfferDiscount: {
-                        $cond: {
-                            if: { $and: [
-                                { $ne: [categoryOffer, null] },
-                                { $ne: [categoryOffer?.discountPercentage, null] }
-                            ]},
-                            then: {
-                                $multiply: [
-                                    '$variants.colorVariant.price',
-                                    { $divide: [(categoryOffer?.discountPercentage || 0), 100] }
-                                ]
-                            },
-                            else: 0
-                        }
-                    }
-                }
-            },
-            // Calculate final price
-            {
-                $addFields: {
-                    maxDiscount: {
-                        $max: ['$productOfferDiscount', '$categoryOfferDiscount']
-                    },
-                    finalPrice: {
-                        $subtract: [
-                            '$basePrice',
-                            {
-                                $max: ['$productOfferDiscount', '$categoryOfferDiscount']
-                            }
-                        ]
-                    },
-                    appliedOfferType: {
-                        $cond: {
-                            if: { $gt: ['$productOfferDiscount', '$categoryOfferDiscount'] },
-                            then: 'product',
-                            else: 'category'
-                        }
-                    },
-                    hasOffer: {
-                        $gt: [
-                            { $max: ['$productOfferDiscount', '$categoryOfferDiscount'] },
-                            0
-                        ]
-                    }
+                    category: menCategory._id
                 }
             }
         ];
+
+        // Add subcategory filter if present in query
+        if (req.query.subcategories) {
+            const subcatIds = req.query.subcategories.split(',').map(id => 
+                mongoose.Types.ObjectId(id.trim())
+            ).filter(id => id); // Filter out any invalid IDs
+            
+            if (subcatIds.length > 0) {
+                pipeline.push({
+                    $match: {
+                        subcategory: { $in: subcatIds }
+                    }
+                });
+            }
+        }
+
+        // Add product offer lookup
+        pipeline.push({
+            $lookup: {
+                from: 'offers',
+                let: { productId: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ['$offerType', 'product'] },
+                                    { $eq: ['$product', '$$productId'] },
+                                    { $eq: ['$isActive', true] },
+                                    { $lte: ['$startDate', currentDate] },
+                                    { $gte: ['$endDate', currentDate] }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                as: 'productOffer'
+            }
+        });
+
+        // Unwind variants array
+        pipeline.push(
+            { $unwind: '$variants' },
+            { $unwind: '$variants.colorVariant' }
+        );
+
+        // Add price calculation fields
+        pipeline.push({
+            $addFields: {
+                basePrice: '$variants.colorVariant.price',
+                productOfferDiscount: {
+                    $cond: {
+                        if: { $gt: [{ $size: '$productOffer' }, 0] },
+                        then: {
+                            $multiply: [
+                                '$variants.colorVariant.price',
+                                { $divide: [{ $arrayElemAt: ['$productOffer.discountPercentage', 0] }, 100] }
+                            ]
+                        },
+                        else: 0
+                    }
+                },
+                categoryOfferDiscount: {
+                    $cond: {
+                        if: { $and: [
+                            { $ne: [categoryOffer, null] },
+                            { $ne: [categoryOffer?.discountPercentage, null] }
+                        ]},
+                        then: {
+                            $multiply: [
+                                '$variants.colorVariant.price',
+                                { $divide: [(categoryOffer?.discountPercentage || 0), 100] }
+                            ]
+                        },
+                        else: 0
+                    }
+                }
+            }
+        });
 
         // Price filter
         if (req.query.maxPrice) {
@@ -505,7 +503,37 @@ const getMensFashion = async (req, res) => {
             }
         }
 
-        // Group back with all previous fields
+        // Calculate final price and offer details
+        pipeline.push({
+            $addFields: {
+                maxDiscount: {
+                    $max: ['$productOfferDiscount', '$categoryOfferDiscount']
+                },
+                finalPrice: {
+                    $subtract: [
+                        '$basePrice',
+                        {
+                            $max: ['$productOfferDiscount', '$categoryOfferDiscount']
+                        }
+                    ]
+                },
+                appliedOfferType: {
+                    $cond: {
+                        if: { $gt: ['$productOfferDiscount', '$categoryOfferDiscount'] },
+                        then: 'product',
+                        else: 'category'
+                    }
+                },
+                hasOffer: {
+                    $gt: [
+                        { $max: ['$productOfferDiscount', '$categoryOfferDiscount'] },
+                        0
+                    ]
+                }
+            }
+        });
+
+        // Group back products
         pipeline.push({
             $group: {
                 _id: '$_id',
@@ -552,10 +580,10 @@ const getMensFashion = async (req, res) => {
                 sortStage = { viewCount: -1, createdAt: -1 };
                 break;
             case 'price_asc':
-                sortStage = { 'variants.colorVariant.price': 1 };
+                sortStage = { finalPrice: 1 };
                 break;
             case 'price_desc':
-                sortStage = { 'variants.colorVariant.price': -1 };
+                sortStage = { finalPrice: -1 };
                 break;
             case 'newest':
                 sortStage = { createdAt: -1 };
@@ -577,44 +605,13 @@ const getMensFashion = async (req, res) => {
         // Execute the aggregation
         let products = await Product.aggregate(pipeline);
 
-        // Add isInWishlist field to products
-       
-        products = products.map(product => {
-            try {
-                if (!product.variants?.[0]?.colorVariant?.[0]?.price) {
-                    console.warn(`Product ${product._id} has invalid price structure`);
-                    return {
-                        ...product,
-                        isInWishlist: userWishlist.includes(product._id.toString()),
-                        hasOffer: false,
-                        finalPrice: 0,
-                        discountPercentage: 0
-                    };
-                }
-    
-                const originalPrice = product.variants[0].colorVariant[0].price;
-                const hasOffer = product.hasOffer || false;
-                const finalPrice = product.finalPrice || originalPrice;
-                
-                return {
-                    ...product,
-                    isInWishlist: userWishlist.includes(product._id.toString()),
-                    hasOffer,
-                    finalPrice,
-                    discountPercentage: hasOffer && originalPrice > 0 ? 
-                        Math.round(((originalPrice - finalPrice) / originalPrice) * 100) : 0
-                };
-            } catch (err) {
-                console.error(`Error processing product ${product._id}:`, err);
-                return {
-                    ...product,
-                    isInWishlist: false,
-                    hasOffer: false,
-                    finalPrice: 0,
-                    discountPercentage: 0
-                };
-            }
-        });
+        // Process products and add wishlist info
+        products = products.map(product => ({
+            ...product,
+            isInWishlist: userWishlist.includes(product._id.toString()),
+            discountPercentage: product.hasOffer && product.basePrice > 0 ? 
+                Math.round(((product.basePrice - product.finalPrice) / product.basePrice) * 100) : 0
+        }));
 
         // Get total count for pagination
         const totalProducts = await Product.aggregate([
@@ -635,7 +632,7 @@ const getMensFashion = async (req, res) => {
 
         // Get price range
         const priceStats = await Product.aggregate([
-            { $match: { category: womenCategory._id, isListed: true } },
+            { $match: { category: menCategory._id, isListed: true } },
             { $unwind: '$variants' },
             { $unwind: '$variants.colorVariant' },
             {
@@ -647,19 +644,13 @@ const getMensFashion = async (req, res) => {
             }
         ]);
 
-        // Get wishlist count if user is logged in
-        let wishlistCount = 0;
-        if (req.user) {
-            const wishlistDoc = await Wishlist.findOne({ userId: req.user._id });
-            wishlistCount = wishlistDoc ? wishlistDoc.products.length : 0;
-        }
-
         // Render response
         res.render('categoryMenwear', {
             title: "MEN",
-            category: womenCategory,
+            category: menCategory,
             products,
             colors: allColors,
+            subcategories, // Add subcategories to the render data
             currentFilters: req.query,
             priceRange: priceStats[0] || { minPrice: 0, maxPrice: 10000 },
             pagination: {
@@ -672,8 +663,8 @@ const getMensFashion = async (req, res) => {
                 totalProducts: total
             },
             categoryOffer,
-            wishlistCount, // Add wishlist count to the response
-            isAuthenticated: true
+            wishlistCount: userWishlist.length,
+            isAuthenticated: !!req.user
         });
 
     } catch (error) {

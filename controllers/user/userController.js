@@ -609,7 +609,8 @@ const search = async (req, res) => {
           page = 1, 
           maxPrice, 
           sizes, 
-          colors 
+          colors,
+          subcategories // Add subcategories parameter
       } = req.query;
 
       // Pagination settings
@@ -653,12 +654,28 @@ const search = async (req, res) => {
       const pipeline = [];
 
       // Base match stage
-      pipeline.push({
-          $match: {
-              isListed: true,
-              category: categoryDoc._id
-          }
-      });
+      const baseMatch = {
+          isListed: true,
+          category: categoryDoc._id
+      };
+
+      // Add subcategory filter if present
+      if (req.query.subcategories) {
+        const subcatIds = req.query.subcategories.split(',')
+            .map(id => id.trim())
+            .filter(Boolean)
+            .map(id => new mongoose.Types.ObjectId(id)); // Add 'new' here
+        
+        if (subcatIds.length > 0) {
+            pipeline.push({
+                $match: {
+                    subcategory: { $in: subcatIds }
+                }
+            });
+        }
+    }
+
+      pipeline.push({ $match: baseMatch });
 
       // Search query handling
       if (query && query.trim()) {
@@ -783,54 +800,66 @@ const search = async (req, res) => {
           }
       });
 
-      // Calculate final price and offer details
+      // Calculate final price and discount details
       pipeline.push({
-        $addFields: {
-            basePrice: '$variants.colorVariant.price',
-            finalPrice: {
-                $subtract: [
-                    '$variants.colorVariant.price',
-                    {
-                        $max: [
-                            {
-                                $cond: {
-                                    if: { $gt: [{ $size: '$productOffer' }, 0] },
-                                    then: {
-                                        $multiply: [
-                                            '$variants.colorVariant.price',
-                                            { $divide: [{ $arrayElemAt: ['$productOffer.discountPercentage', 0] }, 100] }
-                                        ]
-                                    },
-                                    else: 0
-                                }
-                            },
-                            {
-                                $cond: {
-                                    if: { $and: [
-                                        { $ne: ['$categoryOffer', null] },
-                                        { $ne: ['$categoryOffer.discountPercentage', null] }
-                                    ]},
-                                    then: {
-                                        $multiply: [
-                                            '$variants.colorVariant.price',
-                                            { $divide: ['$categoryOffer.discountPercentage', 100] }
-                                        ]
-                                    },
-                                    else: 0
-                                }
-                            }
-                        ]
-                    }
-                ]
-            }
-        }
-    });
+          $addFields: {
+              maxDiscount: {
+                  $max: ['$productOfferDiscount', '$categoryOfferDiscount']
+              },
+              finalPrice: {
+                  $subtract: [
+                      '$basePrice',
+                      { $max: ['$productOfferDiscount', '$categoryOfferDiscount'] }
+                  ]
+              },
+              hasOffer: {
+                  $gt: [
+                      { $max: ['$productOfferDiscount', '$categoryOfferDiscount'] },
+                      0
+                  ]
+              },
+              appliedOfferType: {
+                  $cond: {
+                      if: { $gt: ['$productOfferDiscount', '$categoryOfferDiscount'] },
+                      then: 'product',
+                      else: 'category'
+                  }
+              },
+              discountPercentage: {
+                  $multiply: [
+                      {
+                          $divide: [
+                              { $max: ['$productOfferDiscount', '$categoryOfferDiscount'] },
+                              '$basePrice'
+                          ]
+                      },
+                      100
+                  ]
+              }
+          }
+      });
+
+      // Group back products
+      pipeline.push({
+          $group: {
+              _id: '$_id',
+              productName: { $first: '$productName' },
+              variants: { $first: '$variants' },
+              finalPrice: { $first: '$finalPrice' },
+              basePrice: { $first: '$basePrice' },
+              hasOffer: { $first: '$hasOffer' },
+              discountPercentage: { $first: '$discountPercentage' },
+              appliedOfferType: { $first: '$appliedOfferType' },
+              createdAt: { $first: '$createdAt' },
+              viewCount: { $first: '$viewCount' }
+          }
+      });
 
       // Sort configuration
       let sortStage = { createdAt: -1 }; // Default sort
       switch(sort) {
           case 'featured':
-              sortStage = { 'productOffer': -1, createdAt: -1 };
+              sortStage = { discountPercentage: -1, createdAt: -1 };
               break;
           case 'popularity':
               sortStage = { viewCount: -1, createdAt: -1 };
@@ -850,23 +879,7 @@ const search = async (req, res) => {
       }
       pipeline.push({ $sort: sortStage });
 
-      // Group products to maintain structure
-      pipeline.push({
-          $group: {
-              _id: '$_id',
-              productName: { $first: '$productName' },
-              variants: { $first: '$variants' },
-              finalPrice: { $first: '$finalPrice' },
-              basePrice: { $first: '$basePrice' },
-              hasOffer: { $first: '$hasOffer' },
-              discountPercentage: { $first: '$discountPercentage' },
-              appliedOfferType: { $first: '$appliedOfferType' },
-              createdAt: { $first: '$createdAt' },
-              viewCount: { $first: '$viewCount' }
-          }
-      });
-
-      // Add pagination stages
+      // Add pagination
       const paginatedPipeline = [
           ...pipeline,
           { $skip: skip },
@@ -877,27 +890,23 @@ const search = async (req, res) => {
       const products = await Product.aggregate(paginatedPipeline);
 
       // Get total count for pagination
-      const totalPipeline = [
-          ...pipeline,
-          { $count: 'total' }
-      ];
+      const totalPipeline = [...pipeline, { $count: 'total' }];
       const totalResult = await Product.aggregate(totalPipeline);
       const total = totalResult[0]?.total || 0;
 
       // Format products for response
-     // In your search controller, update the formattedProducts mapping:
-     const formattedProducts = products.map(product => ({
-      _id: product._id,
-      productName: product.productName,
-      image: product.variants?.productImage?.[0] || product.variants?.[0]?.productImage?.[0],
-      originalPrice: product.basePrice,
-      finalPrice: product.finalPrice,
-      hasOffer: product.hasOffer,
-      productOffer: product.discountPercentage || 0,
-      discountPercentage: Math.round(product.discountPercentage || 0),
-      appliedOfferType: product.appliedOfferType,
-      isInWishlist: userWishlist.includes(product._id.toString())
-  }));
+      const formattedProducts = products.map(product => ({
+          _id: product._id,
+          productName: product.productName,
+          image: product.variants?.productImage?.[0] || product.variants?.[0]?.productImage?.[0],
+          originalPrice: product.basePrice,
+          finalPrice: product.finalPrice,
+          hasOffer: product.hasOffer,
+          discountPercentage: Math.round(product.discountPercentage || 0),
+          appliedOfferType: product.appliedOfferType,
+          isInWishlist: userWishlist.includes(product._id.toString())
+      }));
+
       // Send response
       res.json({
           success: true,
@@ -926,6 +935,8 @@ const search = async (req, res) => {
       });
   }
 };
+
+
 const loadUserProfile = async (req,res) => {
   
     try {
