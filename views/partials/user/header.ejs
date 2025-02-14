@@ -314,25 +314,18 @@
             <a class="nav-link" href="/womens">WOMEN</a>
         </div>
 
-       
-           
-      
-        
         <div class="icons">
-            <% if (locals.user) { %>
-                <!-- Profile Icon -->
+            <% if (typeof user !== 'undefined' && user && user._id) { %>
+                <!-- Only show these icons if user is properly authenticated -->
                 <span class="icon bi bi-person-circle" title="Profile" onclick="toggleDropdown()"></span>
         
                 <!-- Dropdown Menu -->
                 <div class="dropdown-menu" id="dropdown">
-                    <a href="#" class="username">
-                        <%= user.name %>
-                    </a>
+                    <a href="#" class="username"><%= user.name %></a>
                     <a href="/userProfile">Profile</a>
                     <a href="/logout">Logout</a>
                 </div>
         
-                <!-- Additional Icons -->
                 <a href="/wishlist">
                     <span class="icon bi bi-heart-fill" title="Wishlist"></span>
                 </a>
@@ -345,10 +338,12 @@
                     </span>
                 </a>
             <% } else { %>
+                <!-- Show these links when user is not logged in -->
                 <a href="/login" class="auth-links">LOG IN</a>
                 <a href="/signup" class="auth-links">SIGN UP</a>
             <% } %>
         </div>
+
     </nav>
 
 
