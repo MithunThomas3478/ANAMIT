@@ -315,10 +315,10 @@
         </div>
 
         <div class="icons">
-            <% if (typeof user !== 'undefined' && user && user._id) { %>
-                <!-- Only show these icons if user is properly authenticated -->
+            <% if (typeof user !== 'undefined' && user) { %>
+                <!-- User is logged in - show all icons -->
                 <span class="icon bi bi-person-circle" title="Profile" onclick="toggleDropdown()"></span>
-        
+                
                 <!-- Dropdown Menu -->
                 <div class="dropdown-menu" id="dropdown">
                     <a href="#" class="username"><%= user.name %></a>
@@ -338,7 +338,7 @@
                     </span>
                 </a>
             <% } else { %>
-                <!-- Show these links when user is not logged in -->
+                <!-- User is not logged in - show only login/signup -->
                 <a href="/login" class="auth-links">LOG IN</a>
                 <a href="/signup" class="auth-links">SIGN UP</a>
             <% } %>

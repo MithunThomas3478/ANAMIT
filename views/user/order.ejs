@@ -285,7 +285,44 @@
             background: #ffebee;
             color: #d32f2f;
         }
+        .status-payment_failed {
+    background: #fff0f0;
+    color: #e53e3e;
+    border: 1px solid rgba(229, 62, 62, 0.3);
+}
 
+.status-failed {
+    background: #fff0f0;
+    color: #e53e3e;
+    border: 1px solid rgba(229, 62, 62, 0.3);
+}
+
+/* Add retry payment button styles */
+.btn-retry {
+    background: var(--warning-color);
+    color: white;
+}
+
+.btn-retry:hover {
+    background: #e67700;
+}
+
+/* Add payment status alert styles */
+.payment-alert {
+    background: #fff0f0;
+    border: 1px solid rgba(229, 62, 62, 0.3);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.payment-alert i {
+    color: #e53e3e;
+    font-size: 1.2rem;
+}
         /* Empty State Styling */
         .empty-state {
             text-align: center;
@@ -440,6 +477,19 @@
                 <% if (orders && orders.length > 0) { %>
                     <% orders.forEach(order => { %>
                         <div class="order-card">
+
+                              <!-- Add payment failed alert if applicable -->
+                            <% if (order.orderStatus === 'payment_failed' || order.paymentStatus === 'failed') { %>
+                                <div class="payment-alert">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <div>
+                                        <strong>Payment Failed</strong>
+                                        <p style="margin-top: 0.25rem; font-size: 0.9rem;">
+                                            Your payment was unsuccessful. You can retry the payment or choose a different payment method.
+                                        </p>
+                                    </div>
+                                </div>
+                            <% } %>
                             <div class="order-header">
                                 <div class="order-id">
                                     <i class="fas fa-shopping-bag"></i>
@@ -462,24 +512,30 @@
                                         Order Status
                                     </div>
                                     <div class="detail-value">
-                                        <span class="status-badge status-<%= order.orderStatus.toLowerCase() %>">
-                                            <i class="fas fa-circle" style="font-size: 0.8em;"></i>
-                                            <%= order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1) %></span>
-                                        </div>
+                                        <span class="status-badge <%= order.paymentStatus === 'failed' ? 'status-failed' : 
+                                        getStatusClass(order.paymentStatus) %>">
+                                        <i class="fas fa-<%= order.paymentStatus === 'failed' ? 'times-circle' : 
+                                            (order.paymentStatus === 'completed' ? 'check-circle' : 'clock') %>"></i>
+                                        <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %>
+                                    </span>
                                     </div>
+                                </div>
+                        
     
-                                    <div class="detail-section">
-                                        <div class="detail-label">
-                                            <i class="fas fa-credit-card"></i>
-                                            Payment Status
-                                        </div>
-                                        <div class="detail-value">
-                                            <span class="status-badge status-<%= order.paymentStatus.toLowerCase() %>">
-                                                <i class="fas fa-<%= order.paymentStatus === 'completed' ? 'check-circle' : 'clock' %>"></i>
-                                                <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %>
-                                            </span>
-                                        </div>
+                                <div class="detail-section">
+                                    <div class="detail-label">
+                                        <i class="fas fa-credit-card"></i>
+                                        Payment Status
                                     </div>
+                                    <div class="detail-value">
+                                        <span class="status-badge <%= order.paymentStatus === 'failed' ? 'status-failed' : 
+                                                                   getStatusClass(order.paymentStatus) %>">
+                                            <i class="fas fa-<%= order.paymentStatus === 'failed' ? 'times-circle' : 
+                                                              (order.paymentStatus === 'completed' ? 'check-circle' : 'clock') %>"></i>
+                                            <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %>
+                                        </span>
+                                    </div>
+                                </div>
                                     
                                     <div class="detail-section">
                                         <div class="detail-label">
@@ -557,11 +613,13 @@
                                     <i class="fas fa-eye"></i>
                                     View Details
                                 </a>
-
+                        
+                             
+                        
                                 <% if (order.paymentStatus === 'completed') { %>
-                                    <a href="/orders/<%= order.orderId %>/invoice" 
-                                    class="btn btn-secondary"
-                                    target="_blank">
+                                    <a href="/order/<%= order._id %>/invoice" 
+                                       class="btn btn-secondary"
+                                       target="_blank">
                                         <i class="fas fa-file-invoice"></i>
                                         Download Invoice
                                     </a>

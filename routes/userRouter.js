@@ -69,9 +69,14 @@ router.post('/checkout/verify-razorpay-payment', checkoutController.verifyRazorp
 router.get('/checkout/orderSuccess/:orderId?', checkoutController.orderSuccess);
 router.post('/checkout/address', checkoutController.addCheckoutAddress);
 router.get('/orders',orderController.getUserOrders);
+
 router.get('/orders/:orderId', orderController.getOrderDetails);
 router.post('/orders/:orderId/items/:itemId/cancel', orderController.cancelOrderItem);
 router.post('/orders/:orderId/items/:itemId/return', orderController.returnOrderItem);
+
+router.post('/orders/payment/create-order', orderController.createRazorpayOrder);
+router.post('/orders/payment/verify/:orderId', orderController.verifyRazorpayPayment);
+router.post('/orders/payment/verify/:orderId', orderController.retryPayment);
 
 router.post('/checkout/apply-coupon', checkoutController.applyCoupon);
 router.post('/checkout/remove-coupon', checkoutController.removeCoupon);

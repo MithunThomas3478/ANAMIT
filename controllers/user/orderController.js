@@ -6,6 +6,9 @@ const Order = require('../../models/orderSchema');
 const User = require("../../models/userSchema");
 const Wallet = require('../../models/walletSchema');
 const mongoose = require('mongoose');
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
+
 
 const getUserOrders = async (req, res) => {
     try {
@@ -25,32 +28,22 @@ const getUserOrders = async (req, res) => {
         const totalOrders = await Order.countDocuments({ user: userId });
         const totalPages = Math.ceil(totalOrders / limit);
 
-        // Create helper functions for formatting
-        const orderHelpers = {
-            getStatusClass: (status) => {
-                const statusMap = {
-                    'pending': 'status-pending',
-                    'confirmed': 'status-confirmed',
-                    'processing': 'status-confirmed',
-                    'shipped': 'status-confirmed',
-                    'delivered': 'status-delivered',
-                    'cancelled': 'status-cancelled',
-                    'returned': 'status-cancelled',
-                    'partially_cancelled': 'status-cancelled',
-                    'partially_returned': 'status-cancelled'
-                };
-                return statusMap[status] || 'status-pending';
-            },
-            formatDate: (date) => {
-                return new Date(date).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-            },
-            formatCurrency: (amount) => {
-                return amount.toFixed(2);
-            }
+        // Define status class mapping function
+        const getStatusClass = (status) => {
+            const statusMap = {
+                'pending': 'status-pending',
+                'confirmed': 'status-confirmed',
+                'processing': 'status-confirmed',
+                'shipped': 'status-confirmed',
+                'delivered': 'status-delivered',
+                'cancelled': 'status-cancelled',
+                'returned': 'status-cancelled',
+                'partially_cancelled': 'status-cancelled',
+                'partially_returned': 'status-cancelled',
+                'payment_failed': 'status-payment_failed',
+                'failed': 'status-failed'
+            };
+            return statusMap[status] || 'status-pending';
         };
 
         // Render orders page
@@ -59,7 +52,7 @@ const getUserOrders = async (req, res) => {
             currentPage: page,
             totalPages,
             totalOrders,
-            orderHelpers,
+            getStatusClass, // Pass the function to the view
             user: req.user
         });
     } catch (error) {
@@ -70,7 +63,6 @@ const getUserOrders = async (req, res) => {
         });
     }
 };
-
 const getOrderDetails = async (req, res) => {
     try {
         const orderId = req.params.orderId;
@@ -479,10 +471,246 @@ const returnOrderItem = async (req, res) => {
     }
 };
 
+const retryPayment = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const { 
+            razorpay_payment_id, 
+            razorpay_order_id, 
+            razorpay_signature 
+        } = req.body;
+
+        // Find the order
+        const order = await Order.findOne({ orderId });
+        if (!order) {
+            throw new Error('Order not found');
+        }
+
+        // Verify signature
+        const body = razorpay_order_id + '|' + razorpay_payment_id;
+        const expectedSignature = crypto
+            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+            .update(body)
+            .digest('hex');
+
+        if (expectedSignature !== razorpay_signature) {
+            throw new Error('Invalid payment signature');
+        }
+
+        // Update order with new payment details
+        order.paymentStatus = 'completed';
+        order.orderStatus = 'confirmed';
+        order.paymentDetails = {
+            razorpayOrderId: razorpay_order_id,
+            razorpayPaymentId: razorpay_payment_id,
+            razorpaySignature: razorpay_signature,
+            paidAmount: order.finalAmount,
+            paidAt: new Date()
+        };
+
+        // Add to status history
+        order.statusHistory.push({
+            status: 'confirmed',
+            timestamp: new Date(),
+            comment: 'Payment retry successful'
+        });
+
+        await order.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Payment completed successfully'
+        });
+
+    } catch (error) {
+        console.error('Payment retry error:', error);
+        res.status(400).json({
+            success: false,
+            message: error.message || 'Payment retry failed'
+        });
+    }
+};
+
+
+const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
+});
+
+// Create Razorpay order
+const createRazorpayOrder = async (req, res) => {
+    try {
+        const { amount } = req.body;
+        
+        if (!amount || amount <= 0) {
+            throw new Error('Invalid amount');
+        }
+
+        const options = {
+            amount: Math.round(amount * 100), // amount in paisa
+            currency: 'INR',
+            receipt: 'order_' + Date.now(),
+            notes: {
+                userId: req.user._id.toString()
+            }
+        };
+
+        const order = await razorpay.orders.create(options);
+        
+        res.status(200).json({
+            success: true,
+            orderId: order.id,
+            amount: order.amount,
+            key: process.env.RAZORPAY_KEY_ID
+        });
+
+    } catch (error) {
+        console.error('Razorpay order creation error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create payment order',
+            error: error.message
+        });
+    }
+};
+
+// Verify Razorpay payment
+
+
+const verifyRazorpayPayment = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const { 
+            razorpay_payment_id, 
+            razorpay_order_id, 
+            razorpay_signature 
+        } = req.body;
+
+        // Find the order first
+        const order = await Order.findOne({ orderId });
+        if (!order) {
+            throw new Error('Order not found');
+        }
+
+        // Verify signature
+        const body = razorpay_order_id + '|' + razorpay_payment_id;
+        const expectedSignature = crypto
+            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+            .update(body)
+            .digest('hex');
+
+        if (expectedSignature !== razorpay_signature) {
+            throw new Error('Invalid payment signature');
+        }
+
+        // Update product quantities for each item in the order
+        const productUpdatePromises = order.items.map(async (item) => {
+            const product = await Product.findById(item.product);
+            if (product) {
+                const variant = product.variants.find(v => 
+                    v.colorName === item.selectedColor.colorName
+                );
+                if (variant) {
+                    const sizeVariant = variant.colorVariant.find(sv => 
+                        sv.size === item.selectedSize
+                    );
+                    if (sizeVariant) {
+                        // Decrease stock
+                        sizeVariant.stock = Math.max(0, sizeVariant.stock - item.quantity);
+                        
+                        // Update product sales count
+                        product.totalSales = (product.totalSales || 0) + item.quantity;
+
+                        // Save the product
+                        return Product.findByIdAndUpdate(
+                            product._id,
+                            { 
+                                $set: { 
+                                    variants: product.variants,
+                                    totalSales: product.totalSales
+                                }
+                            },
+                            { new: true, runValidators: false }
+                        );
+                    }
+                }
+            }
+        });
+
+        // Wait for all product updates
+        await Promise.all(productUpdatePromises);
+
+        // Remove ordered items from user's cart
+        const cart = await Cart.findOne({ user: order.user });
+        if (cart) {
+            // Remove items that match the ordered items
+            cart.items = cart.items.filter(cartItem => 
+                !order.items.some(orderItem => 
+                    orderItem.product.toString() === cartItem.product.toString() &&
+                    orderItem.selectedColor.colorName === cartItem.selectedColor.colorName &&
+                    orderItem.selectedSize === cartItem.selectedSize
+                )
+            );
+
+            // Recalculate cart totals
+            let totalAmount = 0;
+            let totalDiscount = 0;
+            
+            cart.items.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                const productDiscount = (itemTotal * item.appliedProductOffer) / 100;
+                const categoryDiscount = (itemTotal * item.appliedCategoryOffer) / 100;
+                
+                totalAmount += itemTotal;
+                totalDiscount += (productDiscount + categoryDiscount);
+            });
+            
+            cart.totalAmount = totalAmount;
+            cart.totalDiscount = totalDiscount;
+
+            await cart.save();
+        }
+
+        // Update order with new payment details
+        order.paymentStatus = 'completed';
+        order.orderStatus = 'confirmed';
+        order.paymentDetails = {
+            razorpayOrderId: razorpay_order_id,
+            razorpayPaymentId: razorpay_payment_id,
+            razorpaySignature: razorpay_signature,
+            paidAmount: order.finalAmount,
+            paidAt: new Date()
+        };
+
+        // Add to status history
+        order.statusHistory.push({
+            status: 'confirmed',
+            timestamp: new Date(),
+            comment: 'Payment completed successfully'
+        });
+
+        await order.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Payment verified successfully'
+        });
+
+    } catch (error) {
+        console.error('Payment verification error:', error);
+        res.status(400).json({
+            success: false,
+            message: error.message || 'Payment verification failed'
+        });
+    }
+};
 
 module.exports = {
     getUserOrders,
     getOrderDetails,
     cancelOrderItem,
-    returnOrderItem
+    returnOrderItem,
+    retryPayment,
+    createRazorpayOrder,
+    verifyRazorpayPayment
 }

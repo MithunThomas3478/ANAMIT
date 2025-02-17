@@ -250,6 +250,18 @@
             font-size: 1.5rem;
             color: var(--primary-color);
         }
+        .payment-method.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background-color: #f8f8f8;
+        }
+
+        .cod-limit-warning {
+            color: #dc3545;
+            font-size: 0.8rem;
+            display: block;
+            margin-top: 5px;
+        }
 
         /* Coupon Section */
         .coupon-section {
@@ -731,14 +743,19 @@
                             </div>
                         </div>
 
-                        <!-- Cash on Delivery -->
-                        <div class="payment-method" data-payment-method="cod" onclick="selectPayment('cod')">
+                      <!-- Cash on Delivery -->
+                        <div class="payment-method <%= checkoutData.finalAmount < 1000 ? 'disabled' : '' %>" 
+                            data-payment-method="cod" 
+                            onclick="<%= checkoutData.finalAmount >= 1000 ? 'selectPayment(\'cod\')' : '' %>">
                             <div class="payment-icon">
                                 <i class="fas fa-money-bill-wave"></i>
                             </div>
                             <div class="payment-info">
                                 <h3>Cash on Delivery</h3>
                                 <p>Pay when you receive</p>
+                                <% if (checkoutData.finalAmount < 1000) { %>
+                                    <small class="cod-limit-warning">Available only for orders above ₹1,000</small>
+                                <% } %>
                             </div>
                         </div>
                     </div>
@@ -1330,6 +1347,11 @@ function renderCoupons(coupons) {
                 return;
             }
 
+            if (method === 'cod' && grandTotal < 1000) {  // Changed from > to 
+                showNotification('Cash on Delivery is available only for orders above ₹1,000. Please choose another payment method.', 'warning');
+                return;
+            }
+
             selectedPaymentMethod = method;
             
             document.querySelectorAll('.payment-method').forEach(pm => {
@@ -1432,52 +1454,97 @@ function renderCoupons(coupons) {
         showNotification('Wallet payment failed: ' + error.message, 'error');
     }
 }
+async function initializeRazorpay() {
+    try {
+        const response = await fetch('/checkout/create-razorpay-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: grandTotal })
+        });
 
-        async function initializeRazorpay() {
-            try {
-                const response = await fetch('/checkout/create-razorpay-order', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ amount: grandTotal })
-                });
-
-                const data = await response.json();
-                
-                if (!data.success) {
-                    throw new Error(data.message);
-                }
-
-                const options = {
-                    key: '<%= razorpayKeyId %>',
-                    amount: data.amount,
-                    currency: 'INR',
-                    name: '<%= storeName %>',
-                    description: 'Order Payment',
-                    order_id: data.orderId,
-                    handler: async function(response) {
-                        hideLoading();
-                        await verifyPayment(response);
-                    },
-                    prefill: {
-                        name: '<%= user.name %>',
-                        email: '<%= user.email %>',
-                        contact: '<%= user.phone %>'
-                    },
-                    theme: {
-                        color: '#fc7b03'
-                    }
-                };
-
-                const rzp = new Razorpay(options);
-                rzp.open();
-
-            } catch (error) {
-                hideLoading();
-                throw new Error('Payment initialization failed: ' + error.message);
-            }
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.message);
         }
 
-        async function verifyPayment(razorpayResponse) {
+        const options = {
+            key: '<%= razorpayKeyId %>',
+            amount: data.amount,
+            currency: 'INR',
+            name: '<%= storeName %>',
+            description: 'Order Payment',
+            order_id: data.orderId,
+            handler: async function(response) {
+                hideLoading();
+                await verifyPayment(response);
+            },
+            prefill: {
+                name: '<%= user.name %>',
+                email: '<%= user.email %>',
+                contact: '<%= user.phone %>'
+            },
+            theme: {
+                color: '#fc7b03'
+            },
+            modal: {
+                ondismiss: async function() {
+                    hideLoading();
+                    try {
+                        // Create cancelled order when payment modal is dismissed
+                        await placeOrder('razorpay', { payment_status: 'failed' });
+                        Swal.fire({
+                            title: 'Payment Cancelled',
+                            text: 'Your order has been cancelled due to payment failure',
+                            icon: 'error',
+                            confirmButtonColor: '#fc7b03'
+                        }).then(() => {
+                            window.location.href = '/orders';
+                        });
+                    } catch (error) {
+                        console.error('Error handling payment cancellation:', error);
+                    }
+                }
+            }
+        };
+
+        const rzp = new Razorpay(options);
+        
+        rzp.on('payment.failed', async function(failureResponse) {
+            hideLoading();
+            try {
+                // Create failed order
+                await placeOrder('razorpay', { 
+                    payment_status: 'failed',
+                    error_description: failureResponse.error.description 
+                });
+                Swal.fire({
+                    title: 'Payment Failed',
+                    text: failureResponse.error.description || 'Your payment has failed. The order has been cancelled.',
+                    icon: 'error',
+                    confirmButtonColor: '#fc7b03'
+                }).then(() => {
+                    window.location.href = '/orders';
+                });
+            } catch (error) {
+                console.error('Error handling payment failure:', error);
+            }
+        });
+
+        rzp.open();
+
+    } catch (error) {
+        hideLoading();
+        Swal.fire({
+            title: 'Payment Failed',
+            text: error.message || 'Failed to initialize payment',
+            icon: 'error',
+            confirmButtonColor: '#fc7b03'
+        });
+    }
+}
+       
+async function verifyPayment(razorpayResponse) {
     showLoading();
     try {
         const verification = await fetch('/checkout/verify-razorpay-payment', {
@@ -1492,11 +1559,21 @@ function renderCoupons(coupons) {
             await placeOrder('razorpay', razorpayResponse);
         } else {
             hideLoading();
-            throw new Error(data.message);
+            Swal.fire({
+                title: 'Payment Verification Failed!',
+                text: data.message || 'Unable to verify payment. Please contact support.',
+                icon: 'error',
+                confirmButtonColor: '#fc7b03'
+            });
         }
     } catch (error) {
         hideLoading();
-        showNotification('Payment verification failed: ' + error.message, 'error');
+        Swal.fire({
+            title: 'Payment Verification Failed!',
+            text: error.message || 'Failed to verify payment. Please try again.',
+            icon: 'error',
+            confirmButtonColor: '#fc7b03'
+        });
     }
 }
 

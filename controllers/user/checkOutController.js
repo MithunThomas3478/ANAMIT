@@ -9,6 +9,7 @@ const Coupon = require('../../models/couponSchema');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const mongoose = require('mongoose');
+const moment = require('moment');
 
 // Initialize Razorpay
 const razorpay = new Razorpay({
@@ -562,23 +563,88 @@ const placeOrder = async (req, res) => {
                     discountAmount: couponDiscount,
                     discountType: coupon.discountType
                 };
-
-                // Update coupon usage
-                await Coupon.findByIdAndUpdate(coupon._id, {
-                    $inc: { usageCount: 1 }
-                });
             }
         }
 
         const shippingFee = 128;
         const finalAmount = Number((subtotal - totalDiscount - couponDiscount + shippingFee).toFixed(2));
 
-        // Validate wallet balance if using wallet payment
+       // In placeOrder function, modify the Razorpay failure section
+       if (paymentMethod === 'razorpay' && paymentDetails && paymentDetails.payment_status === 'failed') {
+        const [orderId, orderNumber] = await Promise.all([
+            Order.generateOrderId(),
+            Order.generateOrderNumber()
+        ]);
+    
+        const failedOrder = new Order({
+            orderId,
+            orderNumber,
+            user: userId,
+            items: items.map(item => ({
+                product: item.productId,
+                productName: item.productName,
+                productImage: item.productImage,
+                selectedColor: {
+                    colorName: item.selectedColor.colorName,
+                    colorValue: item.selectedColor.colorValue
+                },
+                selectedSize: item.selectedSize,
+                quantity: item.quantity,
+                price: item.price,
+                appliedProductOffer: item.discountPercent || 0,
+                appliedCategoryOffer: 0,
+                itemTotal: item.itemTotal,
+                status: 'active'  // Keep items active
+            })),
+            shippingAddress: {
+                fullName: address.fullName,
+                streetAddress: address.streetAddress,
+                city: address.city,
+                state: address.state,
+                pincode: address.pincode,
+                phoneNumber: address.phoneNumber
+            },
+            totalAmount: subtotal,
+            totalDiscount,
+            coupon: couponData,
+            shippingFee,
+            finalAmount,
+            paymentMethod: 'razorpay',
+            paymentStatus: 'failed',
+            orderStatus: 'payment_failed',  // Set to payment_failed
+            statusHistory: [{
+                status: 'payment_failed',
+                timestamp: new Date(),
+                comment: `Payment failed${paymentDetails.error_description ? ': ' + paymentDetails.error_description : ''}`
+            }]
+        });
+    
+        await failedOrder.save();
+    
+        return res.status(200).json({
+            success: true,
+            message: 'Order status: Payment failed',
+            orderId: failedOrder._id,
+            orderNumber: failedOrder.orderNumber,
+            paymentFailed: true
+        });
+    }
+
+        // Validate payment method specific conditions
+            // In your checkout controller, update the COD validation
+        if (paymentMethod === 'cod' && finalAmount < 1000) {  // Changed from > to 
+            throw new Error('Cash on Delivery is only available for orders above ₹1,000');
+        }
+
         if (paymentMethod === 'wallet') {
             const wallet = await Wallet.findOne({ user: userId });
             if (!wallet || wallet.balance < finalAmount) {
                 throw new Error('Insufficient wallet balance');
             }
+        }
+
+        if (paymentMethod === 'razorpay' && (!paymentDetails || !paymentDetails.razorpay_payment_id)) {
+            throw new Error('Invalid payment details');
         }
 
         // Generate order identifiers
@@ -587,7 +653,7 @@ const placeOrder = async (req, res) => {
             Order.generateOrderNumber()
         ]);
 
-        // Create order with consistent data
+        // Create successful order
         const order = new Order({
             orderId,
             orderNumber,
@@ -618,13 +684,13 @@ const placeOrder = async (req, res) => {
             },
             totalAmount: subtotal,
             totalDiscount,
+            coupon: couponData,
             shippingFee,
             finalAmount,
             paymentMethod,
             paymentStatus: paymentMethod === 'cod' ? 'pending' : 'completed',
             orderStatus: paymentMethod === 'cod' ? 'pending' : 'confirmed',
-            coupon: couponData,
-            estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
+            estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
             statusHistory: [{
                 status: paymentMethod === 'cod' ? 'pending' : 'confirmed',
                 timestamp: new Date(),
@@ -643,7 +709,7 @@ const placeOrder = async (req, res) => {
             };
         }
 
-        // Save order first to ensure we have the order document
+        // Save order first
         await order.save();
 
         // Update product stock
@@ -684,6 +750,13 @@ const placeOrder = async (req, res) => {
             await order.save();
         }
 
+        // Update coupon usage if applicable
+        if (couponData) {
+            await Coupon.findByIdAndUpdate(req.session.appliedCoupon._id, {
+                $inc: { usageCount: 1 }
+            });
+        }
+
         // Mark cart as inactive
         await Cart.findOneAndUpdate(
             { user: userId, active: true },
@@ -698,20 +771,12 @@ const placeOrder = async (req, res) => {
             delete req.session.appliedCoupon;
         }
 
-        // Log order totals for debugging
-        console.log('Order Placed Totals:', {
-            orderId: order._id,
-            subtotal,
-            totalDiscount,
-            couponDiscount,
-            finalAmount
-        });
-
         res.status(200).json({
             success: true,
             message: 'Order placed successfully',
             orderId: order._id,
-            orderNumber: order.orderNumber
+            orderNumber: order.orderNumber,
+            paymentFailed: false
         });
 
     } catch (error) {
@@ -728,7 +793,7 @@ const orderSuccess = async (req, res) => {
         const select = `
             orderNumber totalAmount paymentMethod paymentStatus orderStatus 
             items shippingAddress user createdAt estimatedDelivery coupon 
-            totalDiscount shippingFee finalAmount trackingDetails
+            totalDiscount shippingFee finalAmount trackingDetails paymentDetails statusHistory
         `;
 
         const order = await Order.findById(req.params.orderId)
@@ -745,16 +810,13 @@ const orderSuccess = async (req, res) => {
             throw new Error('Unauthorized access');
         }
 
-        // Ensure all required values exist with default values if undefined
+        // Calculate all order totals
         const orderTotals = {
-            // Calculate items total with safe checks
             itemsTotal: order.items.reduce((sum, item) => {
                 const price = Number(item.price) || 0;
                 const quantity = Number(item.quantity) || 0;
                 return sum + (price * quantity);
             }, 0),
-
-            // Calculate offer savings with safe checks
             offerSavings: order.items.reduce((acc, item) => {
                 const price = Number(item.price) || 0;
                 const quantity = Number(item.quantity) || 0;
@@ -762,46 +824,49 @@ const orderSuccess = async (req, res) => {
                 const itemTotal = Number(item.itemTotal) || 0;
                 return acc + (originalPrice - itemTotal);
             }, 0),
-
-            // Get coupon discount with safe check
-            couponDiscount: order.coupon && typeof order.coupon.discountAmount === 'number' 
-                ? order.coupon.discountAmount 
-                : 0,
-
-            // Get shipping fee with safe check
+            couponDiscount: order.coupon?.discountAmount || 0,
             shippingFee: Number(order.shippingFee) || 0
         };
 
-        // Calculate final totals with safe Number conversion
+        // Format totals
         const totals = {
-            totalItemsPrice: Number((orderTotals.itemsTotal || 0).toFixed(2)),
-            offerSavings: Number((orderTotals.offerSavings || 0).toFixed(2)),
-            couponDiscount: Number((orderTotals.couponDiscount || 0).toFixed(2)),
-            shippingFee: Number((orderTotals.shippingFee || 0).toFixed(2))
+            totalItemsPrice: Number(orderTotals.itemsTotal.toFixed(2)),
+            offerSavings: Number(orderTotals.offerSavings.toFixed(2)),
+            couponDiscount: Number(orderTotals.couponDiscount.toFixed(2)),
+            shippingFee: Number(orderTotals.shippingFee.toFixed(2)),
+            finalAmount: Number(order.finalAmount.toFixed(2))
         };
 
-        // Calculate final amount
-        totals.finalAmount = Number((
-            totals.totalItemsPrice - 
-            totals.offerSavings - 
-            totals.couponDiscount + 
-            totals.shippingFee
-        ).toFixed(2));
+        // Get failure reason safely
+        let failureReason = null;
+        if (order.statusHistory && Array.isArray(order.statusHistory)) {
+            const failedStatus = order.statusHistory.find(s => 
+                s.status === 'cancelled' || s.status === 'payment_failed'
+            );
+            failureReason = failedStatus?.comment;
+        }
 
-        // Debug log
-        console.log('Order Success Totals:', {
-            orderTotals,
-            totals,
-            storedValues: {
-                totalAmount: order.totalAmount,
-                totalDiscount: order.totalDiscount,
-                finalAmount: order.finalAmount
-            }
-        });
+        // Get payment details and status
+        const paymentInfo = {
+            method: order.paymentMethod,
+            status: order.paymentStatus,
+            statusText: getPaymentStatusText(order.paymentStatus),
+            methodText: getPaymentMethodText(order.paymentMethod),
+            details: order.paymentDetails || {},
+            failureReason: failureReason
+        };
+
+        // Get shipping status
+        const shippingInfo = {
+            status: order.orderStatus,
+            statusText: getOrderStatusText(order.orderStatus),
+            estimatedDelivery: order.estimatedDelivery,
+            address: order.shippingAddress,
+            tracking: order.trackingDetails || {}
+        };
 
         // Format currency helper
         const formatAmount = (amount) => {
-            // Ensure amount is a number and not undefined
             const safeAmount = Number(amount) || 0;
             return safeAmount.toLocaleString('en-IN', {
                 maximumFractionDigits: 2,
@@ -809,11 +874,19 @@ const orderSuccess = async (req, res) => {
             });
         };
 
+        // Format date helper
+        const formatDate = (date) => {
+            return moment(date).format('MMM DD, YYYY, hh:mm A');
+        };
+
         res.render('orderSuccess', {
             order,
             totals,
-            storeName: process.env.STORE_NAME || 'Your Store Name',
+            paymentInfo,
+            shippingInfo,
             formatAmount,
+            formatDate,
+            storeName: process.env.STORE_NAME || 'Your Store Name',
             moment: require('moment')
         });
 
@@ -826,6 +899,59 @@ const orderSuccess = async (req, res) => {
             });
     }
 };
+
+function getPaymentStatusText(status) {
+    const statusMap = {
+        'pending': 'Payment Pending',
+        'completed': 'Payment Completed',
+        'failed': 'Payment Failed',
+        'refunded': 'Payment Refunded',
+        'partially_refunded': 'Partially Refunded'
+    };
+    return statusMap[status] || status;
+}
+
+function getOrderStatusText(status) {
+    const statusMap = {
+        'pending': 'Order Pending',
+        'confirmed': 'Order Confirmed',
+        'processing': 'Processing',
+        'shipped': 'Shipped',
+        'delivered': 'Delivered',
+        'cancelled': 'Cancelled',
+        'returned': 'Returned',
+        'partially_cancelled': 'Partially Cancelled',
+        'partially_returned': 'Partially Returned',
+        'payment_failed': 'Payment Failed'
+    };
+    return statusMap[status] || status;
+}
+
+function getPaymentMethodText(method) {
+    const methodMap = {
+        'cod': 'Cash on Delivery',
+        'razorpay': 'Online Payment',
+        'wallet': 'Wallet Payment'
+    };
+    return methodMap[method] || method;
+}
+
+
+function getOrderStatusText(status) {
+    const statusMap = {
+        'pending': 'Order Pending',
+        'confirmed': 'Order Confirmed',
+        'processing': 'Processing',
+        'shipped': 'Shipped',
+        'delivered': 'Delivered',
+        'cancelled': 'Cancelled',
+        'returned': 'Returned',
+        'partially_cancelled': 'Partially Cancelled',
+        'partially_returned': 'Partially Returned'
+    };
+    return statusMap[status] || status;
+}
+
 
 // Helper Functions
 function getPaymentDetails(paymentMethod, paymentDetails, totalAmount) {
@@ -886,6 +1012,10 @@ module.exports = {
     orderSuccess,
     applyCoupon,
     removeCoupon,
-    getAvailableCoupons
+    getAvailableCoupons,
+    getPaymentStatusText,
+    getPaymentMethodText,
+    getOrderStatusText,
+  
 
 };

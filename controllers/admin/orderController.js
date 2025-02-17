@@ -118,8 +118,25 @@ const updateOrderStatus = async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
+        // Check if payment is pending or failed for Razorpay orders
+        if (order.paymentMethod === 'razorpay' && 
+            (order.paymentStatus === 'pending' || order.paymentStatus === 'failed')) {
+            return res.status(400).json({ 
+                message: `Cannot update order status while payment is ${order.paymentStatus}`
+            });
+        }
+
+        // Check if the order is in a final state
+        const finalStates = ['delivered', 'cancelled', 'returned', 'partially_returned'];
+        if (finalStates.includes(order.orderStatus)) {
+            return res.status(400).json({ 
+                message: 'Cannot update order in final state'
+            });
+        }
+
         const updateData = { orderStatus: status };
 
+        // Update payment status for COD orders when delivered
         if (status === 'delivered' && order.paymentMethod === 'cod') {
             updateData.paymentStatus = 'completed';
             updateData['paymentDetails.paidAmount'] = order.totalAmount;
@@ -132,6 +149,15 @@ const updateOrderStatus = async (req, res) => {
             { new: true }
         ).populate('user', 'name email');
 
+        // Add to status history
+        updatedOrder.statusHistory.push({
+            status: status,
+            timestamp: new Date(),
+            comment: `Order status updated to ${status}`
+        });
+
+        await updatedOrder.save();
+
         res.json({ 
             message: 'Order status updated successfully',
             order: updatedOrder
@@ -141,7 +167,6 @@ const updateOrderStatus = async (req, res) => {
         res.status(500).json({ message: 'Failed to update order status' });
     }
 };
-
 const generateInvoice = async (req, res) => {
     try {
         const { orderId } = req.params;
@@ -568,8 +593,6 @@ const validateReturnEligibility = (order, orderItem) => {
 
 
 
-
-
 module.exports = {
     getOrderManagement,
     updateOrderStatus,
@@ -577,5 +600,5 @@ module.exports = {
     getOrderDetails,
     returnOrderItem,
     validateReturnEligibility,
-    handleReturnRequest
+    handleReturnRequest,
 }

@@ -97,6 +97,18 @@ const orderItemSchema = new Schema({
     }
 });
 
+const paymentFailureDetailsSchema = {
+    failureReason: String,
+    failureCode: String,
+    failureMessage: String,
+    failedAt: Date,
+    retryCount: {
+        type: Number,
+        default: 0
+    },
+    lastRetryAt: Date
+};
+
 // Order Schema
 const orderSchema = new Schema({
     orderId: {
@@ -159,17 +171,22 @@ const orderSchema = new Schema({
         razorpaySignature: String,
         paidAmount: Number,
         paidAt: Date,
-        walletTransactionId: String
+        walletTransactionId: String,
+        failureDetails: paymentFailureDetailsSchema  // Add this
     },
     orderStatus: {
         type: String,
-        enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'partially_cancelled', 'partially_returned'],
+        enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 
+               'cancelled', 'returned', 'partially_cancelled', 'partially_returned', 
+               'payment_failed'],  // Add payment_failed status
         default: 'pending'
     },
     statusHistory: [{
         status: {
             type: String,
-            enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'partially_cancelled', 'partially_returned']
+            enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 
+                   'cancelled', 'returned', 'partially_cancelled', 'partially_returned', 
+                   'payment_failed']  // Add payment_failed status here too
         },
         timestamp: {
             type: Date,
@@ -318,14 +335,11 @@ orderSchema.pre('save', function(next) {
 
     // Handle payment status changes
     if (this.isModified('paymentStatus') && this.paymentStatus === 'failed') {
-        this.orderStatus = 'cancelled';
+        this.orderStatus = 'payment_failed';  // Change to payment_failed instead of cancelled
         this.items.forEach(item => {
-            item.status = 'cancelled';
-            item.cancellationDetails = {
-                cancelledAt: new Date(),
-                reason: 'Payment failed',
-                refundStatus: 'not_applicable'
-            };
+            item.status = 'active';  // Keep items active
+            // Remove cancellation details since we're not cancelling
+            item.cancellationDetails = undefined;
         });
     }
 
