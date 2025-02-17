@@ -1,33 +1,295 @@
-<%- include('../partials/admin/adminHeader')%>
-<main class="main-content">
-    <div class="dashboard-header">
-        <h1 class="dashboard-title">Dashboard Overview</h1>
-        <div class="user-info">
-            <span>Welcome, Admin</span>
+<!-- views/admin/dashboard.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <!-- Include Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Include Date Range Picker dependencies -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    
+    <style>
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-card h3 {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .stat-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .top-products {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        #dateRange {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/admin/adminHeader') %>
+    <div class="dashboard-container" style="padding: 20px;">
+        <h1>Dashboard</h1>
+        
+        <!-- Stats Cards -->
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <h3>Total Orders</h3>
+                <div class="value"><%= totalOrders %></div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Revenue</h3>
+                <div class="value">₹<%= totalRevenue.toLocaleString() %></div>
+            </div>
         </div>
+
+        <!-- Chart Controls -->
+        <div class="controls">
+            <select id="timeRange">
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly" selected>Monthly</option>
+                <option value="yearly">Yearly</option>
+                <option value="custom">Custom Range</option>
+            </select>
+            <input type="text" id="dateRange" style="display: none;" />
+        </div>
+
+        <!-- Sales Chart -->
+        <div class="chart-container">
+            <canvas id="salesChart"></canvas>
+        </div>
+
+       <!-- Product and Category Charts Container -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+    <!-- Top Products Chart -->
+    <div class="chart-container">
+        <h2>Top Selling Products</h2>
+        <canvas id="topProductsChart"></canvas>
     </div>
 
-    <div class="stats-grid">
-        <div class="stat-card">
-            <i class="fas fa-shopping-cart stat-icon" style="color: var(--primary-color);"></i>
-            <div class="stat-value">1,234</div>
-            <div class="stat-label">Total Orders</div>
-        </div>
-        <div class="stat-card">
-            <i class="fas fa-users stat-icon" style="color: var(--secondary-color);"></i>
-            <div class="stat-value">5,678</div>
-            <div class="stat-label">Total Users</div>
-        </div>
-        <div class="stat-card">
-            <i class="fas fa-box stat-icon" style="color: var(--accent-color);"></i>
-            <div class="stat-value">890</div>
-            <div class="stat-label">Total Products</div>
-        </div>
-        <div class="stat-card">
-            <i class="fas fa-dollar-sign stat-icon" style="color: var(--success-color);"></i>
-            <div class="stat-value">$12,345</div>
-            <div class="stat-label">Total Revenue</div>
-        </div>
+    <!-- Top Categories Chart -->
+    <div class="chart-container">
+        <h2>Top Selling Categories</h2>
+        <canvas id="topCategoriesChart"></canvas>
     </div>
-</main>
-<%- include('../partials/admin/adminFooter')%>
+</div>
+
+    </div>
+    <%- include('../partials/admin/adminFooter') %>
+    <script>
+        let salesChart;
+
+        // Initialize Chart
+        function initializeChart(data) {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            
+            if (salesChart) {
+                salesChart.destroy();
+            }
+
+            salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(item => {
+                        if (item._id.date) return item._id.date;
+                        if (item._id.month) return `${item._id.year}-${item._id.month}`;
+                        return item._id.toString();
+                    }),
+                    datasets: [{
+                        label: 'Revenue',
+                        data: data.map(item => item.revenue),
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Orders',
+                        data: data.map(item => item.orders),
+                        borderColor: 'rgb(255, 99, 132)',
+                        tension: 0.1,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Revenue (₹)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Number of Orders'
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Fetch Graph Data
+        async function fetchGraphData(timeRange, startDate = null, endDate = null) {
+            try {
+                const params = new URLSearchParams({ timeRange });
+                if (startDate && endDate) {
+                    params.append('startDate', startDate);
+                    params.append('endDate', endDate);
+                }
+
+                const response = await fetch(`/admin/dashboard/graph-data?${params}`);
+                const data = await response.json();
+                initializeChart(data);
+            } catch (error) {
+                console.error('Error fetching graph data:', error);
+            }
+        }
+
+        // Initialize DateRangePicker
+        $('#dateRange').daterangepicker({
+            opens: 'left',
+            maxDate: new Date()
+        });
+
+        // Event Listeners
+        document.getElementById('timeRange').addEventListener('change', function(e) {
+            const selectedRange = e.target.value;
+            const dateRangeInput = document.getElementById('dateRange');
+            
+            dateRangeInput.style.display = selectedRange === 'custom' ? 'block' : 'none';
+            
+            if (selectedRange !== 'custom') {
+                fetchGraphData(selectedRange);
+            }
+        });
+
+        $('#dateRange').on('apply.daterangepicker', function(ev, picker) {
+            fetchGraphData('custom', picker.startDate.format('YYYY-MM-DD'), picker.endDate.format('YYYY-MM-DD'));
+        });
+
+        // Initial load
+        fetchGraphData('monthly');
+
+        function createDoughnutChart(ctx, data, title) {
+        return new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: data.map(item => item._id),
+                datasets: [{
+                    data: data.map(item => item.totalQuantity),
+                    backgroundColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(54, 162, 235)',
+                        'rgb(255, 206, 86)',
+                        'rgb(75, 192, 192)',
+                        'rgb(153, 102, 255)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    title: {
+                        display: true,
+                        text: title
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const item = data[context.dataIndex];
+                                return [
+                                    `${item._id}: ${item.totalQuantity} units`,
+                                    `Revenue: ₹${item.totalRevenue.toLocaleString()}`,
+                                    `${item.percentage}% of total`
+                                ];
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Initialize top products chart
+    const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
+    const topProductsData = <%- JSON.stringify(topProducts) %>;
+    createDoughnutChart(topProductsCtx, topProductsData, 'Product Distribution');
+
+    // Initialize top categories chart
+    const topCategoriesCtx = document.getElementById('topCategoriesChart').getContext('2d');
+    const topCategoriesData = <%- JSON.stringify(topCategories) %>;
+    createDoughnutChart(topCategoriesCtx, topCategoriesData, 'Category Distribution');
+
+
+    </script>
+</body>
+</html>

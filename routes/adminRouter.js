@@ -43,6 +43,7 @@ router.get("/login", adminController.loadLogin);
 router.post("/login", adminController.adminLogin);
 router.use(adminAuthMiddleware)
 router.get("/dashboard", adminController.loadDashboard);
+router.get('/dashboard/graph-data', adminController.getGraphData);
 router.get("/pageerror", adminController.pageerror);
 router.get("/logout", adminController.logout);
 
@@ -102,7 +103,6 @@ router.delete('/coupons/delete/:id', couponController.deleteCoupon);
 
 router.get('/sales-report/:type?',salesController.getSalesReport);
 router.get('/sales-report/export/:format/:type', salesController.exportSalesReport);
-// Add these to your existing routes
 router.post('/orders/:orderId/items/:itemId/return/:action', orderController.handleReturnRequest);
 
 
