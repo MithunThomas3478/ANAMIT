@@ -49,8 +49,8 @@ router.get("/logout", adminController.logout);
 
 // Route for loading users page
 router.get("/users", customerController.loadUsers);
+router.post('/users/toggle-block/:id', customerController.toggleBlock);
 
-// Route for toggling user block status
 // In your admin routes file
 router.post("/product/toggle/:id", productController.toggleProductStatus);
 

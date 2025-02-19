@@ -854,7 +854,7 @@
                     <% order.items.forEach(item => { %>
                         <div class="product-item">
                             <img src="<%= item.productImage %>" alt="<%= item.productName %>" class="product-image">
-                           <!-- Inside product-item div -->
+ <!-- Inside product-item div -->
 <div class="product-info">
     <div class="product-name"><%= item.productName %></div>
     <div class="product-meta">
@@ -885,13 +885,15 @@
         <!-- Active item actions -->
         <div class="product-actions">
             <% 
-                // Check if payment is not pending and item can be cancelled
-                const isPaymentPending = order.paymentStatus === 'pending' || order.paymentStatus === 'failed';
+                // Updated condition to hide cancel button for failed payments
                 const nonCancellableStatuses = ['shipped', 'delivered', 'cancelled', 'returned'];
-                const canCancel = item.status === 'active' && !nonCancellableStatuses.includes(order.orderStatus);
+                const isPaymentFailed = order.paymentStatus === 'failed' || order.orderStatus === 'payment_failed';
+                const canCancel = item.status === 'active' && 
+                                !nonCancellableStatuses.includes(order.orderStatus) && 
+                                !isPaymentFailed;
             %>
             
-            <% if (!isPaymentPending && canCancel) { %>
+            <% if (canCancel) { %>
                 <button type="button" 
                     onclick="showCancelItemModal('<%= order.orderId %>', '<%= item._id %>')"
                     class="btn btn-sm btn-danger">

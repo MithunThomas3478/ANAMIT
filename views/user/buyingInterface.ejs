@@ -34,6 +34,9 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             height: 500px;
         }
+        .zoom-container.zoomed {
+            cursor: zoom-out;
+        }
 
         .zoom-container img {
             width: 100%;
@@ -41,6 +44,13 @@
             object-fit: contain;
             transform-origin: center;
             transition: transform 0.3s ease-out;
+        }
+        .zoom-lens {
+            position: absolute;
+            border: 1px solid #d4d4d4;
+            width: 40px;
+            height: 40px;
+            display: none;
         }
 
         .zoom-container:hover img {
@@ -209,6 +219,7 @@
             letter-spacing: 1px;
             transition: all 0.3s ease;
         }
+      
         .product-badge {
             position: absolute;
             top: 10px;
@@ -257,40 +268,7 @@
         font-size: 0.75rem;
         opacity: 0.9;
     }
-    .wishlist-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    min-width: 160px;
-    background: #f8f9fa;
-    border: 2px solid #dee2e6;
-    padding: 0.75rem 1.5rem;
-    font-weight: 500;
-    border-radius: 30px;
-    transition: all 0.3s ease;
-}
-
-.wishlist-btn i {
-    font-size: 1.2rem;
-    transition: transform 0.3s;
-    color: #dc3545;
-}
-
-.wishlist-btn:hover {
-    background: #fff;
-    border-color: #dc3545;
-}
-
-.wishlist-btn.wishlisted {
-    background-color: #dc3545;
-    border-color: #dc3545;
-    color: white;
-}
-
-.wishlist-btn.wishlisted i {
-    color: white;
-}
+    
 
 /* Similar Products Wishlist Icon */
 .similar-product-card {
@@ -373,6 +351,139 @@
             text-decoration: underline;
             cursor: pointer;
         }
+        .product-card {
+        background: white;
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 100%;
+        position: relative;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 20px rgba(255, 87, 34, 0.15);
+    }
+
+    .product-image-wrapper {
+        position: relative;
+        padding-top: 133%;
+        overflow: hidden;
+    }
+
+    .product-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .product-card:hover .product-image {
+        transform: scale(1.05);
+    }
+
+    .wishlist-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: white;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 2;
+        border: none;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .wishlist-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    }
+
+    .wishlist-btn i {
+        color: #ff5722;
+        font-size: 1.2rem;
+        transition: transform 0.3s ease;
+    }
+
+    .wishlist-btn.wishlisted {
+        background: #ff5722;
+    }
+
+    .wishlist-btn.wishlisted i {
+        color: white;
+    }
+
+    .product-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: #ff5722;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        z-index: 1;
+    }
+
+    .product-info {
+        padding: 15px;
+    }
+
+    .product-title {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 10px;
+        color: #333;
+        transition: color 0.3s ease;
+    }
+
+    .price-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+    }
+
+    .current-price {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: #ff5722;
+    }
+
+    .original-price {
+        font-size: 1rem;
+        text-decoration: line-through;
+        color: #95a5a6;
+    }
+
+    .discount-badge {
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .product-image-wrapper {
+            padding-top: 100%;
+        }
+    }
     </style>
 </head>
 <body>
@@ -524,29 +635,47 @@
             <h2 class="mb-4">Similar Products</h2>
             <div class="row">
                 <% similarProducts.forEach(similarProduct => { %>
-                    <div class="col-md-3 mb-4">
-                        <div class="card similar-product-card">
-                            <% if (similarProduct.hasOffer) { %>
-                                <span class="product-badge">
-                                    <%= similarProduct.offerPercentage %>% OFF
-                                    <% if (similarProduct.offerType === 'category') { %>
-                                       
-                                    <% } %>
-                                </span>
-                            <% } %>
-                            <img src="<%= similarProduct.variants[0].productImage[0] %>" 
-                                 class="card-img-top similar-product-img" 
-                                 alt="<%= similarProduct.productName %>">
-                            <div class="card-body">
-                                <h5 class="card-title"><%= similarProduct.productName %></h5>
-                                <div class="price-section">
+                    <div class="col-6 col-md-4 col-lg-3 mb-4">
+                        <div class="product-card">
+                            <div class="product-image-wrapper">
+                                <!-- Wishlist Button -->
+                                <button class="wishlist-btn" 
+                                        onclick="toggleWishlist('<%= similarProduct._id %>')"
+                                        data-wishlist-id="<%= similarProduct._id %>"
+                                        title="<%= similarProduct.isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist' %>">
+                                    <i class="<%= similarProduct.isInWishlist ? 'fa-solid' : 'fa-regular' %> fa-heart"></i>
+                                </button>
+                                
+                                <!-- Product Image Link -->
+                                <a href="/productDetails/<%= similarProduct._id %>">
+                                    <img src="<%= similarProduct.variants[0].productImage[0] %>" 
+                                         class="product-image" 
+                                         alt="<%= similarProduct.productName %>">
+                                </a>
+                                
+                             
+                            </div>
+                            
+                            <!-- Product Info -->
+                            <div class="product-info">
+                                <a href="/productDetails/<%= similarProduct._id %>" class="text-decoration-none">
+                                    <h3 class="product-title"><%= similarProduct.productName %></h3>
+                                </a>
+                                
+                                <!-- Price Section -->
+                                <div class="price-container">
                                     <% if (similarProduct.hasOffer) { %>
                                         <span class="current-price">₹<%= similarProduct.discountedPrice.toFixed(2) %></span>
                                         <span class="original-price">₹<%= similarProduct.originalPrice.toFixed(2) %></span>
+                                        <span class="discount-badge">
+                                            <%= similarProduct.offerPercentage %>% OFF
+                                        </span>
                                     <% } else { %>
                                         <span class="current-price">₹<%= similarProduct.originalPrice.toFixed(2) %></span>
                                     <% } %>
                                 </div>
+        
+                                <!-- View Details Button -->
                                 <a href="/productDetails/<%= similarProduct._id %>" class="btn btn-warning mt-3 w-100">
                                     View Details
                                 </a>
@@ -856,7 +985,58 @@ function updateSizeOptions(variant) {
                 showToast('Something went wrong. Please try again.', 'error');
             }
         }
-
+        async function toggleWishlist(productId) {
+        try {
+            const response = await fetch('/toggleWishlist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const wishlistBtn = document.querySelector(`[data-wishlist-id="${productId}"]`);
+                const icon = wishlistBtn.querySelector('i');
+                
+                if (data.isInWishlist) {
+                    icon.classList.remove('fa-regular');
+                    icon.classList.add('fa-solid');
+                    wishlistBtn.classList.add('wishlisted');
+                    showToast('Added to wishlist!', 'success');
+                } else {
+                    icon.classList.remove('fa-solid');
+                    icon.classList.add('fa-regular');
+                    wishlistBtn.classList.remove('wishlisted');
+                    showToast('Removed from wishlist!', 'info');
+                }
+                
+                if (data.wishlistCount !== undefined && document.getElementById('wishlistCount')) {
+                    document.getElementById('wishlistCount').textContent = data.wishlistCount;
+                }
+            } else {
+                if (response.status === 401) {
+                    Swal.fire({
+                        title: 'Login Required',
+                        text: 'Please login to add items to your wishlist',
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonText: 'Login',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = '/login';
+                        }
+                    });
+                } else {
+                    throw new Error(data.message || 'Failed to update wishlist');
+                }
+            }
+        } catch (error) {
+            console.error('Wishlist error:', error);
+            showToast('Something went wrong. Please try again.', 'error');
+        }
+    }
         function showSizeGuide() {
             Swal.fire({
                 title: 'Size Guide',
@@ -918,6 +1098,63 @@ function updateSizeOptions(variant) {
             });
         }
 
+        function initializeZoom() {
+            const mainContainer = document.querySelector('.main-image-container');
+            const mainImage = document.getElementById('mainImage');
+            const zoomLens = document.querySelector('.zoom-lens');
+            let isZoomed = false;
+            let currentScale = 1;
+            const maxScale = 4;
+
+            function updateZoom(e) {
+                if (!isZoomed) return;
+
+                const rect = mainContainer.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width;
+                const y = (e.clientY - rect.top) / rect.height;
+
+                mainImage.style.transformOrigin = `${x * 100}% ${y * 100}%`;
+                mainImage.style.transform = `scale(${currentScale})`;
+            }
+
+            function handleZoomClick(e) {
+                isZoomed = !isZoomed;
+                mainContainer.style.cursor = isZoomed ? 'zoom-out' : 'zoom-in';
+
+                if (isZoomed) {
+                    currentScale = 2;
+                    updateZoom(e);
+                } else {
+                    currentScale = 1;
+                    mainImage.style.transform = 'scale(1)';
+                }
+            }
+
+            function handleMouseWheel(e) {
+                if (!isZoomed) return;
+                
+                e.preventDefault();
+                const delta = Math.sign(-e.deltaY) * 0.5;
+                const newScale = Math.min(Math.max(1, currentScale + delta), maxScale);
+                
+                if (newScale !== currentScale) {
+                    currentScale = newScale;
+                    updateZoom(e);
+                }
+            }
+
+            if (mainContainer && mainImage) {
+                mainContainer.addEventListener('click', handleZoomClick);
+                mainContainer.addEventListener('mousemove', updateZoom);
+                mainContainer.addEventListener('wheel', handleMouseWheel, { passive: false });
+                
+                mainContainer.addEventListener('mouseleave', () => {
+                    if (isZoomed) {
+                        mainImage.style.transformOrigin = 'center center';
+                    }
+                });
+            }
+        }
         // Initialize the page
         document.addEventListener('DOMContentLoaded', () => {
             // Initialize price
@@ -954,22 +1191,7 @@ function updateSizeOptions(variant) {
             }
 
             // Initialize zoom effect
-            const zoomContainer = document.querySelector('.zoom-container');
-            const mainImage = document.getElementById('mainImage');
-
-            if (zoomContainer && mainImage) {
-                zoomContainer.addEventListener('mousemove', (e) => {
-                    const rect = zoomContainer.getBoundingClientRect();
-                    const x = (e.clientX - rect.left) / rect.width;
-                    const y = (e.clientY - rect.top) / rect.height;
-                    
-                    mainImage.style.transformOrigin = `${x * 100}% ${y * 100}%`;
-                });
-
-                zoomContainer.addEventListener('mouseleave', () => {
-                    mainImage.style.transform = 'scale(1)';
-                });
-            }
+            initializeZoom();
         });
     </script>
 </body>

@@ -74,6 +74,8 @@ router.get('/orders/:orderId', orderController.getOrderDetails);
 router.post('/orders/:orderId/items/:itemId/cancel', orderController.cancelOrderItem);
 router.post('/orders/:orderId/items/:itemId/return', orderController.returnOrderItem);
 
+router.get('/order/:orderId/invoice',orderController.generateUserInvoice);
+
 router.post('/orders/payment/create-order', orderController.createRazorpayOrder);
 router.post('/orders/payment/verify/:orderId', orderController.verifyRazorpayPayment);
 router.post('/orders/payment/verify/:orderId', orderController.retryPayment);

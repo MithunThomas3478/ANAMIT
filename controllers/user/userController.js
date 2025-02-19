@@ -511,6 +511,15 @@ const handleGoogleCallback = async (req, res) => {
       return res.redirect('/login');
     }
 
+    // Check if user is blocked
+    const user = await User.findById(req.user._id);
+    if (user && user.isBlocked) {
+      return res.render("login", {
+        message: "Your account has been blocked. Please contact support for assistance.",
+        isBlocked: true
+      });
+    }
+
     // Store user in session
     req.session.user = req.user._id;
     
@@ -518,7 +527,9 @@ const handleGoogleCallback = async (req, res) => {
     res.redirect('/');
   } catch (error) {
     console.error('Google callback error:', error);
-    res.redirect('/login');
+    res.render("login", {
+      message: "Error processing Google login. Please try again.",
+    });
   }
 };
 
@@ -542,37 +553,59 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    console.log(email, password);
+    console.log("Login attempt:", email);
 
-    // Find the user by email, whether Google or local login
+    // Find the user by email
     const findUser = await User.findOne({ email });
- console.log(findUser , "vjysagfv")
+    console.log("Found user:", findUser);
+
     if (!findUser) {
-      return res.render("login", { message: "User not found" });
+      return res.render("login", { 
+        message: "User not found",
+        email 
+      });
     }
 
+    // Check blocked status with more detailed message
     if (findUser.isBlocked) {
-      return res.render("login", { message: "User is blocked by admin" });
+      return res.render("login", { 
+        message: "Your account has been blocked. Please contact support for assistance.",
+        email,
+        isBlocked: true
+      });
     }
 
-    // If authProvider is local, verify password
+    // For Google users, verify they're using Google signin
+    if (findUser.authProvider === "google" && !req.isGoogleLogin) {
+      return res.render("login", {
+        message: "Please use Google Sign In for this account",
+        email
+      });
+    }
+
+    // For local users, verify password
     if (findUser.authProvider === "local") {
       const passwordMatch = await bcrypt.compare(password, findUser.password);
 
       if (!passwordMatch) {
-        return res.render("login", { message: "Incorrect password" });
+        return res.render("login", { 
+          message: "Incorrect password",
+          email
+        });
       }
     }
 
-    // Save user data in session for both Google and local users
+    // Save user data in session
     req.session.user = findUser._id;
-    console.log(req.session.user);
+    console.log("Session user set:", req.session.user);
 
-    // Redirect to home page
     return res.redirect("/");
   } catch (error) {
     console.error("Login error:", error);
-    return res.render("login", { message: "Please try again" });
+    return res.render("login", { 
+      message: "An error occurred. Please try again.",
+      email: req.body.email
+    });
   }
 };
 

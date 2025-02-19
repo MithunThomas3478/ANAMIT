@@ -321,11 +321,9 @@ const cancelOrderItem = async (req, res) => {
 
 const returnOrderItem = async (req, res) => {
     try {
-        const userId = req.user._id;
         const { orderId, itemId } = req.params;
+        const userId = req.user._id;
         const { reason, condition, comments } = req.body;
-
-        console.log("Processing return request:", { orderId, itemId, userId });
 
         // Input validation
         if (!reason || !condition) {
@@ -335,11 +333,11 @@ const returnOrderItem = async (req, res) => {
             });
         }
 
-        // Find the order
+        // Find order
         const order = await Order.findOne({
             orderId: orderId,
             user: userId
-        });
+        }).populate('items.product');
 
         if (!order) {
             return res.status(404).json({
@@ -348,7 +346,7 @@ const returnOrderItem = async (req, res) => {
             });
         }
 
-        // Find the specific item
+        // Find specific item
         const orderItem = order.items.id(itemId);
         if (!orderItem) {
             return res.status(404).json({
@@ -357,9 +355,7 @@ const returnOrderItem = async (req, res) => {
             });
         }
 
-        console.log("Current item status:", orderItem.status);
-
-        // Validate return eligibility
+        // Check return eligibility
         if (orderItem.status !== 'active') {
             return res.status(400).json({
                 success: false,
@@ -374,8 +370,7 @@ const returnOrderItem = async (req, res) => {
             });
         }
 
-
-        // Calculate refund amount
+        // Calculate refund amount (but don't process it yet)
         const refundAmount = orderItem.calculateRefundAmount();
 
         // Update item status and return details
@@ -390,75 +385,35 @@ const returnOrderItem = async (req, res) => {
             refundStatus: 'pending'
         };
 
-        // Handle wallet refund if payment was completed
-        if (order.paymentStatus === 'completed' && 
-            ['razorpay', 'wallet'].includes(order.paymentMethod)) {
-            
-            let wallet = await Wallet.findOne({ user: userId });
-            if (!wallet) {
-                wallet = new Wallet({
-                    user: userId,
-                    balance: 0
-                });
-                await wallet.save();
-            }
-
-            const walletTransaction = await wallet.credit(
-                refundAmount,
-                'Refund for returned order item',
-                {
-                    reason: 'order_return',
-                    orderId: order._id,
-                    itemId: itemId,
-                    originalOrderNumber: order.orderNumber
-                }
-            );
-
-            orderItem.returnDetails.refundStatus = 'completed';
-            orderItem.returnDetails.walletTransactionId = walletTransaction._id;
-            orderItem.returnDetails.processedAt = new Date();
-        }
-
-        // Update product inventory
-        if (orderItem.product) {
-            const product = await Product.findById(orderItem.product);
-            if (product) {
-                const variant = product.variants.find(v => 
-                    v.colorName === orderItem.selectedColor.colorName);
-                if (variant) {
-                    const sizeVariant = variant.colorVariant.find(sv => 
-                        sv.size === orderItem.selectedSize);
-                    if (sizeVariant) {
-                        sizeVariant.stock += orderItem.quantity;
-                        await product.save();
-                    }
-                }
-            }
-        }
-
         // Add to status history
         order.statusHistory.push({
-            status: 'partially_returned',
+            status: 'processing',  // Use a valid enum value
             timestamp: new Date(),
-            comment: `Return requested: ${reason}`
+            comment: `Return requested for item: ${orderItem.productName}. Reason: ${reason}`
         });
 
-        // Update order status
-        order.updateOrderStatus();
+        // Update order status if needed
+        const activeItems = order.items.filter(item => item.status === 'active');
+        const returnPendingItems = order.items.filter(item => item.status === 'return_pending');
         
-        // Save the order
-        await order.save();
+        if (activeItems.length === 0 && returnPendingItems.length === order.items.length) {
+            order.orderStatus = 'processing';  // Use a valid enum value
+        } else if (returnPendingItems.length > 0) {
+            order.orderStatus = 'processing';  // Use a valid enum value
+        }
 
-        console.log("Return process completed successfully");
+        // Save changes
+        await order.save();
 
         return res.status(200).json({
             success: true,
             message: 'Return request submitted successfully',
             details: {
-                orderStatus: order.orderStatus,
-                itemStatus: orderItem.status,
+                orderNumber: order.orderNumber,
+                itemName: orderItem.productName,
+                returnId: orderItem.returnDetails._id,
                 refundAmount,
-                refundStatus: orderItem.returnDetails.refundStatus
+                refundStatus: 'pending'
             }
         });
 
@@ -466,7 +421,7 @@ const returnOrderItem = async (req, res) => {
         console.error('Return processing error:', error);
         return res.status(500).json({
             success: false,
-            message: error.message || 'Error processing return request'
+            message: 'Error processing return request'
         });
     }
 };
@@ -705,6 +660,52 @@ const verifyRazorpayPayment = async (req, res) => {
     }
 };
 
+const generateUserInvoice = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        
+        const order = await Order.findOne({
+            _id: orderId,
+            user: req.user._id
+        })
+        .populate({
+            path: 'items.product',
+            select: 'productName variants', // Use the correct field name from your Product schema
+            populate: {
+                path: 'category',
+                select: 'name'
+            }
+        })
+        .populate('user', 'firstName lastName email')
+        .populate('shippingAddress');
+
+        if (!order) {
+            return res.status(404).render('error', { 
+                message: 'Order not found or unauthorized',
+                error: { status: 404 }
+            });
+        }
+
+        // Modify the invoice template to use the correct field
+        res.render('invoices', {
+            order,
+            date: new Date(order.createdAt).toLocaleDateString('en-IN', { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric' 
+            }),
+            invoiceNumber: `INV-${order.orderNumber}`,
+            error: null
+        });
+    } catch (error) {
+        console.error('Error generating user invoice:', error);
+        res.status(500).render('error', {
+            message: 'Failed to generate invoice',
+            error: { status: 500 }
+        });
+    }
+};
+
 module.exports = {
     getUserOrders,
     getOrderDetails,
@@ -712,5 +713,6 @@ module.exports = {
     returnOrderItem,
     retryPayment,
     createRazorpayOrder,
-    verifyRazorpayPayment
+    verifyRazorpayPayment,
+    generateUserInvoice
 }

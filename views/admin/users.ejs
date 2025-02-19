@@ -154,14 +154,13 @@
               <td class="user-status"><%= user.isBlocked ? "Blocked" : "Active" %></td>
               <td class="text-end">
                 <label class="switch">
-                  <input 
-                    type="checkbox" 
-                    class="toggle-block" 
-                    data-user-id="<%= user._id %>" 
-                    <%= user.isBlocked ? "checked" : "" %> 
+                  <input type="checkbox" 
+                         class="toggle-block" 
+                         data-user-id="<%= user._id.toString() %>" 
+                         <%= user.isBlocked ? "checked" : "" %> 
                   />
                   <span class="slider round"></span>
-                </label>
+              </label>
               </td>
             </tr>
           <% }) %>
@@ -206,70 +205,94 @@
   
   <script>
   
-    document.addEventListener("DOMContentLoaded", function () {
-      const toggles = document.querySelectorAll(".toggle-block");
+  document.addEventListener("DOMContentLoaded", function () {
+    const toggles = document.querySelectorAll(".toggle-block");
 
-      toggles.forEach((toggle) => {
+    toggles.forEach((toggle) => {
         toggle.addEventListener("change", async function () {
-          const userId = this.dataset.userId;
-          const isChecked = this.checked;
-          const url = `/admin/users/toggle-block/${userId}`;
+            const userId = this.dataset.userId;
+            const isChecked = this.checked;
+            const url = `/admin/users/toggle-block/${userId}`;
 
-          const statusCell = this.closest('tr').querySelector('.user-status');
-          const userName = this.closest('tr').querySelector('td:nth-child(2)').textContent;
+            const statusCell = this.closest('tr').querySelector('.user-status');
+            const userName = this.closest('tr').querySelector('td:nth-child(2)').textContent;
 
-          try {
-            // Show loading message
-            Swal.fire({
-              title: 'Processing...',
-              text: `Updating status for ${userName}`,
-              icon: 'info',
-              allowOutsideClick: false,
-              showConfirmButton: false,
-              willOpen: () => {
-                Swal.showLoading();
-              }
-            });
+            try {
+                // Show confirmation dialog first
+                const confirmResult = await Swal.fire({
+                    title: 'Are you sure?',
+                    text: `Do you want to ${isChecked ? 'block' : 'unblock'} ${userName}?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#6d28d9',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, continue'
+                });
 
-            const response = await fetch(url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ status: isChecked ? "true" : "false" }),
-            });
+                if (!confirmResult.isConfirmed) {
+                    // Revert the toggle if user cancels
+                    this.checked = !isChecked;
+                    return;
+                }
 
-            if (response.ok) {
-              const result = await response.json();
-              statusCell.textContent = isChecked ? "Blocked" : "Active";
-              
-              // Show success message
-              Swal.fire({
-                title: 'Success!',
-                text: `User ${userName} has been ${isChecked ? 'blocked' : 'unblocked'}.`,
-                icon: 'success',
-                timer: 2000,
-                showConfirmButton: false
-              });
+                // Show loading state
+                Swal.fire({
+                    title: 'Processing...',
+                    text: `Updating status for ${userName}`,
+                    icon: 'info',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
 
-              console.log(`User ${result.status === "true" ? "blocked" : "unblocked"}`);
-            } else {
-              throw new Error("Failed to toggle block/unblock");
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"  // Add this line
+                    },
+                    body: JSON.stringify({ status: isChecked })
+                });
+
+                // Check if response is JSON
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    throw new Error("Received non-JSON response from server");
+                }
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    statusCell.textContent = isChecked ? "Blocked" : "Active";
+                    
+                    await Swal.fire({
+                        title: 'Success!',
+                        text: `User has been ${isChecked ? 'blocked' : 'unblocked'}`,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    throw new Error(data.message || 'Failed to update user status');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                // Revert the toggle state
+                this.checked = !isChecked;
+                statusCell.textContent = !isChecked ? "Blocked" : "Active";
+
+                Swal.fire({
+                    title: 'Error!',
+                    text: error.message || 'Failed to update user status',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
             }
-          } catch (error) {
-            console.error("Error:", error);
-            this.checked = !isChecked;
-            statusCell.textContent = !isChecked ? "Blocked" : "Active";
-            
-            // Show error message
-            Swal.fire({
-              title: 'Error!',
-              text: `Failed to update status for ${userName}. Please try again.`,
-              icon: 'error',
-              confirmButtonText: 'OK'
-            });
-          }
         });
-      });
     });
+});
   </script>
 </body>
 </html>

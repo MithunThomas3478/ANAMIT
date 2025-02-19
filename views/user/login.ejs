@@ -211,7 +211,27 @@
             color: #135200;
             border: 1px solid #b7eb8f;
         }
+        .blocked-alert {
+            background-color: #ffeaea;
+            border: 2px solid #ff4d4f;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
 
+        .blocked-alert .alert-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .blocked-alert strong {
+            color: #cf1322;
+            font-size: 1.1em;
+        }
+
+        .alert-content div {
+            color: #595959;
+        }
         /* Loading State */
         .btn-loading {
             position: relative;
@@ -310,14 +330,19 @@
                 <div class="card-content">
                     <!-- Error Message Section -->
                     <% if (locals.message) { %>
-                    <div id="alertMessage" class="alert alert-danger" role="alert">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                        </svg>
-                        <%= locals.message %>
-                    </div>
+                        <div id="alertMessage" class="alert alert-danger <%= locals.isBlocked ? 'blocked-alert' : '' %>" role="alert">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            <div class="alert-content">
+                                <% if (locals.isBlocked) { %>
+                                    <strong>Account Blocked</strong>
+                                <% } %>
+                                <div><%= message %></div>
+                            </div>
+                        </div>
                     <% } %>
 
                     <!-- Login Form -->
@@ -380,6 +405,17 @@
             const passwordInput = document.getElementById('password');
             const loginButton = document.getElementById('loginButton');
             const alertMessage = document.getElementById('alertMessage');
+            // In your existing DOMContentLoaded event listener
+            if (alertMessage) {
+                // Don't auto-hide blocked user messages
+                if (!alertMessage.classList.contains('blocked-alert')) {
+                    setTimeout(function() {
+                        alertMessage.style.opacity = '0';
+                        alertMessage.style.transition = 'opacity 0.5s ease';
+                        setTimeout(() => alertMessage.style.display = 'none', 500);
+                    }, 5000);
+                }
+            }
             const togglePassword = document.getElementById('togglePassword');
 
             // Function to validate email

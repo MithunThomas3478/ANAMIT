@@ -38,36 +38,48 @@ const loadUsers = async (req, res) => {
 
 const toggleBlock = async (req, res) => {
   try {
-    const userId = req.params.id;
-    const { status } = req.body;
+      const userId = req.params.id;
+      const status = req.body.status;
 
-    // Validate userId
-    if (!userId) {
-      return res.status(400).json({ message: "User ID is required" });
-    }
+      console.log('Toggle block request:', { userId, status }); // Debug log
 
-    const user = await User.findById(userId);
+      // Validate userId
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+          return res.status(400).json({
+              success: false,
+              message: "Invalid user ID format"
+          });
+      }
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+      const user = await User.findById(userId);
 
-    // Convert the string status to boolean for isBlocked
-    user.isBlocked = status === "true";
-    await user.save();
+      if (!user) {
+          return res.status(404).json({
+              success: false,
+              message: "User not found"
+          });
+      }
 
-    return res.json({
-      success: true,
-      status: user.isBlocked.toString(), // Convert back to string for frontend
-      message: `User ${user.isBlocked ? "blocked" : "unblocked"} successfully`,
-    });
+      // Update user status
+      user.isBlocked = Boolean(status);
+      await user.save();
+
+      // Send JSON response
+      return res.status(200).json({
+          success: true,
+          message: `User has been ${user.isBlocked ? 'blocked' : 'unblocked'} successfully`,
+          status: user.isBlocked
+      });
+
   } catch (error) {
-    console.error("Error toggling block status:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: error.message,
-    });
+      console.error('Toggle block error:', error);
+      
+      // Ensure we always send JSON response
+      return res.status(500).json({
+          success: false,
+          message: "An error occurred while updating user status",
+          error: error.message
+      });
   }
 };
 

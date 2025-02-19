@@ -631,9 +631,8 @@ const placeOrder = async (req, res) => {
     }
 
         // Validate payment method specific conditions
-            // In your checkout controller, update the COD validation
-        if (paymentMethod === 'cod' && finalAmount < 1000) {  // Changed from > to 
-            throw new Error('Cash on Delivery is only available for orders above ₹1,000');
+        if (paymentMethod === 'cod' && finalAmount > 1000) {  
+            throw new Error('Cash on Delivery is only available for orders below ₹1,000');
         }
 
         if (paymentMethod === 'wallet') {

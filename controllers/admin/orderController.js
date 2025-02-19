@@ -299,7 +299,7 @@ const handleReturnRequest = async (req, res) => {
             orderItem.returnDetails.status = 'approved';
             orderItem.returnDetails.processedAt = new Date();
 
-            // Process refund if payment was completed
+            // Process refund only if payment was completed
             if (order.paymentStatus === 'completed') {
                 try {
                     // Find or create wallet
@@ -356,8 +356,6 @@ const handleReturnRequest = async (req, res) => {
                 }
             } catch (error) {
                 console.error('Error updating inventory:', error);
-                // Continue with the return process even if inventory update fails
-                // But log the error for admin attention
             }
 
         } else {
@@ -406,8 +404,7 @@ const handleReturnRequest = async (req, res) => {
         console.error('Error handling return request:', error);
         return res.status(500).json({
             success: false,
-            message: 'Error processing return request',
-            error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+            message: 'Error processing return request'
         });
     }
 };

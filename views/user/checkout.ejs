@@ -744,17 +744,18 @@
                         </div>
 
                       <!-- Cash on Delivery -->
-                        <div class="payment-method <%= checkoutData.finalAmount < 1000 ? 'disabled' : '' %>" 
+                                      
+                        <div class="payment-method <%= checkoutData.finalAmount > 1000 ? 'disabled' : '' %>" 
                             data-payment-method="cod" 
-                            onclick="<%= checkoutData.finalAmount >= 1000 ? 'selectPayment(\'cod\')' : '' %>">
+                            onclick="<%= checkoutData.finalAmount <= 1000 ? 'selectPayment(\'cod\')' : '' %>">
                             <div class="payment-icon">
                                 <i class="fas fa-money-bill-wave"></i>
                             </div>
                             <div class="payment-info">
                                 <h3>Cash on Delivery</h3>
                                 <p>Pay when you receive</p>
-                                <% if (checkoutData.finalAmount < 1000) { %>
-                                    <small class="cod-limit-warning">Available only for orders above ₹1,000</small>
+                                <% if (checkoutData.finalAmount > 1000) { %>
+                                    <small class="cod-limit-warning">Available only for orders below ₹1,000</small>
                                 <% } %>
                             </div>
                         </div>
@@ -1342,28 +1343,28 @@ function renderCoupons(coupons) {
 
         // Payment Functions
         function selectPayment(method) {
-            if (method === 'wallet' && walletBalance < grandTotal) {
-                showNotification('Insufficient wallet balance', 'warning');
-                return;
-            }
+    if (method === 'wallet' && walletBalance < grandTotal) {
+        showNotification('Insufficient wallet balance', 'warning');
+        return;
+    }
 
-            if (method === 'cod' && grandTotal < 1000) {  // Changed from > to 
-                showNotification('Cash on Delivery is available only for orders above ₹1,000. Please choose another payment method.', 'warning');
-                return;
-            }
+    if (method === 'cod' && grandTotal > 1000) {
+        showNotification('Cash on Delivery is available only for orders below ₹1,000. Please choose another payment method.', 'warning');
+        return;
+    }
 
-            selectedPaymentMethod = method;
-            
-            document.querySelectorAll('.payment-method').forEach(pm => {
-                pm.classList.remove('selected');
-            });
-            
-            const selectedMethod = document.querySelector(`[data-payment-method="${method}"]`);
-            if (selectedMethod) {
-                selectedMethod.classList.add('selected');
-                updateCheckoutButton();
-            }
-        }
+    selectedPaymentMethod = method;
+    
+    document.querySelectorAll('.payment-method').forEach(pm => {
+        pm.classList.remove('selected');
+    });
+    
+    const selectedMethod = document.querySelector(`[data-payment-method="${method}"]`);
+    if (selectedMethod) {
+        selectedMethod.classList.add('selected');
+        updateCheckoutButton();
+    }
+}
 
         function updateCheckoutButton() {
             const button = document.getElementById('proceedButton');
