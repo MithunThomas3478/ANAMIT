@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OTP Verification</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.7.32/sweetalert2.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.7.32/sweetalert2.min.css" rel="stylesheet">
+    
     <style>
         html, body {
             height: 100%;
@@ -18,13 +18,6 @@
             justify-content: center;
             background-color: #f0f2f5;
             font-family: Arial, sans-serif;
-        }
-        .container {
-            width: 100%;
-            padding-right: 15px;
-            padding-left: 15px;
-            margin-right: auto;
-            margin-left: auto;
         }
         .otp-card {
             max-width: 400px;
@@ -114,7 +107,7 @@
             <div class="col-12 col-sm-10 col-md-8 col-lg-6">
                 <div class="otp-card">
                     <h2 class="text-center mb-4">OTP Verification</h2>
-                    <p class="text-center mb-4">Enter the 6-digit code sent to your phone</p>
+                    <p class="text-center mb-4">Enter the 6-digit code sent to your email</p>
 
                     <form id="otp-form">
                         <div class="otp-input-group mb-4">
@@ -133,9 +126,9 @@
                     <div class="text-center mt-3">
                         <p class="mb-2">
                             Didn't receive the code?
-                            <a href="/resend-otp" id="resend-otp" class="resend-link">Resend OTP</a>
+                            <a href="#" id="resend-otp" class="resend-link">Resend OTP</a>
                         </p>
-                        <p id="timer" class="timer">OTP Expires in 00:60</p>
+                        <p id="timer" class="timer">OTP Expires in 01:00</p>
                     </div>
                 </div>
             </div>
@@ -182,11 +175,9 @@
 
             // Function to start/restart timer
             function startTimer(duration = 60) {
-                // Clear existing timer if any
                 if (timerInterval) clearInterval(timerInterval);
                 if (resendTimeout) clearTimeout(resendTimeout);
 
-                // Disable resend link
                 resendLink.classList.add('disabled');
 
                 let timeLeft = duration;
@@ -198,11 +189,12 @@
                         return;
                     }
 
-                    timerElement.textContent = `OTP Expires in 00:${String(timeLeft).padStart(2, '0')}`;
+                    const minutes = Math.floor(timeLeft / 60);
+                    const seconds = timeLeft % 60;
+                    timerElement.textContent = `OTP Expires in ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
                     timeLeft--;
                 }, 1000);
 
-                // Enable resend link after timer expires
                 resendTimeout = setTimeout(() => {
                     resendLink.classList.remove('disabled');
                 }, duration * 1000);
@@ -221,6 +213,9 @@
                             input.value = pastedData[index] || '';
                         });
                         verifyBtn.disabled = !Array.from(inputs).every(input => input.value.length === 1);
+                        if (pastedData.length === 6) {
+                            inputs[5].focus();
+                        }
                     }
                 });
             });
@@ -241,11 +236,11 @@
 
                     const result = await response.json();
 
-                    if (response.ok) {
+                    if (result.success) {
                         Swal.fire({
                             icon: 'success',
                             title: 'Success!',
-                            text: 'OTP verified successfully',
+                            text: result.message,
                             showConfirmButton: false,
                             timer: 1500
                         }).then(() => {
@@ -254,7 +249,7 @@
                             }
                         });
                     } else {
-                        throw new Error(result.message || 'Invalid OTP');
+                        throw new Error(result.message);
                     }
                 } catch (error) {
                     Swal.fire({
@@ -266,12 +261,27 @@
             });
 
             // Handle resend OTP
+            let isResending = false;
             resendLink.addEventListener('click', async (e) => {
                 e.preventDefault();
                 
-                if (resendLink.classList.contains('disabled')) {
+                if (resendLink.classList.contains('disabled') || isResending) {
                     return;
                 }
+
+                // Immediately disable resend link
+                isResending = true;
+                resendLink.classList.add('disabled');
+
+                // Show immediate feedback
+                const loadingSwal = Swal.fire({
+                    title: 'Sending OTP...',
+                    text: 'Please wait',
+                    icon: 'info',
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    timer: 800
+                });
 
                 try {
                     const response = await fetch('/resend-otp', {
@@ -283,29 +293,50 @@
 
                     const result = await response.json();
 
-                    if (response.ok) {
+                    if (result.success) {
                         // Clear inputs
                         inputs.forEach(input => input.value = '');
                         verifyBtn.disabled = true;
 
-                        // Restart timer
-                        startTimer();
+                        // Start new timer (60 seconds)
+                        startTimer(60);
+                        
+                        // Close loading alert if it's still open
+                        loadingSwal.close();
 
+                        // Show quick success message
                         Swal.fire({
                             icon: 'success',
-                            title: 'OTP Resent',
-                            text: 'A new OTP has been sent to your phone',
+                            title: 'OTP Sent!',
+                            text: 'Check your email',
                             showConfirmButton: false,
-                            timer: 1500
+                            timer: 1000,
+                            position: 'top-end',
+                            toast: true
                         });
+
+                        // Keep resend link disabled for the full duration
+                        setTimeout(() => {
+                            isResending = false;
+                        }, 60000); // 60 seconds
                     } else {
-                        throw new Error(result.message || 'Failed to resend OTP');
+                        throw new Error(result.message);
                     }
                 } catch (error) {
+                    // Close loading alert if it's still open
+                    loadingSwal.close();
+                    
+                    // Re-enable resend link on error
+                    isResending = false;
+                    resendLink.classList.remove('disabled');
+                    
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
                         text: error.message || 'Something went wrong. Please try again.',
+                        timer: 1500,
+                        position: 'top-end',
+                        toast: true
                     });
                 }
             });

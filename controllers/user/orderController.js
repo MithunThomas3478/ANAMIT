@@ -664,13 +664,14 @@ const generateUserInvoice = async (req, res) => {
     try {
         const { orderId } = req.params;
         
+        // Fetch order without lean() to keep virtuals
         const order = await Order.findOne({
             _id: orderId,
             user: req.user._id
         })
         .populate({
             path: 'items.product',
-            select: 'productName variants', // Use the correct field name from your Product schema
+            select: 'productName variants category',
             populate: {
                 path: 'category',
                 select: 'name'
@@ -686,22 +687,60 @@ const generateUserInvoice = async (req, res) => {
             });
         }
 
-        // Modify the invoice template to use the correct field
-        res.render('invoices', {
-            order,
-            date: new Date(order.createdAt).toLocaleDateString('en-IN', { 
-                day: 'numeric', 
-                month: 'long', 
-                year: 'numeric' 
-            }),
-            invoiceNumber: `INV-${order.orderNumber}`,
-            error: null
+        // Calculate final amount manually since we might need more control
+        const activeItemsTotal = order.items.reduce((total, item) => 
+            item.status === 'active' ? total + item.itemTotal : total, 0);
+        
+        const finalAmount = activeItemsTotal + 
+            (order.shippingFee || 0) - 
+            (order.totalDiscount || 0);
+
+        // Format date
+        const invoiceDate = new Date(order.createdAt).toLocaleDateString('en-IN', { 
+            day: 'numeric', 
+            month: 'long', 
+            year: 'numeric',
+            timeZone: 'Asia/Kolkata'
         });
+
+        // Format payment method
+        const paymentMethodDisplay = {
+            'cod': 'Cash on Delivery',
+            'razorpay': 'Online Payment',
+            'wallet': 'Wallet Payment'
+        }[order.paymentMethod] || order.paymentMethod;
+
+        // Format payment status
+        const paymentStatusDisplay = order.paymentStatus.charAt(0).toUpperCase() + 
+            order.paymentStatus.slice(1).toLowerCase();
+
+        // Convert order to plain object and add computed properties
+        const orderData = order.toObject({ getters: true, virtuals: true });
+        
+        // Prepare invoice data
+        const invoiceData = {
+            order: {
+                ...orderData,
+                paymentMethodDisplay,
+                paymentStatusDisplay,
+                finalAmount: finalAmount // Add calculated final amount
+            },
+            date: invoiceDate,
+            invoiceNumber: `INV-${order.orderNumber}`,
+            subtotal: activeItemsTotal.toFixed(2),
+            formatCurrency: (amount) => {
+                return typeof amount === 'number' ? amount.toFixed(2) : '0.00';
+            }
+        };
+
+        // Render the invoice
+        res.render('invoices', invoiceData);
+
     } catch (error) {
-        console.error('Error generating user invoice:', error);
+        console.error('Error generating invoice:', error);
         res.status(500).render('error', {
             message: 'Failed to generate invoice',
-            error: { status: 500 }
+            error: process.env.NODE_ENV === 'development' ? error : {}
         });
     }
 };

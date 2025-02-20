@@ -196,9 +196,7 @@
                             'wallet': 'Wallet'
                         }[order.paymentMethod] %><br>
                         Status: <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %><br>
-                        <% if (order.paymentDetails?.paidAmount) { %>
-                            Paid: ₹<%= order.paymentDetails.paidAmount.toFixed(2) %>
-                        <% } %>
+                       
                     </div>
                 </div>
 
@@ -207,38 +205,60 @@
                     <div class="info-box">
                         <div class="info-label">Order Summary</div>
                         <div class="info-value">
-                            <% 
-                                // Calculate active items
-                                const activeItems = order.items.filter(item => item.status === 'active');
-                                const activeItemsTotal = activeItems.reduce((total, item) => total + item.itemTotal, 0);
-                                
-                                // Calculate total discount proportionally
-                                let totalDiscount = 0;
-                                if (order.totalDiscount && order.totalDiscount > 0) {
-                                    const totalOrderAmount = order.items.reduce((total, item) => total + item.itemTotal, 0);
-                                    const activeItemRatio = activeItemsTotal / totalOrderAmount;
-                                    totalDiscount = order.totalDiscount * activeItemRatio;
-                                }
-                                
-                                // Calculate final amount
-                                const finalAmount = activeItemsTotal - totalDiscount + 
-                                    (activeItems.length === order.items.length ? order.shippingFee : 0);
-                            %>
-                            Total Items: <%= order.items.length %><br>
-                            Active Items: <%= activeItems.length %><br>
-                            Subtotal: ₹<%= activeItemsTotal.toFixed(2) %><br>
-                            
-                            <% if (totalDiscount > 0) { %>
-                                Discount: -₹<%= totalDiscount.toFixed(2) %><br>
+                            <!-- Actual Total -->
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Actual Total:</span>
+                                <span>₹<%= (order.orderSummary.actualTotal || 0).toFixed(2) %></span>
+                            </div>
+                    
+                            <!-- Product Offers -->
+                            <% if (order.orderSummary.productOffersTotal > 0) { %>
+                                <div class="d-flex justify-content-between mb-2 text-success">
+                                    <span>Product Offers:</span>
+                                    <span>-₹<%= order.orderSummary.productOffersTotal.toFixed(2) %></span>
+                                </div>
                             <% } %>
-                            
-                            <% if (activeItems.length === order.items.length) { %>
-                                Shipping: ₹<%= order.shippingFee.toFixed(2) %><br>
+                    
+                            <!-- Category Offers -->
+                            <% if (order.orderSummary.categoryOffersTotal > 0) { %>
+                                <div class="d-flex justify-content-between mb-2 text-success">
+                                    <span>Category Offers:</span>
+                                    <span>-₹<%= order.orderSummary.categoryOffersTotal.toFixed(2) %></span>
+                                </div>
                             <% } %>
-                            
-                            <strong>Final Total: ₹<%= finalAmount.toFixed(2) %></strong>
+                    
+                            <!-- Coupon Discount -->
+                            <% if (order.orderSummary.couponDiscount > 0) { %>
+                                <div class="d-flex justify-content-between mb-2 text-success">
+                                    <span>Coupon Discount:</span>
+                                    <span>-₹<%= order.orderSummary.couponDiscount.toFixed(2) %></span>
+                                </div>
+                            <% } %>
+                    
+                            <!-- Total Savings -->
+                            <% if (order.orderSummary.totalDiscount > 0) { %>
+                                <div class="d-flex justify-content-between mb-2 text-success fw-bold">
+                                    <span>Total Savings:</span>
+                                    <span>-₹<%= order.orderSummary.totalDiscount.toFixed(2) %></span>
+                                </div>
+                            <% } %>
+                    
+                            <!-- Shipping Fee -->
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Shipping Fee:</span>
+                                <span>₹<%= (order.orderSummary.shippingFee || 0).toFixed(2) %></span>
+                            </div>
+                    
+                            <hr>
+                            <!-- Final Amount -->
+                            <div class="d-flex justify-content-between fw-bold">
+                                <span>Final Amount:</span>
+                                <span>₹<%= (order.orderSummary.finalAmount || 0).toFixed(2) %></span>
+                            </div>
                         </div>
                     </div>
+
+
                 </div>
             </div>
 

@@ -167,32 +167,88 @@ const updateOrderStatus = async (req, res) => {
         res.status(500).json({ message: 'Failed to update order status' });
     }
 };
+
 const generateInvoice = async (req, res) => {
     try {
         const { orderId } = req.params;
         
-        const order = await Order.findById(orderId)
-            .populate('user', 'firstName lastName email address')
-            .populate('items.product', 'name price');
+        // Fetch order without lean() to keep virtuals
+        const order = await Order.findOne({
+            _id: orderId,
+            user: req.user._id
+        })
+        .populate({
+            path: 'items.product',
+            select: 'productName variants category',
+            populate: {
+                path: 'category',
+                select: 'name'
+            }
+        })
+        .populate('user', 'firstName lastName email')
+        .populate('shippingAddress');
 
         if (!order) {
             return res.status(404).render('error', { 
-                message: 'Order not found',
+                message: 'Order not found or unauthorized',
                 error: { status: 404 }
             });
         }
 
-        res.render('invoice', {
-            order,
-            date: new Date(order.createdAt).toLocaleDateString(),
-            invoiceNumber: `INV-${order.orderNumber}`,
-            error: null
+        // Calculate final amount manually since we might need more control
+        const activeItemsTotal = order.items.reduce((total, item) => 
+            item.status === 'active' ? total + item.itemTotal : total, 0);
+        
+        const finalAmount = activeItemsTotal + 
+            (order.shippingFee || 0) - 
+            (order.totalDiscount || 0);
+
+        // Format date
+        const invoiceDate = new Date(order.createdAt).toLocaleDateString('en-IN', { 
+            day: 'numeric', 
+            month: 'long', 
+            year: 'numeric',
+            timeZone: 'Asia/Kolkata'
         });
+
+        // Format payment method
+        const paymentMethodDisplay = {
+            'cod': 'Cash on Delivery',
+            'razorpay': 'Online Payment',
+            'wallet': 'Wallet Payment'
+        }[order.paymentMethod] || order.paymentMethod;
+
+        // Format payment status
+        const paymentStatusDisplay = order.paymentStatus.charAt(0).toUpperCase() + 
+            order.paymentStatus.slice(1).toLowerCase();
+
+        // Convert order to plain object and add computed properties
+        const orderData = order.toObject({ getters: true, virtuals: true });
+        
+        // Prepare invoice data
+        const invoiceData = {
+            order: {
+                ...orderData,
+                paymentMethodDisplay,
+                paymentStatusDisplay,
+                finalAmount: finalAmount // Add calculated final amount
+            },
+            date: invoiceDate,
+            invoiceNumber: `INV-${order.orderNumber}`,
+            subtotal: activeItemsTotal.toFixed(2),
+            formatCurrency: (amount) => {
+                return typeof amount === 'number' ? amount.toFixed(2) : '0.00';
+            }
+        };
+
+        // Render the invoice
+        res.render('invoices', invoiceData);
+
     } catch (error) {
         console.error('Error generating invoice:', error);
         res.status(500).render('error', {
             message: 'Failed to generate invoice',
-            error: { status: 500 }
+            error: process.env.NODE_ENV === 'development' ? error : {}
         });
     }
 };
@@ -212,22 +268,70 @@ const getOrderDetails = async (req, res) => {
             });
         }
 
-        const activeItemsTotal = order.items
-            .filter(item => item.status === 'active')
-            .reduce((total, item) => total + item.itemTotal, 0);
+        // Calculate actual total without any discounts
+        const actualTotal = order.items.reduce((total, item) => {
+            const price = Number(item.price) || 0;
+            const quantity = Number(item.quantity) || 0;
+            return total + (price * quantity);
+        }, 0);
 
-        const finalAmount = activeItemsTotal - (order.totalDiscount || 0) + order.shippingFee;
+        // Calculate discounts
+        const productOffersTotal = order.items.reduce((total, item) => {
+            const price = Number(item.price) || 0;
+            const quantity = Number(item.quantity) || 0;
+            const productOffer = Number(item.appliedProductOffer) || 0;
+            return total + ((price * quantity * productOffer) / 100);
+        }, 0);
+
+        const categoryOffersTotal = order.items.reduce((total, item) => {
+            const price = Number(item.price) || 0;
+            const quantity = Number(item.quantity) || 0;
+            const categoryOffer = Number(item.appliedCategoryOffer) || 0;
+            return total + ((price * quantity * categoryOffer) / 100);
+        }, 0);
+
+        const couponDiscount = order.coupon && typeof order.coupon.discountAmount === 'number' 
+            ? Number(order.coupon.discountAmount) 
+            : 0;
+
+        const shippingFee = Number(order.shippingFee) || 0;
+
+        // Calculate final amount
+        const finalAmount = Math.max(0, actualTotal - productOffersTotal - categoryOffersTotal - couponDiscount + shippingFee);
 
         const processedOrder = {
             ...order._doc,
-            items: order.items.map(item => ({
-                ...item.toObject(),
-                productName: item.productName || (item.product ? item.product.name : 'Unknown Product'),
-                productImage: item.productImage || (item.product && item.product.images && item.product.images.length > 0 
-                    ? item.product.images[0] 
-                    : '/images/placeholder.jpg')
-            })),
-            finalAmount: finalAmount
+            items: order.items.map(item => {
+                const price = Number(item.price) || 0;
+                const quantity = Number(item.quantity) || 0;
+                const actualItemPrice = price * quantity;
+                const productOffer = Number(item.appliedProductOffer) || 0;
+                const categoryOffer = Number(item.appliedCategoryOffer) || 0;
+                const productDiscount = (actualItemPrice * productOffer) / 100;
+                const categoryDiscount = (actualItemPrice * categoryOffer) / 100;
+
+                return {
+                    ...item.toObject(),
+                    productName: item.productName || (item.product ? item.product.name : 'Unknown Product'),
+                    productImage: item.productImage || (item.product && item.product.images && item.product.images.length > 0 
+                        ? item.product.images[0] 
+                        : '/images/placeholder.jpg'),
+                    actualPrice: price,
+                    actualItemTotal: actualItemPrice,
+                    productDiscount,
+                    categoryDiscount,
+                    finalPrice: actualItemPrice - productDiscount - categoryDiscount
+                };
+            }),
+            orderSummary: {
+                actualTotal: Number(actualTotal.toFixed(2)),
+                productOffersTotal: Number(productOffersTotal.toFixed(2)),
+                categoryOffersTotal: Number(categoryOffersTotal.toFixed(2)),
+                couponDiscount: Number(couponDiscount.toFixed(2)),
+                shippingFee: Number(shippingFee.toFixed(2)),
+                finalAmount: Number(finalAmount.toFixed(2)),
+                totalDiscount: Number((productOffersTotal + categoryOffersTotal + couponDiscount).toFixed(2))
+            }
         };
 
         res.render('admin/orderDetailsView', {
@@ -244,7 +348,6 @@ const getOrderDetails = async (req, res) => {
         });
     }
 };
-
 const handleReturnRequest = async (req, res) => {
     try {
         const { orderId, itemId } = req.params;

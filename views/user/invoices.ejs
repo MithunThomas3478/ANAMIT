@@ -4,111 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice #<%= invoiceNumber %></title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #34495e;
-            --accent-color: #3498db;
-            --text-color: #333;
-            --light-gray: #f4f4f4;
-            --border-color: #e0e0e0;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            --primary-color: #2563eb;
+            --secondary-color: #6d28d9;
+            --text-color: #1f2937;
+            --background-color: #f9fafb;
         }
 
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Inter', 'Arial', sans-serif;
             line-height: 1.6;
             color: var(--text-color);
-            background-color: #fff;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+            background-color: var(--background-color);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .invoice-container {
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 30px;
+            max-width: 900px;
+            margin: 2rem auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            position: relative;
         }
 
         .invoice-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid var(--primary-color);
         }
 
-        .invoice-header-left h1 {
-            color: var(--primary-color);
-            margin-bottom: 10px;
+        .invoice-header h1 {
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: -1px;
         }
 
-        .invoice-header-right {
+        .invoice-header-details {
             text-align: right;
         }
 
-        .invoice-details {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 30px;
+        .invoice-body {
+            padding: 2rem;
         }
 
-        .invoice-details-section {
-            width: 45%;
-        }
-
-        .invoice-details-section h3 {
-            color: var(--secondary-color);
-            margin-bottom: 10px;
-            border-bottom: 1px solid var(--accent-color);
-            padding-bottom: 5px;
+        .customer-details {
+            background-color: #f3f4f6;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
         }
 
         .invoice-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
         }
 
-        .invoice-table th {
-            background-color: var(--light-gray);
-            color: var(--secondary-color);
-            padding: 12px;
-            text-align: left;
-            border: 1px solid var(--border-color);
+        .invoice-table thead {
+            background-color: #f9fafb;
         }
 
-        .invoice-table td {
-            padding: 12px;
-            border: 1px solid var(--border-color);
-        }
-
-        .invoice-summary {
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .invoice-summary-table {
-            width: 50%;
-            border-collapse: collapse;
-        }
-
-        .invoice-summary-table td {
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            text-align: right;
-        }
-
-        .invoice-summary-table .total {
-            font-weight: bold;
-            background-color: var(--light-gray);
+        .total-section {
+            background-color: #f3f4f6;
+            border-radius: 8px;
+            padding: 1.25rem;
         }
 
         .watermark {
@@ -116,124 +83,197 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 80px;
-            color: rgba(0, 0, 0, 0.1);
-            z-index: -1;
+            color: rgba(0, 0, 0, 0.05);
+            font-size: 5rem;
+            font-weight: bold;
+            z-index: 0;
+        }
+
+        .transaction-details {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .download-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 auto;
+            transition: background-color 0.3s ease;
+        }
+
+        .download-button:hover {
+            background-color: #1d4ed8;
         }
 
         @media print {
             body {
-                padding: 0;
+                background-color: white;
+            }
+            .no-print, .download-button {
+                display: none;
             }
             .invoice-container {
-                border: none;
                 box-shadow: none;
+                border: none;
+                margin: 0;
             }
         }
     </style>
 </head>
 <body>
     <div class="invoice-container">
-        <div class="watermark">INVOICE</div>
+        <div class="watermark">ANAMIT</div>
         
         <div class="invoice-header">
-            <div class="invoice-header-left">
-                <h1>Invoice</h1>
-                <p>Invoice Number: <%= invoiceNumber %></p>
-                <p>Date: <%= date %></p>
+            <div>
+                <h1>ANAMIT</h1>
+                <p class="mb-0">Fashion Store</p>
             </div>
-            <div class="invoice-header-right">
-                <strong><%= order.user.firstName %> <%= order.user.lastName %></strong><br>
-                <%= order.user.email %>
-            </div>
-        </div>
-
-        <div class="invoice-details">
-            <div class="invoice-details-section">
-                <h3>Billing Address</h3>
-                <p>
-                    <%= order.shippingAddress.fullName %><br>
-                    <%= order.shippingAddress.streetAddress %><br>
-                    <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %><br>
-                    <%= order.shippingAddress.pincode %>
-                </p>
-            </div>
-            <div class="invoice-details-section">
-                <h3>Order Details</h3>
-                <p>Payment Method: <%= order.paymentMethod || 'Not Specified' %></p>
-                <p>Order Status: <%= order.status || 'Completed' %></p>
+            <div class="invoice-header-details">
+                <h2 class="text-white mb-2">INVOICE</h2>
+                <p class="mb-1"><strong>Invoice #:</strong> <%= invoiceNumber %></p>
+                <p class="mb-1"><strong>Date:</strong> <%= date %></p>
+                <p class="mb-0"><strong>Order #:</strong> <%= order.orderNumber %></p>
             </div>
         </div>
 
-        <table class="invoice-table">
-            <thead>
-                <tr>
-                    <th>Product</th>
-                    <th>Quantity</th>
-                    <th>Unit Price</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% order.items.forEach(item => { %>
-                    <tr>
-                        <td><%= item.product ? item.product.productName : 'Unknown Product' %></td>
-                        <td><%= item.quantity %></td>
-                        <td>
-                            <%
-                            let price = 0;
-                            if (item.product && item.product.variants && item.product.variants.length > 0) {
-                                const variant = item.product.variants[0];
-                                if (variant.colorVariant && variant.colorVariant.length > 0) {
-                                    price = variant.colorVariant[0].price || 0;
-                                }
-                            }
-                            %>
-                            ₹<%= price.toFixed(2) %>
-                        </td>
-                        <td>₹<%= item.itemTotal ? item.itemTotal.toFixed(2) : '0.00' %></td>
-                    </tr>
-                <% }); %>
-            </tbody>
-        </table>
+        <div class="invoice-body">
+            <div class="customer-details">
+                <div class="row">
+                    <div class="col-4">
+                        <h4 class="mb-3">Bill To</h4>
+                        <p class="mb-1">
+                            <strong><%= order.user.firstName %> <%= order.user.lastName %></strong><br>
+                            Email: <%= order.user.email %>
+                        </p>
+                    </div>
+                    <div class="col-4 text-center">
+                        <% if (order.coupon) { %>
+                            <h4 class="mb-3">Coupon Applied</h4>
+                            <p class="mb-1">
+                                <strong>Code:</strong> <%= order.coupon.code %><br>
+                                <strong>Discount:</strong> 
+                                <% if (order.coupon.discountType === 'percentage') { %>
+                                    <%= order.coupon.discountValue %>%
+                                <% } else { %>
+                                    ₹<%= order.coupon.discountValue.toFixed(2) %>
+                                <% } %>
+                            </p>
+                        <% } %>
+                    </div>
+                    <div class="col-4 text-end">
+                        <h4 class="mb-3">Shipping Address</h4>
+                        <p class="mb-1">
+                            <%= order.shippingAddress.fullName %><br>
+                            <%= order.shippingAddress.streetAddress %><br>
+                            <%= order.shippingAddress.city %>, 
+                            <%= order.shippingAddress.state %> 
+                            <%= order.shippingAddress.pincode %><br>
+                            Phone: <%= order.shippingAddress.phoneNumber %>
+                        </p>
+                    </div>
+                </div>
+            </div>
 
-        <div class="invoice-summary">
-            <table class="invoice-summary-table">
-                <tr>
-                    <td>Subtotal</td>
-                    <td>₹<%= order.items.reduce((total, item) => total + item.itemTotal, 0).toFixed(2) %></td>
-                </tr>
-                <% if (order.totalDiscount > 0) { %>
+            <table class="table table-striped">
+                <thead>
                     <tr>
-                        <td>Discount</td>
-                        <td>-₹<%= order.totalDiscount.toFixed(2) %></td>
+                        <th>Item Description</th>
+                        <th class="text-center">Quantity</th>
+                        <th class="text-end">Unit Price</th>
+                        <th class="text-end">Total</th>
                     </tr>
-                <% } %>
-                <% if (order.shippingCharge > 0) { %>
-                    <tr>
-                        <td>Shipping</td>
-                        <td>₹<%= order.shippingCharge.toFixed(2) %></td>
-                    </tr>
-                <% } %>
-                <tr class="total">
-                    <td>Total</td>
-                    <td>₹<%= order.finalAmount.toFixed(2) %></td>
-                </tr>
+                </thead>
+                <tbody>
+                    <% order.items.forEach(item => { %>
+                        <tr>
+                            <td>
+                                <%= item.product ? item.product.productName : 'Unknown Product' %><br>
+                                <small class="text-muted">
+                                    Size: <%= item.selectedSize %>, 
+                                    Color: <%= item.selectedColor.colorName %>
+                                </small>
+                            </td>
+                            <td class="text-center"><%= item.quantity %></td>
+                            <td class="text-end">₹<%= item.price ? item.price.toFixed(2) : '0.00' %></td>
+                            <td class="text-end">₹<%= item.itemTotal ? item.itemTotal.toFixed(2) : '0.00' %></td>
+                        </tr>
+                    <% }); %>
+                </tbody>
             </table>
-        </div>
 
-        <div style="margin-top: 30px; text-align: center; color: var(--secondary-color);">
-            <p>Thank you for your purchase!</p>
-            <small>This is a computer-generated invoice</small>
+            <div class="total-section">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="transaction-details">
+                            <p class="mb-1"><strong>Payment Method:</strong> <%= order.paymentMethod.toUpperCase() %></p>
+                            <p class="mb-1"><strong>Payment Status:</strong> <%= order.paymentStatus.toUpperCase() %></p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <table class="table table-borderless mb-0">
+                            <tr>
+                                <td class="text-end">Subtotal:</td>
+                                <td class="text-end">₹<%= order.totalAmount.toFixed(2) %></td>
+                            </tr>
+                            <% if (order.totalDiscount > 0) { %>
+                                <tr>
+                                    <td class="text-end">Discount:</td>
+                                    <td class="text-end text-success">-₹<%= order.totalDiscount.toFixed(2) %></td>
+                                </tr>
+                            <% } %>
+                            <% if (order.shippingFee > 0) { %>
+                                <tr>
+                                    <td class="text-end">Shipping Fee:</td>
+                                    <td class="text-end">₹<%= order.shippingFee.toFixed(2) %></td>
+                                </tr>
+                            <% } %>
+                            <tr class="border-top">
+                                <td class="text-end"><strong>Total Amount:</strong></td>
+                                <td class="text-end">
+                                    <strong>₹<%= formatCurrency(order.finalAmount) %></strong>
+                                </td>                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4 text-muted">
+                <p class="mb-1">Thank you for your business!</p>
+                <p class="small">Questions? Contact us at support@anamit.com</p>
+            </div>
         </div>
     </div>
 
+    <div style="text-align: center; margin: 20px 0;" class="no-print">
+        <button id="downloadBtn" class="download-button">
+            <i class="fas fa-download"></i> Download Invoice
+        </button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Optional: Auto-print when loaded
-        window.onload = function() {
-            // Uncomment the line below to auto-print
-            // window.print();
-        }
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            const element = document.querySelector('.invoice-container');
+            const opt = {
+                margin: 1,
+                filename: '<%= invoiceNumber %>.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        });
     </script>
 </body>
 </html>
