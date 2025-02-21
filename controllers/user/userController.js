@@ -1219,6 +1219,25 @@ const resetPassword = async (req, res) => {
       });
     }
 
+    // Find the user first
+    const user = await User.findOne({ email: sessionOtp.email });
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if new password matches the existing password
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password cannot be the same as your current password'
+      });
+    }
+    
     // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
