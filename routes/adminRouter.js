@@ -83,7 +83,10 @@ router.get('/orders',orderController.getOrderManagement);
 router.patch('/order/:orderId/update-status', orderController.updateOrderStatus);
 router.get('/order/:orderId/invoice', orderController.generateInvoice);
 router.get('/order/view/:orderId', orderController.getOrderDetails);
+router.post('/orders/:orderId/items/:itemId/return/:action', orderController.handleReturnRequest);
 
+router.post('/admin/orders/:orderId/items/:itemId/return/approve', orderController.handleReturnRequest);
+router.post('/admin/orders/:orderId/items/:itemId/return/reject', orderController.handleReturnRequest);
 
 router.get('/offers',offerController.getOfferManagement);
 router.get('/offers/add', offerController.getAddOffer);
@@ -103,7 +106,6 @@ router.delete('/coupons/delete/:id', couponController.deleteCoupon);
 
 router.get('/sales-report/:type?',salesController.getSalesReport);
 router.get('/sales-report/export/:format/:type', salesController.exportSalesReport);
-router.post('/orders/:orderId/items/:itemId/return/:action', orderController.handleReturnRequest);
 
 
 

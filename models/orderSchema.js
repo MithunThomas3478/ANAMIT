@@ -287,7 +287,12 @@ orderSchema.methods.needsRefund = function(item) {
            item.cancellationDetails?.refundStatus !== 'completed';
 };
 
-orderSchema.methods.updateOrderStatus = function() {
+orderSchema.methods.updateOrderStatus = function(forceUpdate = false) {
+    // Skip if orderStatus is already modified, unless forceUpdate is true
+    if (this.isModified('orderStatus') && !forceUpdate) {
+        return;
+    }
+    
     const activeItems = this.getActiveItems();
     const cancelledItems = this.getCancelledItems();
     const returnedItems = this.getReturnedItems();

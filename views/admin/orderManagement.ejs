@@ -168,7 +168,98 @@
             background-color: var(--primary-color);
             border-color: var(--primary-color);
         }
+        .return-pending-notice {
+        display: inline-flex;
+        align-items: center;
+        background-color: #fff3cd;
+        color: #856404;
+        padding: 0.3rem 0.6rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        margin-left: 0.5rem;
+        border: 1px solid #ffeeba;
+    }
+    
+    .return-pending-notice i {
+        margin-right: 0.25rem;
+    }
 
+    /* Styles for partially cancelled/returned orders */
+.special-partially-cancelled,
+.special-partially-returned {
+    border-left: 3px solid #17a2b8 !important;
+}
+
+/* Style for the info indicator */
+.text-info {
+    color: #17a2b8 !important;
+}
+
+/* Additional badge styles for these statuses */
+.badge.bg-info-light {
+    background-color: rgba(23, 162, 184, 0.15);
+    color: #17a2b8;
+    border: 1px solid #17a2b8;
+}
+
+/* Style for the updateSelectStyle function */
+.partially-cancelled-style {
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+}
+
+.partially-returned-style {
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+}
+    
+    /* Pulsing animation for pending icons */
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.6; }
+        100% { opacity: 1; }
+    }
+    
+    .pulse-icon {
+        animation: pulse 1.5s infinite;
+    }
+    
+    /* Style for disabled selects */
+    select.form-select:disabled {
+        background-color: #e9ecef;
+        cursor: not-allowed;
+    }
+    
+    /* Tooltip styles */
+    [data-tooltip] {
+        position: relative;
+        cursor: help;
+    }
+    
+    [data-tooltip]:before {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 0.5rem;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        z-index: 10;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+    
+    [data-tooltip]:hover:before {
+        opacity: 1;
+        visibility: visible;
+    }
         @media (max-width: 768px) {
             .main-content {
                 margin-left: 0;
@@ -236,13 +327,12 @@
                                 </td>
                                                             
                                  <!-- Replace the existing status dropdown code with this -->
-                                 <td class="order-cell">
+                                <!-- Replace the existing status dropdown code with this -->
+                                <td class="order-cell">
                                     <% if (order.orderStatus === 'cancelled') { %>
                                         <span class="badge bg-danger">Cancelled</span>
-                                    <% } else if (order.orderStatus === 'returned' || order.orderStatus === 'partially_returned') { %>
-                                        <span class="badge bg-secondary">
-                                            <%= order.orderStatus === 'returned' ? 'Returned' : 'Partially Returned' %>
-                                        </span>
+                                    <% } else if (order.orderStatus === 'returned') { %>
+                                        <span class="badge bg-secondary">Returned</span>
                                     <% } else if ((order.paymentMethod === 'razorpay' && order.paymentStatus === 'pending') || order.paymentStatus === 'failed') { %>
                                         <div class="d-flex align-items-center">
                                             <select class="form-select form-select-sm status-select" disabled>
@@ -255,10 +345,67 @@
                                                 Payment <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %>
                                             </small>
                                         </div>
+                                    <% } else if (order.items.some(item => item.status === 'return_pending')) { %>
+                                        <div class="d-flex align-items-center">
+                                            <select class="form-select form-select-sm status-select" disabled>
+                                                <option value="<%= order.orderStatus %>" selected>
+                                                    <%= order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1) %>
+                                                </option>
+                                            </select>
+                                            <small class="text-warning ms-2">
+                                                <i class="fas fa-undo"></i> Return Pending
+                                            </small>
+                                        </div>
+                                    <% } else if (order.orderStatus === 'partially_cancelled') { %>
+                                        <!-- MODIFIED: For partially cancelled orders, show dropdown with a special indicator -->
+                                        <div class="d-flex align-items-center">
+                                            <select class="form-select form-select-sm status-select special-partially-cancelled"
+                                                    onchange="updateOrderStatus('<%= order._id %>', this.value)"
+                                                    <%= order.items.filter(i => i.status === 'active').length === 0 ? 'disabled' : '' %>>
+                                                <option value="confirmed" <%= order.orderStatus === 'confirmed' ? 'selected' : '' %>>
+                                                    Confirmed
+                                                </option>
+                                                <option value="processing" <%= order.orderStatus === 'processing' ? 'selected' : '' %>>
+                                                    Processing
+                                                </option>
+                                                <option value="shipped" <%= order.orderStatus === 'shipped' ? 'selected' : '' %>>
+                                                    Shipped
+                                                </option>
+                                                <option value="delivered" <%= order.orderStatus === 'delivered' ? 'selected' : '' %>>
+                                                    Delivered
+                                                </option>
+                                            </select>
+                                            <small class="text-info ms-2">
+                                                <i class="fas fa-info-circle"></i> Partially Cancelled
+                                            </small>
+                                        </div>
+                                    <% } else if (order.orderStatus === 'partially_returned') { %>
+                                        <!-- MODIFIED: For partially returned orders, show dropdown with a special indicator -->
+                                        <div class="d-flex align-items-center">
+                                            <select class="form-select form-select-sm status-select special-partially-returned"
+                                                    onchange="updateOrderStatus('<%= order._id %>', this.value)"
+                                                    <%= order.items.filter(i => i.status === 'active').length === 0 ? 'disabled' : '' %>>
+                                                <option value="confirmed" <%= order.orderStatus === 'confirmed' ? 'selected' : '' %>>
+                                                    Confirmed
+                                                </option>
+                                                <option value="processing" <%= order.orderStatus === 'processing' ? 'selected' : '' %>>
+                                                    Processing
+                                                </option>
+                                                <option value="shipped" <%= order.orderStatus === 'shipped' ? 'selected' : '' %>>
+                                                    Shipped
+                                                </option>
+                                                <option value="delivered" <%= order.orderStatus === 'delivered' ? 'selected' : '' %>>
+                                                    Delivered
+                                                </option>
+                                            </select>
+                                            <small class="text-info ms-2">
+                                                <i class="fas fa-info-circle"></i> Partially Returned
+                                            </small>
+                                        </div>
                                     <% } else { %>
                                         <select class="form-select form-select-sm status-select"
                                                 onchange="updateOrderStatus('<%= order._id %>', this.value)"
-                                                <%= ['delivered', 'cancelled', 'returned', 'partially_returned'].includes(order.orderStatus) ? 'disabled' : '' %>>
+                                                <%= ['delivered', 'cancelled', 'returned'].includes(order.orderStatus) ? 'disabled' : '' %>>
                                             <option value="pending" <%= order.orderStatus === 'pending' ? 'selected' : '' %>>
                                                 Pending
                                             </option>
@@ -415,105 +562,141 @@
 
        
         function updateOrderStatus(orderId, newStatus) {
-    // Disable the select during the update
-    const statusSelect = document.querySelector(`tr[data-order-id="${orderId}"] .status-select`);
-    const previousValue = statusSelect.getAttribute('data-previous-value');
-    statusSelect.disabled = true;
+        // Disable the select during the update
+        const statusSelect = document.querySelector(`tr[data-order-id="${orderId}"] .status-select`);
+        const previousValue = statusSelect.getAttribute('data-previous-value');
+        statusSelect.disabled = true;
 
-    fetch(`/admin/order/${orderId}/update-status`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: newStatus })
-    })
-    .then(async response => {
-        const result = await response.json();
-        
-        if (!response.ok) {
-            // If response is not ok, throw error with the message
-            throw new Error(result.message || 'Failed to update order status');
-        }
+        fetch(`/admin/order/${orderId}/update-status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(async response => {
+            const result = await response.json();
+            
+            if (!response.ok) {
+                // If response is not ok, throw error with the message
+                throw new Error(result.message || 'Failed to update order status');
+            }
 
-        // If update was successful
-        Swal.fire({
-            title: 'Success!',
-            text: result.message,
-            icon: 'success',
-            timer: 1500,
-            showConfirmButton: false
+            // If update was successful
+            Swal.fire({
+                title: 'Success!',
+                text: result.message,
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+
+            // Update the select style
+            updateSelectStyle(statusSelect);
+            
+            // Store the new value as previous value
+            statusSelect.setAttribute('data-previous-value', newStatus);
+            
+            return result;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            
+            // Show error message
+            Swal.fire({
+                title: 'Error!',
+                text: error.message || 'Failed to update order status',
+                icon: 'error'
+            });
+
+            // Revert to previous value
+            statusSelect.value = previousValue;
+            updateSelectStyle(statusSelect);
+        })
+        .finally(() => {
+            // Re-enable the select after the update
+            statusSelect.disabled = false;
         });
+    }
 
-        // Update the select style
-        updateSelectStyle(statusSelect);
-        
-        // Store the new value as previous value
-        statusSelect.setAttribute('data-previous-value', newStatus);
-        
-        return result;
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        
-        // Show error message
-        Swal.fire({
-            title: 'Error!',
-            text: error.message || 'Failed to update order status',
-            icon: 'error'
+    function checkPendingReturns() {
+        // Add data-tooltip to all disabled selects with pending returns
+        document.querySelectorAll('tr').forEach(row => {
+            const statusCell = row.querySelector('.order-cell:nth-child(4)');
+            const returnPendingIndicator = statusCell?.querySelector('.text-warning');
+            
+            if (returnPendingIndicator) {
+                const selectElement = statusCell.querySelector('select');
+                if (selectElement) {
+                    selectElement.setAttribute('data-tooltip', 'Status update disabled while return requests are pending');
+                }
+            }
         });
+    }
 
-        // Revert to previous value
-        statusSelect.value = previousValue;
-        updateSelectStyle(statusSelect);
-    })
-    .finally(() => {
-        // Re-enable the select after the update
-        statusSelect.disabled = false;
+    // Call this function when the document is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Store initial values for all status selects
+        document.querySelectorAll('.status-select').forEach(select => {
+            select.setAttribute('data-previous-value', select.value);
+            
+            // Store the value before change
+            select.addEventListener('focus', function() {
+                this.setAttribute('data-previous-value', this.value);
+            });
+        });
+        
+        // Initialize tooltips for return pending items
+        checkPendingReturns();
     });
-}
 
-// Add this to your document ready function
-document.addEventListener('DOMContentLoaded', function() {
-    // Store initial values for all status selects
-    document.querySelectorAll('.status-select').forEach(select => {
-        select.setAttribute('data-previous-value', select.value);
-        
-        // Store the value before change
-        select.addEventListener('focus', function() {
-            this.setAttribute('data-previous-value', this.value);
-        });
-    });
-});
 
         // Style functions for status select
-        function updateSelectStyle(select) {
-            const status = select.value;
-            let backgroundColor;
-            
-            switch(status) {
-                case 'delivered':
-                    backgroundColor = '#10b981';
-                    break;
-                case 'processing':
-                    backgroundColor = '#f59e0b';
-                    break;
-                case 'shipped':
-                    backgroundColor = '#3b82f6';
-                    break;
-                case 'cancelled':
-                    backgroundColor = '#ef4444';
-                    break;
-                case 'confirmed':
-                    backgroundColor = '#4f46e5';
-                    break;
-                default:
-                    backgroundColor = '#6b7280';
-            }
-            
-            select.style.backgroundColor = backgroundColor;
-            select.style.color = 'white';
-            select.style.border = 'none';
+       // Style functions for status select
+function updateSelectStyle(select) {
+    const status = select.value;
+    let backgroundColor;
+    
+    // Check if this is a special partially cancelled/returned select
+    const isPartiallyCancel = select.classList.contains('special-partially-cancelled');
+    const isPartiallyReturn = select.classList.contains('special-partially-returned');
+    
+    if (isPartiallyCancel || isPartiallyReturn) {
+        // Use special styling for partially cancelled/returned orders
+        backgroundColor = '#17a2b8'; // Info color
+    } else {
+        // Use regular status-based styling
+        switch(status) {
+            case 'delivered':
+                backgroundColor = '#10b981';
+                break;
+            case 'processing':
+                backgroundColor = '#f59e0b';
+                break;
+            case 'shipped':
+                backgroundColor = '#3b82f6';
+                break;
+            case 'cancelled':
+                backgroundColor = '#ef4444';
+                break;
+            case 'confirmed':
+                backgroundColor = '#4f46e5';
+                break;
+            case 'partially_cancelled':
+                backgroundColor = '#17a2b8';
+                break;
+            case 'partially_returned':
+                backgroundColor = '#17a2b8';
+                break;
+            default:
+                backgroundColor = '#6b7280';
         }
+    }
+    
+    select.style.backgroundColor = backgroundColor;
+    select.style.color = 'white';
+    select.style.border = 'none';
+}
 
         // Export functions
         function exportOrders(format) {

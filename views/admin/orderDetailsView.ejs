@@ -475,59 +475,69 @@
             }
 
             async function confirmRejectReturn() {
-                try {
-                    const rejectReason = document.getElementById('rejectReason').value.trim();
-                    
-                    if (!rejectReason) {
-                        Swal.fire({
-                            title: 'Error!',
-                            text: 'Please provide a reason for rejection',
-                            icon: 'error'
-                        });
-                        return;
-                    }
+    try {
+        const rejectReason = document.getElementById('rejectReason').value.trim();
+        
+        if (!rejectReason) {
+            Swal.fire({
+                title: 'Error!',
+                text: 'Please provide a reason for rejection',
+                icon: 'error'
+            });
+            return;
+        }
 
-                    const response = await fetch(`/admin/orders/${currentOrderId}/items/${currentItemId}/return/reject`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            action: 'reject',
-                            rejectReason: rejectReason
-                        })
-                    });
+        // Show loading state
+        const confirmButton = document.querySelector('#rejectReturnModal .btn-danger');
+        const originalButtonText = confirmButton.innerHTML;
+        confirmButton.disabled = true;
+        confirmButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
 
-                    const data = await response.json();
+        const response = await fetch(`/admin/orders/${currentOrderId}/items/${currentItemId}/return/reject`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'reject',
+                rejectReason: rejectReason  // The key name must match what the server expects
+            })
+        });
 
-                    if (!response.ok) {
-                        throw new Error(data.message || 'Failed to reject return request');
-                    }
+        // Reset button state
+        confirmButton.disabled = false;
+        confirmButton.innerHTML = originalButtonText;
 
-                    // Close the modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('rejectReturnModal'));
-                    modal.hide();
+        const data = await response.json();
 
-                    // Show success message
-                    await Swal.fire({
-                        title: 'Return Rejected',
-                        text: data.message,
-                        icon: 'success',
-                        timer: 2000
-                    });
+        if (!response.ok) {
+            throw new Error(data.message || 'Failed to reject return request');
+        }
 
-                    // Reload page to show updated status
-                    window.location.reload();
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('rejectReturnModal'));
+        modal.hide();
 
-                } catch (error) {
-                    console.error('Error:', error);
-                    Swal.fire({
-                        title: 'Error!',
-                        text: error.message || 'Failed to reject return request',
-                        icon: 'error'
-                    });
-                }
-            }
+        // Show success message
+        await Swal.fire({
+            title: 'Return Rejected',
+            text: data.message,
+            icon: 'success',
+            timer: 2000
+        });
+
+        // Reload page to show updated status
+        window.location.reload();
+
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+            title: 'Error!',
+            text: error.message || 'Failed to reject return request',
+            icon: 'error'
+        });
+    }
+}
     </script>
 </body>
 </html>

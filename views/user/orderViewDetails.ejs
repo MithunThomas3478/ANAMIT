@@ -873,12 +873,26 @@
                 - <%= item.cancellationDetails.reason %>
             <% } %>
         </div>
-    <% } else if (item.status === 'returned' || item.status === 'return_pending') { %>
-        <div class="status-badge <%= item.status === 'return_pending' ? 'pending' : 'returned' %>">
-            <i class="fas fa-undo"></i> 
-            <%= item.status === 'return_pending' ? 'Return Pending' : 'Returned' %>
+    <% } else if (item.status === 'returned') { %>
+        <div class="status-badge returned">
+            <i class="fas fa-undo"></i> Returned
             <% if (item.returnDetails?.reason) { %>
                 - <%= item.returnDetails.reason %>
+            <% } %>
+        </div>
+    <% } else if (item.status === 'return_pending') { %>
+        <div class="status-badge pending">
+            <i class="fas fa-undo"></i> Return Pending
+            <% if (item.returnDetails?.reason) { %>
+                - <%= item.returnDetails.reason %>
+            <% } %>
+        </div>
+    <% } else if (item.returnDetails && item.returnDetails.status === 'rejected') { %>
+        <!-- Show return rejection message -->
+        <div class="status-badge cancelled">
+            <i class="fas fa-ban"></i> Return Rejected
+            <% if (item.returnDetails.comments) { %>
+                - <%= item.returnDetails.comments %>
             <% } %>
         </div>
     <% } else { %>

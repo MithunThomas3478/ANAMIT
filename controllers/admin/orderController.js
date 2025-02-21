@@ -113,6 +113,7 @@ const updateOrderStatus = async (req, res) => {
             return res.status(400).json({ message: 'Invalid status value' });
         }
 
+        // Find the order first - don't use findByIdAndUpdate yet
         const order = await Order.findById(orderId);
         if (!order) {
             return res.status(404).json({ message: 'Order not found' });
@@ -126,37 +127,60 @@ const updateOrderStatus = async (req, res) => {
             });
         }
 
-        // Check if the order is in a final state
-        const finalStates = ['delivered', 'cancelled', 'returned', 'partially_returned'];
-        if (finalStates.includes(order.orderStatus)) {
+        // Check if any items have pending returns
+        const hasPendingReturns = order.items.some(item => item.status === 'return_pending');
+        if (hasPendingReturns) {
+            return res.status(400).json({ 
+                message: 'Cannot update order status while return requests are pending'
+            });
+        }
+
+        // Modified: Check if the order is in specific final states that shouldn't be updated
+        // Now allowing partially_cancelled and partially_returned orders to be processed
+        const finalUnupdatableStates = ['cancelled', 'delivered', 'returned'];
+        if (finalUnupdatableStates.includes(order.orderStatus)) {
             return res.status(400).json({ 
                 message: 'Cannot update order in final state'
             });
         }
 
-        const updateData = { orderStatus: status };
+        // Don't allow setting status to cancelled if order is partially_cancelled
+        if (status === 'cancelled' && (order.orderStatus === 'partially_cancelled' || order.orderStatus === 'partially_returned')) {
+            return res.status(400).json({
+                message: 'Cannot cancel an order that is already partially cancelled or returned. Please cancel individual items instead.'
+            });
+        }
+
+        // Check if there are any active items left to process
+        const activeItems = order.items.filter(item => item.status === 'active');
+        if (activeItems.length === 0) {
+            return res.status(400).json({
+                message: 'No active items remaining in this order'
+            });
+        }
+
+        // Set the new status directly on the order object
+        order.orderStatus = status;
 
         // Update payment status for COD orders when delivered
         if (status === 'delivered' && order.paymentMethod === 'cod') {
-            updateData.paymentStatus = 'completed';
-            updateData['paymentDetails.paidAmount'] = order.totalAmount;
-            updateData['paymentDetails.paidAt'] = new Date();
+            order.paymentStatus = 'completed';
+            if (!order.paymentDetails) {
+                order.paymentDetails = {};
+            }
+            order.paymentDetails.paidAmount = order.totalAmount;
+            order.paymentDetails.paidAt = new Date();
         }
 
-        const updatedOrder = await Order.findByIdAndUpdate(
-            orderId,
-            updateData,
-            { new: true }
-        ).populate('user', 'name email');
+        // Add to status history - this is now handled by the schema's pre-save hook
+        // But we manually add the comment for clarity
+        const comment = `Order status updated to ${status}`;
 
-        // Add to status history
-        updatedOrder.statusHistory.push({
-            status: status,
-            timestamp: new Date(),
-            comment: `Order status updated to ${status}`
-        });
+        // Save the order - this will trigger the pre-save middleware
+        const updatedOrder = await order.save();
 
-        await updatedOrder.save();
+        // Now populate user details for the response
+        await updatedOrder.populate('user', 'name email');
 
         res.json({ 
             message: 'Order status updated successfully',
@@ -164,7 +188,10 @@ const updateOrderStatus = async (req, res) => {
         });
     } catch (error) {
         console.error('Error updating order status:', error);
-        res.status(500).json({ message: 'Failed to update order status' });
+        res.status(500).json({ 
+            message: 'Failed to update order status',
+            error: error.message
+        });
     }
 };
 
@@ -348,10 +375,20 @@ const getOrderDetails = async (req, res) => {
         });
     }
 };
+
+
 const handleReturnRequest = async (req, res) => {
     try {
         const { orderId, itemId } = req.params;
         const { action, rejectReason } = req.body;
+
+        console.log('Return request received:', { 
+            orderId, 
+            itemId, 
+            action, 
+            rejectReason, 
+            body: req.body 
+        });
 
         // Input validation
         if (!['approve', 'reject'].includes(action)) {
@@ -463,14 +500,19 @@ const handleReturnRequest = async (req, res) => {
 
         } else {
             // Handle return rejection
-            orderItem.status = 'active';
+            orderItem.status = 'active';  // Change back to active status
+            
+            // Store rejection details in returnDetails but don't remove the entire object
             orderItem.returnDetails.status = 'rejected';
             orderItem.returnDetails.comments = rejectReason;
+            orderItem.returnDetails.processedAt = new Date();
+            
+            // We keep other return details for reference and to prevent new return requests
         }
 
         // Update order status history
         order.statusHistory.push({
-            status: action === 'approve' ? 'returned' : 'return_rejected',
+            status: action === 'approve' ? 'returned' : 'processing',  // Use valid enum value
             timestamp: new Date(),
             comment: action === 'approve' 
                 ? `Return approved for item: ${orderItem.productName}`
@@ -494,7 +536,7 @@ const handleReturnRequest = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: `Return request ${action}ed successfully`,
+            message: `Return request ${action === 'approve' ? 'approved' : 'rejected'} successfully`,
             details: {
                 orderStatus: order.orderStatus,
                 itemStatus: orderItem.status,
@@ -507,7 +549,8 @@ const handleReturnRequest = async (req, res) => {
         console.error('Error handling return request:', error);
         return res.status(500).json({
             success: false,
-            message: 'Error processing return request'
+            message: 'Error processing return request',
+            error: error.message  // Include error message for debugging
         });
     }
 };

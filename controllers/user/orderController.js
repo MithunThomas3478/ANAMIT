@@ -370,6 +370,24 @@ const returnOrderItem = async (req, res) => {
             });
         }
 
+        // Check return window
+        const deliveryEntry = order.statusHistory
+            .filter(status => status.status === 'delivered')
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+        
+        if (deliveryEntry) {
+            const deliveryDate = new Date(deliveryEntry.timestamp);
+            const currentDate = new Date();
+            const daysSinceDelivery = Math.floor((currentDate - deliveryDate) / (1000 * 60 * 60 * 24));
+            
+            if (daysSinceDelivery > 7) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Return window of 7 days has expired'
+                });
+            }
+        }
+
         // Calculate refund amount (but don't process it yet)
         const refundAmount = orderItem.calculateRefundAmount();
 
@@ -385,25 +403,77 @@ const returnOrderItem = async (req, res) => {
             refundStatus: 'pending'
         };
 
-        // Add to status history
-        order.statusHistory.push({
-            status: 'processing',  // Use a valid enum value
-            timestamp: new Date(),
-            comment: `Return requested for item: ${orderItem.productName}. Reason: ${reason}`
-        });
-
-        // Update order status if needed
+        // Get counts of items by status
         const activeItems = order.items.filter(item => item.status === 'active');
         const returnPendingItems = order.items.filter(item => item.status === 'return_pending');
+        const returnedItems = order.items.filter(item => item.status === 'returned');
+        const cancelledItems = order.items.filter(item => item.status === 'cancelled');
+
+        // Determine the appropriate order status based on item statuses
+        let newOrderStatus;
         
-        if (activeItems.length === 0 && returnPendingItems.length === order.items.length) {
-            order.orderStatus = 'processing';  // Use a valid enum value
-        } else if (returnPendingItems.length > 0) {
-            order.orderStatus = 'processing';  // Use a valid enum value
+        if (activeItems.length === 0) {
+            // No active items left
+            if (returnPendingItems.length === order.items.length) {
+                // All items are pending return
+                newOrderStatus = 'processing';
+            } else if (returnPendingItems.length > 0) {
+                // Mix of pending returns and completed returns/cancellations
+                newOrderStatus = 'processing';
+            } else if (returnedItems.length === order.items.length) {
+                // All items returned
+                newOrderStatus = 'returned';
+            } else if (cancelledItems.length === order.items.length) {
+                // All items cancelled
+                newOrderStatus = 'cancelled';
+            } else {
+                // Mix of returned and cancelled items
+                const hasReturned = returnedItems.length > 0;
+                const hasCancelled = cancelledItems.length > 0;
+                
+                if (hasReturned && hasCancelled) {
+                    newOrderStatus = 'partially_returned';
+                } else if (hasReturned) {
+                    newOrderStatus = 'returned';
+                } else if (hasCancelled) {
+                    newOrderStatus = 'cancelled';
+                }
+            }
+        } else {
+            // Some active items remain
+            if (returnPendingItems.length > 0) {
+                newOrderStatus = 'processing';
+            } else if (returnedItems.length > 0) {
+                newOrderStatus = 'partially_returned';
+            } else if (cancelledItems.length > 0) {
+                newOrderStatus = 'partially_cancelled';
+            }
+        }
+
+        // Add to status history
+        if (newOrderStatus && newOrderStatus !== order.orderStatus) {
+            order.statusHistory.push({
+                status: newOrderStatus,
+                timestamp: new Date(),
+                comment: `Return requested for item: ${orderItem.productName}. Reason: ${reason}`
+            });
+            
+            // Update order status
+            order.orderStatus = newOrderStatus;
+        } else {
+            // Just add a status history entry without changing order status
+            order.statusHistory.push({
+                status: order.orderStatus, // Keep current status
+                timestamp: new Date(),
+                comment: `Return requested for item: ${orderItem.productName}. Reason: ${reason}`
+            });
         }
 
         // Save changes
         await order.save();
+
+        // Notify admin or customer service (implementation depends on your system)
+        // ...
 
         return res.status(200).json({
             success: true,
@@ -411,7 +481,7 @@ const returnOrderItem = async (req, res) => {
             details: {
                 orderNumber: order.orderNumber,
                 itemName: orderItem.productName,
-                returnId: orderItem.returnDetails._id,
+                returnId: orderItem._id,
                 refundAmount,
                 refundStatus: 'pending'
             }
@@ -421,11 +491,11 @@ const returnOrderItem = async (req, res) => {
         console.error('Return processing error:', error);
         return res.status(500).json({
             success: false,
-            message: 'Error processing return request'
+            message: error.message || 'Error processing return request',
+            details: process.env.NODE_ENV === 'development' ? error : {}
         });
     }
 };
-
 const retryPayment = async (req, res) => {
     try {
         const { orderId } = req.params;
