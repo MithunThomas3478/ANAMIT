@@ -287,6 +287,8 @@ orderSchema.methods.needsRefund = function(item) {
            item.cancellationDetails?.refundStatus !== 'completed';
 };
 
+// Update the updateOrderStatus method in orderSchema
+
 orderSchema.methods.updateOrderStatus = function(forceUpdate = false) {
     // Skip if orderStatus is already modified, unless forceUpdate is true
     if (this.isModified('orderStatus') && !forceUpdate) {
@@ -296,15 +298,35 @@ orderSchema.methods.updateOrderStatus = function(forceUpdate = false) {
     const activeItems = this.getActiveItems();
     const cancelledItems = this.getCancelledItems();
     const returnedItems = this.getReturnedItems();
+    const returnPendingItems = this.items.filter(item => item.status === 'return_pending');
     
+    // If there are no active items left
     if (activeItems.length === 0) {
         if (cancelledItems.length === this.items.length) {
             this.orderStatus = 'cancelled';
         } else if (returnedItems.length === this.items.length) {
             this.orderStatus = 'returned';
+        } else if (returnPendingItems.length > 0) {
+            // If some items are pending return approval
+            this.orderStatus = 'processing';
+        } else if (returnedItems.length > 0 && cancelledItems.length > 0) {
+            // Mix of returned and cancelled items
+            this.orderStatus = 'partially_returned';
         }
-    } else {
-        if (cancelledItems.length > 0) {
+    } 
+    // If there are still active items
+    else {
+        // IMPORTANT FIX: If the order was marked as delivered, keep it as delivered
+        // This is crucial for showing the "Return Item" buttons for active items
+        if (this.orderStatus === 'delivered') {
+            // Only change from 'delivered' if there are returned items, not just pending returns
+            if (returnedItems.length > 0) {
+                this.orderStatus = 'partially_returned';
+            }
+            // Keep as 'delivered' otherwise
+        }
+        // For other statuses
+        else if (cancelledItems.length > 0) {
             this.orderStatus = 'partially_cancelled';
         } else if (returnedItems.length > 0) {
             this.orderStatus = 'partially_returned';

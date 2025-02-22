@@ -897,48 +897,67 @@
         </div>
     <% } else { %>
         <!-- Active item actions -->
-        <div class="product-actions">
-            <% 
-                // Updated condition to hide cancel button for failed payments
-                const nonCancellableStatuses = ['shipped', 'delivered', 'cancelled', 'returned'];
-                const isPaymentFailed = order.paymentStatus === 'failed' || order.orderStatus === 'payment_failed';
-                const canCancel = item.status === 'active' && 
-                                !nonCancellableStatuses.includes(order.orderStatus) && 
-                                !isPaymentFailed;
-            %>
-            
-            <% if (canCancel) { %>
-                <button type="button" 
-                    onclick="showCancelItemModal('<%= order.orderId %>', '<%= item._id %>')"
-                    class="btn btn-sm btn-danger">
-                    <i class="fas fa-times"></i> Cancel Item
-                </button>
-            <% } %>
-            
-            <% 
-                // Find delivery timestamp for return eligibility
-                const deliveryEntry = order.statusHistory
-                    .filter(status => status.status === 'delivered')
-                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
-                
-                const deliveryDate = deliveryEntry?.timestamp;
-                const currentDate = new Date();
-                const daysSinceDelivery = deliveryDate ? 
-                    Math.floor((currentDate - new Date(deliveryDate)) / (1000 * 60 * 60 * 24)) : null;
-                const isWithinReturnWindow = daysSinceDelivery !== null && daysSinceDelivery <= 7;
-            %>
-            
-            <% if (order.orderStatus === 'delivered' && isWithinReturnWindow) { %>
-                <button type="button"
-                    onclick="showReturnItemModal('<%= order.orderId %>', '<%= item._id %>')"
-                    class="btn btn-sm btn-warning">
-                    <i class="fas fa-undo"></i> Return Item
-                </button>
-                <div class="return-eligibility-notice">
-                    Return eligible for <%= 7 - daysSinceDelivery %> more days
-                </div>
-            <% } %>
+   <!-- Complete fixed product-actions section -->
+<div class="product-actions">
+    <% 
+        // Check if order was ever delivered from status history
+        const wasEverDelivered = order.statusHistory.some(status => status.status === 'delivered');
+        
+        // These statuses should never show cancel button
+        const nonCancellableStatuses = ['shipped', 'delivered', 'cancelled', 'returned', 'partially_returned'];
+        
+        // Order payment status check
+        const isPaymentFailed = order.paymentStatus === 'failed' || order.orderStatus === 'payment_failed';
+        
+        // Only show cancel button if:
+        // 1. Item is active
+        // 2. Order was NEVER delivered
+        // 3. Order status is not in the non-cancellable list
+        // 4. Payment is not failed
+        const canCancel = item.status === 'active' && 
+                        !wasEverDelivered && 
+                        !nonCancellableStatuses.includes(order.orderStatus) && 
+                        !isPaymentFailed;
+        
+        // Find delivery timestamp for return eligibility
+        const deliveryEntry = order.statusHistory
+            .filter(status => status.status === 'delivered')
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+        
+        const deliveryDate = deliveryEntry?.timestamp;
+        const currentDate = new Date();
+        const daysSinceDelivery = deliveryDate ? 
+            Math.floor((currentDate - new Date(deliveryDate)) / (1000 * 60 * 60 * 24)) : null;
+        const isWithinReturnWindow = daysSinceDelivery !== null && daysSinceDelivery <= 7;
+        
+        // Show return button if:
+        // 1. Item is active
+        // 2. Order was EVER delivered
+        // 3. It's within return window
+        const canReturn = item.status === 'active' && 
+                        wasEverDelivered && 
+                        isWithinReturnWindow;
+    %>
+    
+    <% if (canCancel) { %>
+        <button type="button" 
+            onclick="showCancelItemModal('<%= order.orderId %>', '<%= item._id %>')"
+            class="btn btn-sm btn-danger">
+            <i class="fas fa-times"></i> Cancel Item
+        </button>
+    <% } %>
+    
+    <% if (canReturn) { %>
+        <button type="button"
+            onclick="showReturnItemModal('<%= order.orderId %>', '<%= item._id %>')"
+            class="btn btn-sm btn-warning">
+            <i class="fas fa-undo"></i> Return Item
+        </button>
+        <div class="return-eligibility-notice">
+            Return eligible for <%= 7 - daysSinceDelivery %> more days
         </div>
+    <% } %>
+</div>
     <% } %>
 </div>
                             <div class="product-price">

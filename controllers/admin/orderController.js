@@ -197,23 +197,27 @@ const updateOrderStatus = async (req, res) => {
 
 const generateInvoice = async (req, res) => {
     try {
-        const { orderId } = req.params;
+        const orderId = req.params.orderId;
+        
+        // Validate if orderId is a valid ObjectId
+        if (!mongoose.Types.ObjectId.isValid(orderId)) {
+            return res.status(400).render('error', { 
+                message: 'Invalid order ID format',
+                error: { status: 400 }
+            });
+        }
         
         // Fetch order without lean() to keep virtuals
-        const order = await Order.findOne({
-            _id: orderId,
-            user: req.user._id
-        })
-        .populate({
-            path: 'items.product',
-            select: 'productName variants category',
-            populate: {
-                path: 'category',
-                select: 'name'
-            }
-        })
-        .populate('user', 'firstName lastName email')
-        .populate('shippingAddress');
+        const order = await Order.findById(orderId)
+            .populate({
+                path: 'items.product',
+                select: 'productName variants category',
+                populate: {
+                    path: 'category',
+                    select: 'name'
+                }
+            })
+            .populate('user', 'firstName lastName email');
 
         if (!order) {
             return res.status(404).render('error', { 
@@ -222,13 +226,28 @@ const generateInvoice = async (req, res) => {
             });
         }
 
-        // Calculate final amount manually since we might need more control
-        const activeItemsTotal = order.items.reduce((total, item) => 
-            item.status === 'active' ? total + item.itemTotal : total, 0);
-        
-        const finalAmount = activeItemsTotal + 
-            (order.shippingFee || 0) - 
-            (order.totalDiscount || 0);
+        // Special handling for cancelled or returned orders
+        const allItemsCancelledOrReturned = order.items.every(item => 
+            item.status === 'cancelled' || item.status === 'returned');
+
+        // Use a different calculation method for completely cancelled/returned orders
+        let activeItemsTotal, applicableDiscount, shipping, calculatedFinalAmount;
+
+        if (allItemsCancelledOrReturned) {
+            // For cancelled/returned orders, we'll show the original values with a note
+            activeItemsTotal = order.totalAmount;
+            applicableDiscount = order.totalDiscount;
+            shipping = order.shippingFee;
+            calculatedFinalAmount = order.totalAmount - order.totalDiscount + order.shippingFee;
+        } else {
+            // Normal calculation for orders with active items
+            activeItemsTotal = order.getActiveItemsTotal();
+            const activeItemsRatio = order.totalAmount > 0 ? activeItemsTotal / order.totalAmount : 0;
+            applicableDiscount = order.totalDiscount * activeItemsRatio;
+            const isAllItemsActive = order.items.every(item => item.status === 'active');
+            shipping = isAllItemsActive ? order.shippingFee : 0;
+            calculatedFinalAmount = activeItemsTotal - applicableDiscount + shipping;
+        }
 
         // Format date
         const invoiceDate = new Date(order.createdAt).toLocaleDateString('en-IN', { 
@@ -249,24 +268,55 @@ const generateInvoice = async (req, res) => {
         const paymentStatusDisplay = order.paymentStatus.charAt(0).toUpperCase() + 
             order.paymentStatus.slice(1).toLowerCase();
 
+        // Get all item details with status for the invoice
+        const itemDetails = order.items.map(item => {
+            return {
+                ...item.toObject(),
+                statusDisplay: item.status.charAt(0).toUpperCase() + item.status.slice(1),
+                isActive: item.status === 'active'
+            };
+        });
+
         // Convert order to plain object and add computed properties
         const orderData = order.toObject({ getters: true, virtuals: true });
         
-        // Prepare invoice data
+        // Prepare invoice data with detailed breakdown for transparency
         const invoiceData = {
             order: {
                 ...orderData,
+                items: itemDetails,
                 paymentMethodDisplay,
                 paymentStatusDisplay,
-                finalAmount: finalAmount // Add calculated final amount
+                calculatedFinalAmount: calculatedFinalAmount,
+                isFullyCancelledOrReturned: allItemsCancelledOrReturned
             },
             date: invoiceDate,
             invoiceNumber: `INV-${order.orderNumber}`,
+            // Include breakdown data for debugging and clarity
+            breakdown: {
+                activeItemsTotal: activeItemsTotal.toFixed(2),
+                totalDiscount: order.totalDiscount.toFixed(2),
+                applicableDiscount: applicableDiscount.toFixed(2),
+                shippingFee: shipping.toFixed(2),
+                allItemsActive: order.items.every(item => item.status === 'active'),
+                totalItems: order.items.length,
+                activeItems: order.items.filter(item => item.status === 'active').length,
+                cancelledItems: order.items.filter(item => item.status === 'cancelled').length,
+                returnedItems: order.items.filter(item => item.status === 'returned').length
+            },
             subtotal: activeItemsTotal.toFixed(2),
             formatCurrency: (amount) => {
                 return typeof amount === 'number' ? amount.toFixed(2) : '0.00';
             }
         };
+
+        // For debugging purposes
+        console.log('Invoice data for order:', orderId);
+        console.log('Is fully cancelled/returned:', allItemsCancelledOrReturned);
+        console.log('Active items total:', activeItemsTotal);
+        console.log('Applicable discount:', applicableDiscount);
+        console.log('Shipping fee:', shipping);
+        console.log('Calculated final amount:', calculatedFinalAmount);
 
         // Render the invoice
         res.render('invoices', invoiceData);

@@ -63,6 +63,8 @@ const getUserOrders = async (req, res) => {
         });
     }
 };
+
+
 const getOrderDetails = async (req, res) => {
     try {
         const orderId = req.params.orderId;
@@ -83,30 +85,58 @@ const getOrderDetails = async (req, res) => {
 
         // Create helper functions for item status checks
         const itemHelpers = {
-            canBeCancelled: (item) => {
-                const nonCancellableStatuses = ['shipped', 'delivered', 'cancelled', 'returned'];
-                return item.status === 'active' && !nonCancellableStatuses.includes(order.orderStatus);
-            },
-            canBeReturned: (item) => {
-                // Check basic conditions first
-                if (item.status !== 'active') return false;
-                if (order.orderStatus !== 'delivered') return false;
-        
-                // Find the delivery entry from status history
-                const deliveryEntry = order.statusHistory
-                    .filter(status => status.status === 'delivered')
-                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
-        
-                if (!deliveryEntry) return false;
-        
-                // Calculate days since delivery
-                const deliveryDate = new Date(deliveryEntry.timestamp);
-                const currentDate = new Date();
-                const daysSinceDelivery = Math.floor((currentDate - deliveryDate) / (1000 * 60 * 60 * 24));
-        
-                // Return true if within 7-day window
-                return daysSinceDelivery <= 7;
-            },
+            // Replace the canBeCancelled method in your itemHelpers object
+canBeCancelled: (item) => {
+    // Check basic item status first
+    if (item.status !== 'active') return false;
+    
+    // Check if order was ever delivered
+    const wasEverDelivered = order.statusHistory.some(status => 
+        status.status === 'delivered'
+    );
+    
+    // If it was ever delivered, it cannot be cancelled
+    if (wasEverDelivered) return false;
+    
+    // These statuses should never allow cancellation
+    const nonCancellableStatuses = ['shipped', 'delivered', 'cancelled', 'returned', 'partially_returned'];
+    if (nonCancellableStatuses.includes(order.orderStatus)) return false;
+    
+    // Check payment status
+    const isPaymentFailed = order.paymentStatus === 'failed' || order.orderStatus === 'payment_failed';
+    if (isPaymentFailed) return false;
+    
+    // If we passed all checks, item can be cancelled
+    return true;
+},
+           // Replace the canBeReturned method in your itemHelpers object
+canBeReturned: (item) => {
+    // Check if item is active
+    if (item.status !== 'active') return false;
+    
+    // IMPORTANT FIX: Check if order was EVER delivered, not just current status
+    // Look at status history instead of current status
+    const wasEverDelivered = order.statusHistory.some(status => 
+        status.status === 'delivered'
+    );
+    
+    if (!wasEverDelivered) return false;
+
+    // Find the delivery entry from status history
+    const deliveryEntry = order.statusHistory
+        .filter(status => status.status === 'delivered')
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+
+    if (!deliveryEntry) return false;
+
+    // Calculate days since delivery
+    const deliveryDate = new Date(deliveryEntry.timestamp);
+    const currentDate = new Date();
+    const daysSinceDelivery = Math.floor((currentDate - deliveryDate) / (1000 * 60 * 60 * 24));
+
+    // Return true if within 7-day window
+    return daysSinceDelivery <= 7;
+},
             getRemainingReturnDays: (item) => {
                 // Find the delivery entry
                 const deliveryEntry = order.statusHistory
@@ -122,7 +152,7 @@ const getOrderDetails = async (req, res) => {
                 return Math.max(0, 7 - daysSinceDelivery);
             },
             isDelivered: (order) => {
-                return order.orderStatus === 'delivered';
+                return order.orderStatus === 'delivered' || order.orderStatus === 'partially_returned';
             },
             getDeliveryDate: (order) => {
                 const deliveryEntry = order.statusHistory
@@ -363,7 +393,11 @@ const returnOrderItem = async (req, res) => {
             });
         }
 
-        if (order.orderStatus !== 'delivered') {
+        // IMPORTANT FIX: Check if order was ever delivered by checking status history
+        // instead of only checking current order status
+        const wasEverDelivered = order.statusHistory.some(status => status.status === 'delivered');
+        
+        if (!wasEverDelivered) {
             return res.status(400).json({
                 success: false,
                 message: 'Order must be delivered to process return'
@@ -409,71 +443,44 @@ const returnOrderItem = async (req, res) => {
         const returnedItems = order.items.filter(item => item.status === 'returned');
         const cancelledItems = order.items.filter(item => item.status === 'cancelled');
 
-        // Determine the appropriate order status based on item statuses
-        let newOrderStatus;
+        // Only determine a new order status if necessary
+        let newOrderStatus = order.orderStatus; // Default: keep current status
         
+        // If there are no active items left
         if (activeItems.length === 0) {
-            // No active items left
-            if (returnPendingItems.length === order.items.length) {
-                // All items are pending return
-                newOrderStatus = 'processing';
-            } else if (returnPendingItems.length > 0) {
-                // Mix of pending returns and completed returns/cancellations
+            if (returnPendingItems.length > 0) {
                 newOrderStatus = 'processing';
             } else if (returnedItems.length === order.items.length) {
-                // All items returned
                 newOrderStatus = 'returned';
             } else if (cancelledItems.length === order.items.length) {
-                // All items cancelled
                 newOrderStatus = 'cancelled';
             } else {
                 // Mix of returned and cancelled items
-                const hasReturned = returnedItems.length > 0;
-                const hasCancelled = cancelledItems.length > 0;
-                
-                if (hasReturned && hasCancelled) {
-                    newOrderStatus = 'partially_returned';
-                } else if (hasReturned) {
-                    newOrderStatus = 'returned';
-                } else if (hasCancelled) {
-                    newOrderStatus = 'cancelled';
-                }
-            }
-        } else {
-            // Some active items remain
-            if (returnPendingItems.length > 0) {
-                newOrderStatus = 'processing';
-            } else if (returnedItems.length > 0) {
                 newOrderStatus = 'partially_returned';
-            } else if (cancelledItems.length > 0) {
-                newOrderStatus = 'partially_cancelled';
+            }
+        } 
+        // If there are still active items
+        else {
+            // Keep as delivered if it was delivered, or partial_returned if some items returned
+            if (returnedItems.length > 0) {
+                newOrderStatus = 'partially_returned';
             }
         }
 
         // Add to status history
-        if (newOrderStatus && newOrderStatus !== order.orderStatus) {
-            order.statusHistory.push({
-                status: newOrderStatus,
-                timestamp: new Date(),
-                comment: `Return requested for item: ${orderItem.productName}. Reason: ${reason}`
-            });
+        order.statusHistory.push({
+            status: order.orderStatus,
+            timestamp: new Date(),
+            comment: `Return requested for item: ${orderItem.productName}. Reason: ${reason}`
+        });
             
-            // Update order status
+        // Update order status if it changed
+        if (newOrderStatus !== order.orderStatus) {
             order.orderStatus = newOrderStatus;
-        } else {
-            // Just add a status history entry without changing order status
-            order.statusHistory.push({
-                status: order.orderStatus, // Keep current status
-                timestamp: new Date(),
-                comment: `Return requested for item: ${orderItem.productName}. Reason: ${reason}`
-            });
         }
 
         // Save changes
         await order.save();
-
-        // Notify admin or customer service (implementation depends on your system)
-        // ...
 
         return res.status(200).json({
             success: true,
@@ -496,6 +503,8 @@ const returnOrderItem = async (req, res) => {
         });
     }
 };
+
+
 const retryPayment = async (req, res) => {
     try {
         const { orderId } = req.params;
