@@ -506,107 +506,106 @@
                             </div>
                             
                             <div class="order-details">
+                                <!-- Order Status -->
                                 <div class="detail-section">
                                     <div class="detail-label">
                                         <i class="fas fa-info-circle"></i>
                                         Order Status
                                     </div>
                                     <div class="detail-value">
-                                        <span class="status-badge <%= order.paymentStatus === 'failed' ? 'status-failed' : 
-                                        getStatusClass(order.paymentStatus) %>">
-                                        <i class="fas fa-<%= order.paymentStatus === 'failed' ? 'times-circle' : 
-                                            (order.paymentStatus === 'completed' ? 'check-circle' : 'clock') %>"></i>
-                                        <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %>
-                                    </span>
+                                        <span class="status-badge <%= getStatusClass(order.orderStatus) %>">
+                                            <i class="fas fa-<%= getStatusIcon(order.orderStatus) %>"></i>
+                                            <%= order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1).replace('_', ' ') %>
+                                        </span>
                                     </div>
                                 </div>
-                        
-    
+                            
+                                <!-- Payment Status -->
                                 <div class="detail-section">
                                     <div class="detail-label">
                                         <i class="fas fa-credit-card"></i>
                                         Payment Status
                                     </div>
                                     <div class="detail-value">
-                                        <span class="status-badge <%= order.paymentStatus === 'failed' ? 'status-failed' : 
-                                                                   getStatusClass(order.paymentStatus) %>">
-                                            <i class="fas fa-<%= order.paymentStatus === 'failed' ? 'times-circle' : 
-                                                              (order.paymentStatus === 'completed' ? 'check-circle' : 'clock') %>"></i>
-                                            <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %>
+                                        <span class="status-badge <%= getStatusClass(order.paymentStatus) %>">
+                                            <i class="fas fa-<%= getStatusIcon(order.paymentStatus) %>"></i>
+                                            <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1).replace('_', ' ') %>
                                         </span>
                                     </div>
                                 </div>
-                                    
+                            
+                                <!-- Total Amount -->
+                                <div class="detail-section">
+                                    <div class="detail-label">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                        Total Amount
+                                    </div>
+                                    <div class="detail-value">
+                                        ₹<%= order.finalAmount.toFixed(2) %>
+                                        <% if (order.totalDiscount > 0) { %>
+                                            <small style="color: var(--success-color); display: block; font-size: 0.85em;">
+                                                <i class="fas fa-tag"></i>
+                                                Saved ₹<%= order.totalDiscount.toFixed(2) %>
+                                            </small>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            
+                                <!-- Shipping Address -->
+                                <div class="detail-section">
+                                    <div class="detail-label">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        Shipping Address
+                                    </div>
+                                    <div class="detail-value">
+                                        <strong><%= order.shippingAddress.fullName %></strong><br>
+                                        <%= order.shippingAddress.streetAddress %><br>
+                                        <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %><br>
+                                        <%= order.shippingAddress.pincode %>
+                                    </div>
+                                </div>
+                            
+                                <% if (order.trackingDetails && order.trackingDetails.trackingNumber) { %>
                                     <div class="detail-section">
                                         <div class="detail-label">
-                                            <i class="fas fa-money-bill-wave"></i>
-                                            Total Amount
+                                            <i class="fas fa-truck"></i>
+                                            Tracking Details
                                         </div>
                                         <div class="detail-value">
-                                            ₹<%= order.finalAmount.toFixed(2) %>
-                                            <% if (order.totalDiscount > 0) { %>
-                                                <small style="color: var(--success-color); display: block; font-size: 0.85em;">
-                                                    <i class="fas fa-tag"></i>
-                                                    Saved ₹<%= order.totalDiscount.toFixed(2) %>
-                                                </small>
+                                            <strong><%= order.trackingDetails.courier %></strong><br>
+                                            Tracking #: <span style="color: var(--primary-color);">
+                                                <%= order.trackingDetails.trackingNumber %>
+                                            </span>
+                                            <% if (order.trackingDetails.trackingUrl) { %>
+                                                <a href="<%= order.trackingDetails.trackingUrl %>" 
+                                                   target="_blank"
+                                                   class="btn btn-primary"
+                                                   style="margin-top: 0.5rem; font-size: 0.85rem; padding: 0.5rem 1rem;">
+                                                    <i class="fas fa-external-link-alt"></i>
+                                                    Track Shipment
+                                                </a>
                                             <% } %>
                                         </div>
                                     </div>
-                                    
+                                <% } %>
+                            
+                                <% if (order.estimatedDelivery) { %>
                                     <div class="detail-section">
                                         <div class="detail-label">
-                                            <i class="fas fa-map-marker-alt"></i>
-                                            Shipping Address
+                                            <i class="fas fa-calendar-check"></i>
+                                            Estimated Delivery
                                         </div>
                                         <div class="detail-value">
-                                            <strong><%= order.shippingAddress.fullName %></strong><br>
-                                            <%= order.shippingAddress.streetAddress %><br>
-                                            <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %><br>
-                                            <%= order.shippingAddress.pincode %>
+                                            <%= new Date(order.estimatedDelivery).toLocaleDateString('en-US', {
+                                                weekday: 'long',
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric'
+                                            }) %>
                                         </div>
                                     </div>
-    
-                                    <% if (order.trackingDetails && order.trackingDetails.trackingNumber) { %>
-                                        <div class="detail-section">
-                                            <div class="detail-label">
-                                                <i class="fas fa-truck"></i>
-                                                Tracking Details
-                                            </div>
-                                            <div class="detail-value">
-                                                <strong><%= order.trackingDetails.courier %></strong><br>
-                                                Tracking #: <span style="color: var(--primary-color);">
-                                                    <%= order.trackingDetails.trackingNumber %>
-                                                </span>
-                                                <% if (order.trackingDetails.trackingUrl) { %>
-                                                    <a href="<%= order.trackingDetails.trackingUrl %>" 
-                                                       target="_blank"
-                                                       class="btn btn-primary"
-                                                       style="margin-top: 0.5rem; font-size: 0.85rem; padding: 0.5rem 1rem;">
-                                                        <i class="fas fa-external-link-alt"></i>
-                                                        Track Shipment
-                                                    </a>
-                                                <% } %>
-                                            </div>
-                                        </div>
-                                    <% } %>
-    
-                                    <% if (order.estimatedDelivery) { %>
-                                        <div class="detail-section">
-                                            <div class="detail-label">
-                                                <i class="fas fa-calendar-check"></i>
-                                                Estimated Delivery
-                                            </div>
-                                            <div class="detail-value">
-                                                <%= new Date(order.estimatedDelivery).toLocaleDateString('en-US', {
-                                                    weekday: 'long',
-                                                    year: 'numeric',
-                                                    month: 'long',
-                                                    day: 'numeric'
-                                                }) %>
-                                            </div>
-                                        </div>
-                                    <% } %>
-                                </div>
+                                <% } %>
+                            </div>
                             <!-- Replace the existing button-group section with this -->
                             <div class="button-group">
                                 <a href="/orders/<%= order.orderId %>" class="btn btn-primary">

@@ -41,9 +41,33 @@ const getUserOrders = async (req, res) => {
                 'partially_cancelled': 'status-cancelled',
                 'partially_returned': 'status-cancelled',
                 'payment_failed': 'status-payment_failed',
-                'failed': 'status-failed'
+                'completed': 'status-delivered',
+                'failed': 'status-failed',
+                'refunded': 'status-cancelled',
+                'partially_refunded': 'status-cancelled'
             };
             return statusMap[status] || 'status-pending';
+        };
+
+        // Define status icon mapping function
+        const getStatusIcon = (status) => {
+            const iconMap = {
+                'pending': 'clock',
+                'confirmed': 'check',
+                'processing': 'cog',
+                'shipped': 'truck',
+                'delivered': 'check-circle',
+                'cancelled': 'times-circle',
+                'returned': 'undo',
+                'partially_cancelled': 'times-circle',
+                'partially_returned': 'undo',
+                'payment_failed': 'times-circle',
+                'completed': 'check-circle',
+                'failed': 'times-circle',
+                'refunded': 'undo',
+                'partially_refunded': 'undo'
+            };
+            return iconMap[status] || 'clock';
         };
 
         // Render orders page
@@ -52,7 +76,8 @@ const getUserOrders = async (req, res) => {
             currentPage: page,
             totalPages,
             totalOrders,
-            getStatusClass, // Pass the function to the view
+            getStatusClass,
+            getStatusIcon, // Pass the new icon function
             user: req.user
         });
     } catch (error) {
@@ -63,6 +88,8 @@ const getUserOrders = async (req, res) => {
         });
     }
 };
+
+
 
 
 const getOrderDetails = async (req, res) => {
