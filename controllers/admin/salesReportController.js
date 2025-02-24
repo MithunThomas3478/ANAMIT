@@ -4,7 +4,8 @@ const PDFDocument = require('pdfkit');
 const ExcelJS = require('exceljs');
 const moment = require('moment');
 const lodash = require('lodash'); 
-
+const Category = require('../../models/categorySchema');
+const Product = require('../../models/productSchema');
 // Get sales report
 const getSalesReport = async (req, res) => {
     try {
@@ -449,152 +450,196 @@ async function generatePDF(res, data) {
     doc.end();
 }
 
-// Helper function to generate professional Excel report
 async function generateExcel(res, data) {
-    const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'ANAMIT';
-    workbook.created = new Date();
+    try {
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'ANAMIT';
+        workbook.created = new Date();
+        workbook.modified = new Date();
 
-    const worksheet = workbook.addWorksheet('Sales Report', {
-        pageSetup: {
-            paperSize: 9,
-            orientation: 'landscape',
-            fitToPage: true,
-            fitToWidth: 1,
-            fitToHeight: 0
-        }
-    });
+        const worksheet = workbook.addWorksheet('Sales Report', {
+            pageSetup: { 
+                paperSize: 9, // A4
+                orientation: 'portrait',
+                fitToPage: true,
+                margins: {
+                    left: 0.7, right: 0.7,
+                    top: 0.75, bottom: 0.75,
+                    header: 0.3, footer: 0.3
+                }
+            }
+        });
 
-    // Set print area
-    worksheet.pageSetup.printArea = 'A1:G50';
+        // Set column widths
+        worksheet.columns = [
+            { width: 15 },  // Order ID
+            { width: 15 },  // Date
+            { width: 25 },  // Customer
+            { width: 10 },  // Items
+            { width: 15 },  // Amount
+            { width: 15 }   // Status
+        ];
 
-    // Column definitions
-    worksheet.columns = [
-        { header: 'Order ID', key: 'orderId', width: 15 },
-        { header: 'Date', key: 'date', width: 12 },
-        { header: 'Customer', key: 'customer', width: 30 },
-        { header: 'Items', key: 'items', width: 8 },
-        { header: 'Amount', key: 'amount', width: 15 },
-        { header: 'Status', key: 'status', width: 12 }
-    ];
+        // Add header
+        worksheet.mergeCells('A1:F1');
+        const titleCell = worksheet.getCell('A1');
+        titleCell.value = 'ANAMIT SALES REPORT';
+        titleCell.font = { size: 16, bold: true, name: 'Helvetica' };
+        titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        
+        worksheet.mergeCells('A2:F2');
+        const periodCell = worksheet.getCell('A2');
+        periodCell.value = `Period: ${moment(data.startDate).format('DD/MM/YYYY')} to ${moment(data.endDate).format('DD/MM/YYYY')}`;
+        periodCell.font = { size: 12, name: 'Helvetica' };
+        periodCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
-    // Add company name and report title
-    const titleRow = worksheet.addRow(['ANAMIT']);
-    titleRow.font = { size: 16, bold: true };
-    worksheet.mergeCells('A1:F1');
+        // Summary section
+        worksheet.addRow([]); // Empty row
+        worksheet.mergeCells('A4:F4');
+        worksheet.getCell('A4').value = 'Summary';
+        worksheet.getCell('A4').font = { size: 14, bold: true, name: 'Helvetica' };
+        
+        // Summary data
+        const summaryData = [
+            ['Total Orders', data.totalOrders],
+            ['Products Sold', data.totalProductsSold],
+            ['Total Revenue', formatCurrency(data.totalRevenue)],
+            ['Average Order Value', formatCurrency(data.averageOrderValue)]
+        ];
 
-    // Add report details
-    worksheet.addRow([]);
-    const reportTypeRow = worksheet.addRow([`Sales Report - ${capitalizeFirstLetter(data.type)}`]);
-    reportTypeRow.font = { size: 12, bold: true };
-    worksheet.mergeCells('A3:F3');
+        summaryData.forEach((row, index) => {
+            const rowNum = 5 + index;
+            worksheet.getCell(`A${rowNum}`).value = row[0];
+            worksheet.getCell(`B${rowNum}`).value = row[1];
+            
+            // Styling
+            worksheet.getCell(`A${rowNum}`).font = { name: 'Helvetica', bold: true };
+            worksheet.getCell(`B${rowNum}`).font = { name: 'Helvetica' };
+            worksheet.getCell(`A${rowNum}`).alignment = { vertical: 'middle' };
+            worksheet.getCell(`B${rowNum}`).alignment = { vertical: 'middle' };
+            
+            // Add borders
+            ['A', 'B'].forEach(col => {
+                const cell = worksheet.getCell(`${col}${rowNum}`);
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+            });
+        });
 
-    const dateRangeRow = worksheet.addRow([
-        `Period: ${moment(data.startDate).format('DD/MM/YYYY')} to ${moment(data.endDate).format('DD/MM/YYYY')}`
-    ]);
-    worksheet.mergeCells('A4:F4');
-
-    // Add summary section
-    worksheet.addRow([]);
-    const summaryRow = worksheet.addRow(['Summary']);
-    summaryRow.font = { bold: true };
-
-    // Add summary data
-    const summaryData = [
-        ['Total Orders:', data.totalOrders],
-        ['Products Sold:', data.totalProductsSold],
-        ['Total Revenue:', data.totalRevenue],
-        ['Average Order Value:', data.averageOrderValue]
-    ];
-
-    summaryData.forEach(([label, value]) => {
-        const row = worksheet.addRow([label, value]);
-        if (label.includes('Revenue') || label.includes('Value')) {
-            row.getCell(2).numFmt = '₹#,##0.00';
-        }
-    });
-
-    // Add space before orders table
-    worksheet.addRow([]);
-    worksheet.addRow([]);
-
-    // Add orders table header
-    const headerRow = worksheet.addRow([
-        'Order ID', 'Date', 'Customer', 'Items', 'Amount', 'Status'
-    ]);
-    headerRow.font = { bold: true };
-    headerRow.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'F4F4F4' }
-    };
-
-    // Add order data
-    data.orders.forEach((order, index) => {
-        const row = worksheet.addRow([
-            order.orderNumber,
-            moment(order.createdAt).format('DD/MM/YYYY'),
-            order.shippingAddress.fullName,
-            order.items.length,
-            order.finalAmount,
-            capitalizeFirstLetter(order.orderStatus)
+        // Add table header
+        worksheet.addRow([]); // Empty row
+        const headerRow = worksheet.addRow([
+            'Order ID',
+            'Date',
+            'Customer',
+            'Items',
+            'Amount',
+            'Status'
         ]);
 
-        // Add zebra striping
-        if (index % 2 === 0) {
-            row.fill = {
+        // Style header
+        headerRow.eachCell((cell) => {
+            cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, name: 'Helvetica' };
+            cell.fill = {
                 type: 'pattern',
                 pattern: 'solid',
-                fgColor: { argb: 'FAFAFA' }
+                fgColor: { argb: 'FF4F46E5' }
             };
-        }
-
-        // Format amount column
-        row.getCell(5).numFmt = '₹#,##0.00';
-    });
-
-    // Add borders to the table
-    const tableRange = `A${headerRow.number}:F${worksheet.rowCount}`;
-    worksheet.eachRow({ includeEmpty: false }, row => {
-        row.eachCell({ includeEmpty: false }, cell => {
             cell.border = {
                 top: { style: 'thin' },
                 left: { style: 'thin' },
                 bottom: { style: 'thin' },
                 right: { style: 'thin' }
             };
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
         });
-    });
 
-    // Add footer
-    worksheet.addRow([]);
-    const footerRow = worksheet.addRow([
-        `Generated on: ${moment().format('DD/MM/YYYY, hh:mm A')}`
-    ]);
-    worksheet.mergeCells(`A${footerRow.number}:F${footerRow.number}`);
-    footerRow.font = { italic: true, size: 8 };
+        // Add order data
+        data.orders.forEach((order) => {
+            const row = worksheet.addRow([
+                order.orderNumber,
+                moment(order.createdAt).format('DD/MM/YYYY'),
+                order.shippingAddress.fullName,
+                order.items.length,
+                formatCurrency(order.finalAmount),
+                capitalizeFirstLetter(order.orderStatus)
+            ]);
 
-    // Center align specific columns
-    worksheet.getColumn(4).alignment = { horizontal: 'center' };
-    worksheet.getColumn(5).alignment = { horizontal: 'right' };
+            row.eachCell((cell) => {
+                cell.font = { name: 'Helvetica' };
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+                cell.alignment = { vertical: 'middle' };
+            });
 
-    // Set print options
-    worksheet.headerFooter.oddHeader = '&18ANAMIT';
-    worksheet.headerFooter.oddFooter = '&IPage &P of &N';
+            // Right align amount
+            worksheet.getCell(`E${row.number}`).alignment = { horizontal: 'right' };
+            // Center align items
+            worksheet.getCell(`D${row.number}`).alignment = { horizontal: 'center' };
+        });
 
-    // Set response headers
-    res.setHeader(
-        'Content-Type',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    );
-    res.setHeader(
-        'Content-Disposition',
-        `attachment; filename=ANAMIT_Sales_Report_${moment().format('DDMMYYYY')}.xlsx`
-    );
+        // Add totals row
+        worksheet.addRow([]); // Empty row
+        const totalRow = worksheet.addRow([
+            'Total',
+            '',
+            '',
+            data.totalOrders,
+            formatCurrency(data.totalRevenue),
+            ''
+        ]);
 
-    await workbook.xlsx.write(res);
-    res.end();
+        totalRow.eachCell((cell) => {
+            cell.font = { bold: true, name: 'Helvetica' };
+            cell.border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+            };
+            cell.alignment = { vertical: 'middle' };
+        });
+
+        worksheet.getCell(`D${totalRow.number}`).alignment = { horizontal: 'center' };
+        worksheet.getCell(`E${totalRow.number}`).alignment = { horizontal: 'right' };
+
+        // Add footer
+        worksheet.addRow([]); // Empty row
+        worksheet.mergeCells(`A${worksheet.rowCount + 1}:F${worksheet.rowCount + 1}`);
+        const footerCell = worksheet.getCell(`A${worksheet.rowCount + 1}`);
+        footerCell.value = 'This is a computer-generated document. No signature is required.';
+        footerCell.font = { size: 8, name: 'Helvetica' };
+        footerCell.alignment = { horizontal: 'center' };
+
+        // Set explicit headers for Excel .xlsx format
+        res.setHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="ANAMIT_Sales_Report_${moment().format('DDMMYYYY')}.xlsx"`
+        );
+
+        // Generate buffer and send as response
+        const buffer = await workbook.xlsx.writeBuffer();
+        res.setHeader('Content-Length', buffer.length); // Optional: helps browser show download progress
+        res.send(buffer);
+
+    } catch (error) {
+        console.error('Error generating Excel report:', error);
+        throw error;
+    }
 }
+
 
 // Helper function to format numbers
 function formatNumber(number) {
@@ -686,7 +731,8 @@ exportSalesReport,
 formatDate,
 formatCurrency,
 validateDateRange,
-getChartData
+getChartData,
+generateExcel
 };
 
 // Helper function to get report title

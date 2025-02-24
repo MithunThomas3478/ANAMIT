@@ -606,41 +606,224 @@
     }
 }
         // Utility Functions
-        function validateForm() {
-            clearErrors();
-            let isValid = true;
+ 
+    const VALIDATION_RULES = {
+        productName: {
+            minLength: 3,
+            maxLength: 100,
+            pattern: /^[a-zA-Z0-9\s\-\&]+$/, // Alphanumeric, spaces, hyphens, and ampersands
+            message: 'Product name must be 3-100 characters (letters, numbers, spaces, hyphens, and & only)'
+        },
+        description: {
+            minLength: 10,
+            maxLength: 1000,
+            message: 'Description must be 10-1000 characters'
+        },
+        shortDescription: {
+            maxLength: 200,
+            message: 'Short description must be less than 200 characters'
+        },
+        colorValue: {
+            pattern: /^#[0-9A-Fa-f]{6}$/,
+            message: 'Please select a valid color'
+        },
+        colorName: {
+            minLength: 2,
+            maxLength: 50,
+            pattern: /^[a-zA-Z\s]+$/,
+            message: 'Color name must be 2-50 characters (letters and spaces only)'
+        },
+        size: {
+            validValues: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+            message: 'Please select a valid size'
+        },
+        stock: {
+            min: 0,
+            max: 9999,
+            message: 'Stock must be between 0 and 9999'
+        },
+        price: {
+            min: 0.01,
+            max: 99999.99,
+            step: 0.01,
+            message: 'Price must be between 0.01 and 99999.99'
+        }
+    };
 
-            // Basic fields validation
-            const requiredFields = {
-                productName: 'Product name is required',
-                category: 'Category is required',
-                subcategory: 'Subcategory is required',
-                description: 'Description is required'
-            };
+    document.addEventListener('DOMContentLoaded', function() {
+        // ... Existing initialization ...
 
-            for (const [fieldId, message] of Object.entries(requiredFields)) {
-                const field = document.getElementById(fieldId);
-                if (!field.value.trim()) {
-                    showError(fieldId, message);
-                    isValid = false;
-                }
+        setupRealTimeValidation();
+        setupCharacterCounters();
+    });
+
+    function setupRealTimeValidation() {
+        // Product Name
+        const productName = document.getElementById('productName');
+        productName.addEventListener('input', validateField);
+
+        // Descriptions
+        const description = document.getElementById('description');
+        const shortDescription = document.getElementById('shortDescription');
+        description.addEventListener('input', validateField);
+        shortDescription.addEventListener('input', validateField);
+
+        // Variant fields (dynamic)
+        document.getElementById('variantsContainer').addEventListener('input', function(e) {
+            const target = e.target;
+            if (target.name?.includes('variants')) {
+                validateField.call(target);
             }
+        });
+    }
 
-            // Variants validation
-            const variants = document.querySelectorAll('.variant-section');
-            if (variants.length === 0) {
-                showError('variants', 'At least one variant is required');
+    function setupCharacterCounters() {
+        const description = document.getElementById('description');
+        const shortDescription = document.getElementById('shortDescription');
+        
+        description.addEventListener('input', function() {
+            document.getElementById('description-count').textContent = this.value.length;
+        });
+        
+        shortDescription.addEventListener('input', function() {
+            document.getElementById('short-description-count').textContent = this.value.length;
+        });
+    }
+
+    function validateField() {
+        const field = this;
+        let isValid = true;
+        let message = '';
+
+        if (field.id === 'productName') {
+            const rules = VALIDATION_RULES.productName;
+            isValid = field.value.length >= rules.minLength && 
+                     field.value.length <= rules.maxLength && 
+                     rules.pattern.test(field.value);
+            message = rules.message;
+        }
+        
+        else if (field.id === 'description') {
+            const rules = VALIDATION_RULES.description;
+            isValid = field.value.length >= rules.minLength && 
+                     field.value.length <= rules.maxLength;
+            message = rules.message;
+        }
+        
+        else if (field.id === 'shortDescription') {
+            const rules = VALIDATION_RULES.shortDescription;
+            isValid = field.value.length <= rules.maxLength;
+            message = rules.message;
+        }
+        
+        else if (field.name?.includes('[colorValue]')) {
+            const rules = VALIDATION_RULES.colorValue;
+            isValid = rules.pattern.test(field.value);
+            message = rules.message;
+        }
+        
+        else if (field.name?.includes('[colorName]')) {
+            const rules = VALIDATION_RULES.colorName;
+            isValid = field.value.length >= rules.minLength && 
+                     field.value.length <= rules.maxLength && 
+                     rules.pattern.test(field.value);
+            message = rules.message;
+        }
+        
+        else if (field.name?.includes('[size]')) {
+            const rules = VALIDATION_RULES.size;
+            isValid = rules.validValues.includes(field.value);
+            message = rules.message;
+        }
+        
+        else if (field.name?.includes('[stock]')) {
+            const rules = VALIDATION_RULES.stock;
+            const value = parseInt(field.value);
+            isValid = !isNaN(value) && value >= rules.min && value <= rules.max;
+            message = rules.message;
+        }
+        
+        else if (field.name?.includes('[price]')) {
+            const rules = VALIDATION_RULES.price;
+            const value = parseFloat(field.value);
+            isValid = !isNaN(value) && value >= rules.min && value <= rules.max;
+            message = rules.message;
+        }
+
+        updateValidationUI(field, isValid, message);
+    }
+
+    function updateValidationUI(field, isValid, message) {
+        const errorElement = document.getElementById(`${field.id}-error`) || 
+                           field.nextElementSibling?.classList.contains('error-feedback') ? 
+                           field.nextElementSibling : null;
+
+        field.classList.remove('is-valid', 'is-invalid');
+        field.classList.add(isValid ? 'is-valid' : 'is-invalid');
+
+        if (errorElement) {
+            errorElement.textContent = isValid ? '' : message;
+        }
+    }
+
+    // Modified validateForm function
+    function validateForm() {
+        clearErrors();
+        let isValid = true;
+
+        // Validate basic fields
+        ['productName', 'category', 'subcategory', 'description'].forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (!field.value.trim()) {
+                showError(fieldId, `${fieldId.charAt(0).toUpperCase() + fieldId.slice(1)} is required`);
                 isValid = false;
             }
+            validateField.call(field);
+            if (field.classList.contains('is-invalid')) {
+                isValid = false;
+            }
+        });
 
-            variants.forEach((variant, index) => {
-                if (!validateVariant(variant, index)) {
+        // Validate variants
+        const variants = document.querySelectorAll('.variant-section');
+        if (variants.length === 0) {
+            showError('variants', 'At least one variant is required');
+            return false;
+        }
+
+        variants.forEach((variant, index) => {
+            const inputs = variant.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                validateField.call(input);
+                if (input.classList.contains('is-invalid')) {
                     isValid = false;
                 }
             });
 
-            return isValid;
-        }
+            const images = variantImages.get(index) || [];
+            if (images.length === 0) {
+                showError(`variant-${index}`, 'At least one image is required');
+                isValid = false;
+            }
+        });
+
+        return isValid;
+    }
+
+    // Modified addNewVariant to include validation
+    function addNewVariant() {
+        const variantHtml = createVariantHTML(currentVariantIndex);
+        document.getElementById('variantsContainer').insertAdjacentHTML('beforeend', variantHtml);
+        initializeImageUpload(currentVariantIndex);
+        const newVariant = document.querySelector(`[data-variant-index="${currentVariantIndex}"]`);
+        newVariant.querySelectorAll('input, select').forEach(field => {
+            field.addEventListener('input', validateField);
+        });
+        updateRemoveButtons();
+        currentVariantIndex++;
+    }
+
+
 
         function validateVariant(variant, index) {
             let isValid = true;

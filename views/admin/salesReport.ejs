@@ -400,63 +400,68 @@
     <script>
         // Download report function
         function downloadReport(format) {
-            const reportType = '<%= reportType %>';
-            let url = `/admin/sales-report/export/${format}/${reportType}`;
-            
-            if (reportType === 'custom') {
-                const startDate = document.querySelector('input[name="startDate"]').value;
-                const endDate = document.querySelector('input[name="endDate"]').value;
-                
-                if (!validateDateRange(startDate, endDate)) {
-                    return;
-                }
-                
-                url += `?startDate=${startDate}&endDate=${endDate}`;}
-            
-            // Show loading state
-            const loadingBtn = format === 'pdf' ? 
-                document.querySelector('.download-btn.pdf') : 
-                document.querySelector('.download-btn.excel');
-            
-            const originalText = loadingBtn.innerHTML;
-            loadingBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Downloading...`;
-            loadingBtn.disabled = true;
+        const reportType = '<%= reportType %>';
+        let url = `/admin/sales-report/export/${format}/${reportType}`;
 
-            // Download the file
-            fetch(url)
-                .then(response => response.blob())
-                .then(blob => {
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `sales-report-${reportType}-${new Date().toISOString().split('T')[0]}.${format}`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    
-                    // Show success message
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Download Complete',
-                        text: `Sales report has been downloaded successfully`,
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                })
-                .catch(error => {
-                    console.error('Error downloading report:', error);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Download Failed',
-                        text: 'There was an error downloading the report. Please try again.'
-                    });
-                })
-                .finally(() => {
-                    // Reset button state
-                    loadingBtn.innerHTML = originalText;
-                    loadingBtn.disabled = false;
-                });
+        if (reportType === 'custom') {
+            const startDate = document.querySelector('input[name="startDate"]').value;
+            const endDate = document.querySelector('input[name="endDate"]').value;
+
+            if (!validateDateRange(startDate, endDate)) {
+                return;
+            }
+
+            url += `?startDate=${startDate}&endDate=${endDate}`;
         }
+
+        const loadingBtn = format === 'pdf' ?
+            document.querySelector('.download-btn.pdf') :
+            document.querySelector('.download-btn.excel');
+
+        const originalText = loadingBtn.innerHTML;
+        loadingBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Downloading...`;
+        loadingBtn.disabled = true;
+
+        fetch(url, { method: 'GET' })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                // Explicitly set the correct extension based on format
+                const extension = format === 'pdf' ? 'pdf' : 'xlsx';
+                a.download = `sales-report-${reportType}-${new Date().toISOString().split('T')[0]}.${extension}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Download Complete',
+                    text: `Sales report has been downloaded successfully`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            })
+            .catch(error => {
+                console.error('Error downloading report:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Download Failed',
+                    text: 'There was an error downloading the report: ' + error.message
+                });
+            })
+            .finally(() => {
+                loadingBtn.innerHTML = originalText;
+                loadingBtn.disabled = false;
+            });
+    }
 
         // Download individual day report
         function downloadDayReport(date, format) {
