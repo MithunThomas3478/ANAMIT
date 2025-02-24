@@ -622,66 +622,81 @@
         }
 
         async function addToCart(productId) {
-            const productCard = document.querySelector(`.product-card[data-product-id="${productId}"]`);
-            const selectedColor = productCard.querySelector('.color-option.selected')?.dataset.color;
-            const selectedSize = productCard.querySelector('.size-option.selected')?.dataset.size;
+        const productCard = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+        const selectedColor = productCard.querySelector('.color-option.selected')?.dataset.color;
+        const selectedSize = productCard.querySelector('.size-option.selected')?.dataset.size;
 
-            if (!selectedColor || !selectedSize) {
-                showToast('Please select color and size', 'warning');
-                return;
-            }
-
-            try {
-                showLoading(productId);
-
-                const product = window.wishlistProducts.find(p => p._id === productId);
-                const variant = product.variants.find(v => v.colorName === selectedColor);
-                const sizeVariant = variant.colorVariant.find(cv => cv.size === selectedSize);
-                
-                const basePrice = sizeVariant.price;
-                const discountedPrice = product.productOffer ? 
-                    basePrice * (1 - product.productOffer/100) : basePrice;
-
-                const response = await fetch('/addToCart', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        productId,
-                        colorName: selectedColor,
-                        size: selectedSize,
-                        quantity: 1,
-                        price: discountedPrice
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    window.cartItems.push({
-                        product: productId,
-                        selectedColor: { colorName: selectedColor },
-                        selectedSize: selectedSize
-                    });
-
-                    const button = productCard.querySelector('.add-to-cart-btn');
-                    updateButtonToGoToCart(button);
-                    
-                    showToast('Added to cart successfully');
-
-                    if (result.cartCount && document.getElementById('cartCount')) {
-                        document.getElementById('cartCount').textContent = result.cartCount;
-                    }
-                } else {
-                    throw new Error(result.message || 'Failed to add to cart');
-                }
-            } catch (error) {
-                console.error('Error adding to cart:', error);
-                showToast(error.message || 'Failed to add item to cart', 'error');
-            } finally {
-                hideLoading(productId);
-            }
+        if (!selectedColor || !selectedSize) {
+            showToast('Please select color and size', 'warning');
+            return;
         }
 
+        try {
+            showLoading(productId);
+
+            const product = window.wishlistProducts.find(p => p._id === productId);
+            const variant = product.variants.find(v => v.colorName === selectedColor);
+            const sizeVariant = variant.colorVariant.find(cv => cv.size === selectedSize);
+            
+            const basePrice = sizeVariant.price;
+            const discountedPrice = product.productOffer ? 
+                basePrice * (1 - product.productOffer/100) : basePrice;
+
+            const response = await fetch('/addToCart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productId,
+                    colorName: selectedColor,
+                    size: selectedSize,
+                    quantity: 1,
+                    price: discountedPrice
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Update cart items array
+                window.cartItems.push({
+                    product: productId,
+                    selectedColor: { colorName: selectedColor },
+                    selectedSize: selectedSize
+                });
+
+                // Update button to "Go to Cart"
+                const button = productCard.querySelector('.add-to-cart-btn');
+                updateButtonToGoToCart(button);
+
+                // Remove product from wishlist UI
+                productCard.style.opacity = '0';
+                productCard.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    productCard.remove();
+                    updateWishlistCount(result.wishlistCount);
+
+                    // Check if wishlist is empty after removal
+                    if (!document.querySelector('.wishlist-grid').children.length) {
+                        location.reload();
+                    }
+                }, 300);
+
+                showToast('Added to cart and removed from wishlist');
+
+                // Update cart count in header if exists
+                if (result.cartCount && document.getElementById('cartCount')) {
+                    document.getElementById('cartCount').textContent = result.cartCount;
+                }
+            } else {
+                throw new Error(result.message || 'Failed to add to cart');
+            }
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+            showToast(error.message || 'Failed to add item to cart', 'error');
+        } finally {
+            hideLoading(productId);
+        }
+    }
         function showToast(message, icon = 'success') {
             Swal.fire({
                 text: message,

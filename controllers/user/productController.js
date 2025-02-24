@@ -177,7 +177,7 @@ const addToCart = async (req, res) => {
 
         // Fetch product and validate
         const product = await Product.findById(productId)
-            .select('isListed variants productName category')
+            .select('isListed variants productName category productOffer')
             .populate('category', 'name')
             .lean();
 
@@ -214,9 +214,10 @@ const addToCart = async (req, res) => {
         // Get current date for offer validation
         const currentDate = new Date();
 
-        // Fetch cart and offers
-        const [cart, productOffer, categoryOffer] = await Promise.all([
+        // Fetch cart, wishlist, and offers concurrently
+        const [cart, wishlist, productOffer, categoryOffer] = await Promise.all([
             Cart.findOne({ user: userId, active: true }),
+            Wishlist.findOne({ user: userId }),
             Offer.findOne({
                 offerType: 'product',
                 product: productId,
@@ -234,7 +235,7 @@ const addToCart = async (req, res) => {
         ]);
 
         // Calculate best offer - take only the highest
-        const productOfferPercentage = productOffer?.discountPercentage || 0;
+        const productOfferPercentage = productOffer?.discountPercentage || product.productOffer || 0;
         const categoryOfferPercentage = categoryOffer?.discountPercentage || 0;
         
         // Choose the higher offer
@@ -250,7 +251,7 @@ const addToCart = async (req, res) => {
             active: true
         });
 
-        // Check if item already exists
+        // Check if item already exists in cart
         const existingItemIndex = userCart.items.findIndex(item => 
             item.product.toString() === productId &&
             item.selectedColor.colorName.toLowerCase() === colorName.toLowerCase() &&
@@ -290,6 +291,14 @@ const addToCart = async (req, res) => {
             });
         }
 
+        // Remove from wishlist if present
+        let wishlistCount = null;
+        if (wishlist && wishlist.hasProduct(productId)) {
+            wishlist.removeProduct(productId);
+            await wishlist.save();
+            wishlistCount = wishlist.items.length; // Update wishlist count
+        }
+
         // Save cart and recalculate totals
         await userCart.save();
 
@@ -300,6 +309,7 @@ const addToCart = async (req, res) => {
             success: true,
             message: 'Item added to cart successfully',
             cartCount,
+            wishlistCount, // Return updated wishlist count
             cart: {
                 totalAmount: userCart.totalAmount,
                 totalDiscount: userCart.totalDiscount,
@@ -315,6 +325,8 @@ const addToCart = async (req, res) => {
         });
     }
 };
+
+
 const getMensFashion = async (req, res) => {
     try {
         // Pagination setup
