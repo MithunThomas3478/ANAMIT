@@ -102,11 +102,29 @@ const loadDashboard = async (req, res) => {
 
         // Get top selling categories with percentage
         const topCategories = await Order.aggregate([
-            { $unwind: '$items' },
-            { $match: { 'items.status': 'active' } },
-            { 
+            { $unwind: '$items' }, // Flatten the items array
+            { $match: { 'items.status': 'active' } }, // Filter for active items
+            {
+                $lookup: { // Join with Product collection
+                    from: 'products', // MongoDB collection name (lowercase)
+                    localField: 'items.product',
+                    foreignField: '_id',
+                    as: 'productInfo'
+                }
+            },
+            { $unwind: '$productInfo' }, // Flatten productInfo array (1:1 relationship)
+            {
+                $lookup: { // Join with Category collection
+                    from: 'categories',
+                    localField: 'productInfo.category',
+                    foreignField: '_id',
+                    as: 'categoryInfo'
+                }
+            },
+            { $unwind: '$categoryInfo' }, // Flatten categoryInfo array (1:1 relationship)
+            {
                 $group: {
-                    _id: '$items.category', // Make sure your items have category field
+                    _id: '$categoryInfo.name', // Group by category name
                     totalQuantity: { $sum: '$items.quantity' },
                     totalRevenue: { $sum: '$items.itemTotal' }
                 }
@@ -143,7 +161,9 @@ const loadDashboard = async (req, res) => {
             },
             { $sort: { '_id.year': 1, '_id.month': 1 } }
         ]);
-
+        console.log("prod",topProducts);
+        console.log("prod",topCategories);
+        
         res.render('adminDashboard', {
             totalOrders,
             totalRevenue: totalRevenue[0]?.total || 0,
